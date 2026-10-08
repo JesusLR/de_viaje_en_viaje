@@ -26,8 +26,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'cPrimerApellido',
+        'cSegundoApellido',
+        'cTelefono',
         'email',
         'password',
+        'lActivo',
+        'lCambiarPassword',
     ];
 
     /**
@@ -50,6 +55,16 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'lActivo' => 'boolean',
+            'lCambiarPassword' => 'boolean',
         ];
+    }
+
+    /**
+     * Obtener el nombre completo del usuario.
+     */
+    public function getNombreCompletoAttribute(): string
+    {
+        return trim("{$this->name} {$this->cPrimerApellido} {$this->cSegundoApellido}");
     }
 }
