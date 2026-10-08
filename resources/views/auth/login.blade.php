@@ -5,8 +5,8 @@
 @section('contenido')
 <div class="auth-card">
     <div class="auth-header">
-        <div class="brand-icon">
-            <i class="fas fa-lock"></i>
+        <div class="brand-icon p-0 border border-2 border-white shadow-sm overflow-hidden">
+            <img src="{{ asset('img/logo.jpg') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
         <h4 class="fw-bold mb-1">Bienvenido de nuevo</h4>
         <p class="text-white-50 small mb-0">Ingresa tus credenciales para acceder</p>

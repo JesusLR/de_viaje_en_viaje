@@ -218,8 +218,8 @@
     <div id="app-wrapper">
         <!-- Sidebar Navigation -->
         <aside id="sidebar">
-            <a href="{{ route('dashboard') }}" class="sidebar-brand">
-                <i class="fas fa-cubes text-primary me-2"></i>
+            <a href="{{ route('dashboard') }}" class="sidebar-brand d-flex align-items-center gap-2">
+                <img src="{{ asset('img/logo.jpg') }}" alt="Logo" class="rounded-circle border border-2 border-white shadow-sm" style="height: 38px; width: 38px; object-fit: cover;">
                 <span>{{ config('app.name', 'Laravel') }}</span>
             </a>
 
@@ -243,9 +243,10 @@
                 @endif
             </ul>
 
-            <!-- Módulo Administración -->
+            <!-- Módulo Administración y Catálogos -->
             <div class="sidebar-section">Módulos</div>
             <ul class="sidebar-nav">
+                <!-- Administración -->
                 <li class="nav-item">
                     <a href="#menuAdmin" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('admin.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('admin.*') ? 'true' : 'false' }}">
                         <div>
@@ -260,6 +261,27 @@
                                 <a href="{{ route('admin.usuarios.index') }}" class="nav-link {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">
                                     <i class="fas fa-users me-1"></i>
                                     <span>Usuarios</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Catálogos -->
+                <li class="nav-item mt-1">
+                    <a href="#menuCatalogos" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('catalogos.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('catalogos.*') ? 'true' : 'false' }}">
+                        <div>
+                            <i class="fas fa-folder-open me-1"></i>
+                            <span>Catálogos</span>
+                        </div>
+                        <i class="fas fa-chevron-down small"></i>
+                    </a>
+                    <div class="collapse {{ request()->routeIs('catalogos.*') ? 'show' : '' }}" id="menuCatalogos">
+                        <ul class="sidebar-subnav mt-1">
+                            <li class="nav-item">
+                                <a href="{{ route('catalogos.clientes.index') }}" class="nav-link {{ request()->routeIs('catalogos.clientes.*') ? 'active' : '' }}">
+                                    <i class="fas fa-address-book me-1"></i>
+                                    <span>Clientes</span>
                                 </a>
                             </li>
                         </ul>
