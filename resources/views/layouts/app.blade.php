@@ -267,7 +267,15 @@
                     </div>
                 </li>
 
-                <!-- Catálogos -->
+                <!-- Módulo Servicios Turísticos -->
+                <li class="nav-item mt-1">
+                    <a href="{{ route('servicios.paquetes.index') }}" class="nav-link {{ request()->routeIs('servicios.*') ? 'active' : '' }}">
+                        <i class="fas fa-boxes me-1"></i>
+                        <span>Servicios y Paquetes</span>
+                    </a>
+                </li>
+
+                <!-- Módulo Catálogos -->
                 <li class="nav-item mt-1">
                     <a href="#menuCatalogos" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('catalogos.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('catalogos.*') ? 'true' : 'false' }}">
                         <div>
@@ -282,6 +290,24 @@
                                 <a href="{{ route('catalogos.clientes.index') }}" class="nav-link {{ request()->routeIs('catalogos.clientes.*') ? 'active' : '' }}">
                                     <i class="fas fa-address-book me-1"></i>
                                     <span>Clientes</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('catalogos.categorias.index') }}" class="nav-link {{ request()->routeIs('catalogos.categorias.*') ? 'active' : '' }}">
+                                    <i class="fas fa-tags me-1"></i>
+                                    <span>Categorías</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('catalogos.destinos.index') }}" class="nav-link {{ request()->routeIs('catalogos.destinos.*') ? 'active' : '' }}">
+                                    <i class="fas fa-map-marked-alt me-1"></i>
+                                    <span>Destinos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('catalogos.proveedores.index') }}" class="nav-link {{ request()->routeIs('catalogos.proveedores.*') ? 'active' : '' }}">
+                                    <i class="fas fa-truck-loading me-1"></i>
+                                    <span>Proveedores</span>
                                 </a>
                             </li>
                         </ul>

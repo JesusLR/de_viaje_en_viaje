@@ -60,5 +60,62 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class])->group(function () {
             Route::post('/saveData', [ClienteController::class, 'saveData'])->name('saveData');
             Route::post('/deleteData', [ClienteController::class, 'deleteData'])->name('deleteData');
         });
+
+        // Submódulo Categorías Turísticas
+        Route::prefix('categorias')->name('categorias.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'index'])->name('index');
+            Route::get('/gridData', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'gridData'])->name('gridData');
+            Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'getData'])->name('getData');
+            Route::post('/saveData', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'saveData'])->name('saveData');
+            Route::post('/deleteData', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'deleteData'])->name('deleteData');
+        });
+
+        // Submódulo Destinos Turísticos
+        Route::prefix('destinos')->name('destinos.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'index'])->name('index');
+            Route::get('/gridData', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'gridData'])->name('gridData');
+            Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'getData'])->name('getData');
+            Route::post('/saveData', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'saveData'])->name('saveData');
+            Route::post('/deleteData', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'deleteData'])->name('deleteData');
+        });
+
+        // Submódulo Proveedores Turísticos
+        Route::prefix('proveedores')->name('proveedores.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Catalogos\ProveedorController::class, 'index'])->name('index');
+            Route::get('/gridData', [\App\Http\Controllers\Catalogos\ProveedorController::class, 'gridData'])->name('gridData');
+            Route::get('/getData/{id}', [\App\Http\Controllers\Catalogos\ProveedorController::class, 'getData'])->name('getData');
+            Route::post('/saveData', [\App\Http\Controllers\Catalogos\ProveedorController::class, 'saveData'])->name('saveData');
+            Route::post('/deleteData', [\App\Http\Controllers\Catalogos\ProveedorController::class, 'deleteData'])->name('deleteData');
+        });
+    });
+
+    // Módulo Servicios y Paquetes Turísticos
+    Route::prefix('servicios')->name('servicios.')->group(function () {
+        // Alias de compatibilidad para Categorías y Destinos
+        Route::prefix('categorias')->name('categorias.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'index'])->name('index');
+            Route::get('/gridData', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'gridData'])->name('gridData');
+            Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'getData'])->name('getData');
+            Route::post('/saveData', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'saveData'])->name('saveData');
+            Route::post('/deleteData', [\App\Http\Controllers\Servicios\CategoriaTuristicaController::class, 'deleteData'])->name('deleteData');
+        });
+
+        Route::prefix('destinos')->name('destinos.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'index'])->name('index');
+            Route::get('/gridData', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'gridData'])->name('gridData');
+            Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'getData'])->name('getData');
+            Route::post('/saveData', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'saveData'])->name('saveData');
+            Route::post('/deleteData', [\App\Http\Controllers\Servicios\DestinoTuristicoController::class, 'deleteData'])->name('deleteData');
+        });
+
+        // Servicios y Paquetes Turísticos
+        Route::prefix('paquetes')->name('paquetes.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'index'])->name('index');
+            Route::get('/gridData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'gridData'])->name('gridData');
+            Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'getData'])->name('getData');
+            Route::post('/saveData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'saveData'])->name('saveData');
+            Route::post('/deleteData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'deleteData'])->name('deleteData');
+            Route::post('/simularPrecios', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'simularPrecios'])->name('simularPrecios');
+        });
     });
 });
