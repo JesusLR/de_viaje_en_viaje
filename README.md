@@ -1,59 +1,102 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ✈️ Sistema de Gestión para Agencia de Viajes (De Viaje)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema web monolítico integral diseñado para la administración y comercialización de servicios turísticos, paquetes vacacionales, tours, excursiones y viajes nacionales e internacionales.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🏛️ Arquitectura del Sistema
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+El proyecto sigue una arquitectura **Monolítica MVC (Modelo - Vista - Controlador)** reforzada con una **Capa de Servicios (Service Pattern)** para aislar la lógica de negocio compleja.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```
+[ Cliente / Navegador ]
+       │  ▲
+  AJAX / JSON  │  Blade Views (HTML5 + Bootstrap 5 + jQuery)
+       ▼  │
+[ Laravel 12 Controllers ]
+       │
+[ Service Layer (ServicioTuristicoService) ]
+       │
+[ Eloquent ORM Models ] ──► [ Base de Datos MySQL ]
+       │
+[ Laravel Storage ] ──► [ Public Assets / Imágenes ]
+```
 
-## Learning Laravel
+### Principios Arquitectónicos
+- **Desacoplamiento Operativo**: Lógica financiera (simulación de márgenes, utilidad y promociones) aislada en servicios independientes.
+- **Interactividad Asíncrona (SPA-like)**: Operaciones CRUD, filtrado dinámico y previsualizaciones financieras procesadas mediante peticiones **AJAX** con respuestas estándar JSON.
+- **Convención de Nomenclatura (Notación Húngara)**:
+  - `iID`: Enteros (IDs, llaves foráneas).
+  - `cNombre`, `cCodigo`, `cDescripcion`: Cadenas de texto.
+  - `dPrecioCompra`, `dPrecioVenta`, `dValorDescuento`: Números decimales/flotantes.
+  - `dFechaInicioVigencia`, `dFechaFinVigencia`: Fechas (`YYYY-MM-DD`).
+  - `lActivo`, `lTienePromocion`, `lSuccess`: Valores booleanos (`1`/`0` o `true`/`false`).
+  - `oServicio`, `oProveedor`: Instancias de Objetos / Modelos.
+  - `aCategorias`, `aDestinos`: Arreglos / Arrays.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Herramientas y Tecnologías Utilizadas
 
-## Laravel Sponsors
+### 🔹 Backend
+- **Laravel 12** (PHP 8.2+) — Framework principal de desarrollo.
+- **Eloquent ORM** — Mapeo objeto-relacional para interacción con base de datos.
+- **Carbon** — Gestión y validación estricta de fechas de vigencia y promociones.
+- **PHPUnit 11** — Suite de pruebas automatizadas de integración y características (Feature Tests).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 🔹 Frontend
+- **Blade Templating Engine** — Motor de plantillas servidor.
+- **Bootstrap 5.3** — Framework UI para diseño adaptativo (Responsive), componentes Flexbox, modales de diálogo desplazables y pestañas.
+- **FontAwesome 6** — Iconografía vectorial profesional.
 
-### Premium Partners
+### 🔹 JavaScript & Librerías Cliente
+- **jQuery 3.7+** — Manipulación DOM y arquitectura AJAX.
+- **DataTables 1.13+** — Renderizado dinámico de listados masivos, ordenamiento, filtrado en tiempo real e internacionalización en español.
+- **SweetAlert2** — Notificaciones emergentes, diálogos de confirmación y alertas de validación.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 🔹 Base de Datos y Almacenamiento
+- **MySQL** — Motor relacional de almacenamiento.
+- **Laravel Public Storage (`storage:link`)** — Gestión de imágenes principales y galerías fotográficas asociadas a los servicios.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 📦 Módulos del Sistema
 
-## Code of Conduct
+### 1. Servicios y Paquetes Turísticos
+- Registro, edición y desactivación lógica de paquetes y excursiones.
+- Generación automática de código correlativo único (`SERV-2026-0001`).
+- Simulador financiero en tiempo real: cálculo de costo, precio venta público, porcentaje de utilidad y ganancia estimadas.
+- Módulo de Promociones (Descuento porcentual o importe fijo con vigencia).
+- Carga de imagen principal y galería fotográfica múltiple.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2. Catálogos Generales (Submódulo)
+- **Proveedores Comercial**: Registro de socios y proveedores turísticos.
+- **Categorías Turísticas**: Clasificación general de los servicios (ej. Excursiones, Cruceros, Paquetes Completos).
+- **Destinos Turísticos**: Ubicaciones geográficas por ciudad, estado y país.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🚀 Comandos Principales de Desarrollo
 
-## License
+```bash
+# Ejecutar migraciones de base de datos
+php artisan migrate
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Crear enlace simbólico para imágenes de almacenamiento
+php artisan storage:link
+
+# Ejecutar la suite completa de pruebas automatizadas
+vendor/bin/phpunit
+
+# Iniciar servidor de desarrollo local
+php artisan serve
+```
+
+---
+
+## 🧪 Pruebas Automatizadas (PHPUnit)
+El sistema incluye cobertura de pruebas de integración para verificar la consistencia de los endpoints API y la lógica financiera:
+
+```bash
+vendor/bin/phpunit tests/Feature/ProveedorTest.php tests/Feature/ServicioTuristicoTest.php
+```
