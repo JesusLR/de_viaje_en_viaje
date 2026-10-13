@@ -1,15 +1,17 @@
 @extends('layouts.auth')
 
 @section('titulo', 'Iniciar Sesión')
+@section('auth-page-class', 'auth-login')
 
 @section('contenido')
 <div class="auth-card">
     <div class="auth-header">
-        <div class="brand-icon p-0 border border-2 border-white shadow-sm overflow-hidden">
-            <img src="{{ asset('img/logo.jpg') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;">
+        <div class="brand-icon overflow-hidden">
+            <img src="{{ asset('img/logo.jpg') }}" alt="{{ config('app.name') }}" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
+        <div class="auth-brand-name">{{ config('app.name') }}</div>
         <h4 class="fw-bold mb-1">Bienvenido de nuevo</h4>
-        <p class="text-white-50 small mb-0">Ingresa tus credenciales para acceder</p>
+        <p class="text-muted small mb-0">Ingresa tus credenciales para acceder</p>
     </div>
 
     <div class="auth-body">
@@ -43,6 +45,7 @@
                            name="email" 
                            value="{{ old('email') }}" 
                            placeholder="nombre@ejemplo.com" 
+                           autocomplete="username"
                            required 
                            autofocus>
                 </div>
@@ -63,8 +66,9 @@
                            id="password" 
                            name="password" 
                            placeholder="••••••••" 
+                           autocomplete="current-password"
                            required>
-                    <button class="btn btn-outline-secondary input-group-text px-3" type="button" id="togglePassword">
+                    <button class="btn btn-outline-secondary input-group-text px-3" type="button" id="togglePassword" aria-label="Mostrar u ocultar contraseña" title="Mostrar u ocultar contraseña">
                         <i class="fas fa-eye" id="eyeIcon"></i>
                     </button>
                 </div>
@@ -96,4 +100,7 @@
 
 @push('scripts')
 <script src="{{ asset('js/auth/login.js') }}"></script>
+@endpush
+@push('styles')
+<link href="{{ asset('css/login-module.css') }}?v={{ filemtime(public_path('css/login-module.css')) }}" rel="stylesheet">
 @endpush

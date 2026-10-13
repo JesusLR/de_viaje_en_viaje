@@ -4,8 +4,8 @@
     $anterior = 0;
 @endphp
 <div class="agencia-paginacion px-4 py-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-3">
-    <small class="text-muted">Mostrando {{ $paginador->firstItem() ?? 0 }}–{{ $paginador->lastItem() ?? 0 }} de {{ $paginador->total() }} apartados</small>
-    <nav aria-label="Paginación de apartados">
+    <small class="text-muted">Mostrando {{ $paginador->firstItem() ?? 0 }}–{{ $paginador->lastItem() ?? 0 }} de {{ $paginador->total() }} {{ $etiqueta ?? 'apartados' }}</small>
+    <nav aria-label="Paginación de {{ $etiqueta ?? 'apartados' }}">
         <ul class="pagination pagination-sm mb-0">
             <li class="page-item {{ $paginador->onFirstPage() ? 'disabled' : '' }}">
                 @if($paginador->onFirstPage())

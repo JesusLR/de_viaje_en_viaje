@@ -124,7 +124,7 @@
     </style>
     @stack('styles')
 </head>
-<body>
+<body class="@yield('auth-page-class')">
 
     @yield('contenido')
 

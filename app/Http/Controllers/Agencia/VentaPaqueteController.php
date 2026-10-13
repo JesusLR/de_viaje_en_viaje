@@ -44,8 +44,8 @@ class VentaPaqueteController extends Controller
     private function listado(Request $request, bool $apartados)
     {
         $request->merge([
-            'desde' => $request->input('desde') ?: today()->toDateString(),
-            'hasta' => $request->input('hasta') ?: today()->toDateString(),
+            'desde' => $request->input('desde') ?: ($apartados ? today()->toDateString() : today()->startOfMonth()->toDateString()),
+            'hasta' => $request->input('hasta') ?: ($apartados ? today()->toDateString() : today()->endOfMonth()->toDateString()),
         ]);
         $request->validate([
             'estado' => ['nullable', Rule::in(['Abierto', 'Liquidado', 'Cancelado'])],
@@ -85,7 +85,7 @@ class VentaPaqueteController extends Controller
         $clientes = Cliente::orderBy('cNombre')->get();
         $usuarios = User::orderBy('name')->get();
 
-        return view($apartados ? 'agencia.ventas.apartados' : 'agencia.ventas.listado', compact('ventas', 'clientes', 'usuarios', 'apartados'));
+        return view('agencia.ventas.apartados', compact('ventas', 'clientes', 'usuarios', 'apartados'));
     }
 
     public function store(Request $request)
@@ -159,15 +159,29 @@ class VentaPaqueteController extends Controller
 
     public function comprobante(VentaPaquete $venta)
     {
+        abort_if($venta->cTipoOperacion !== 'APARTADO', 422, 'El PDF de historial de abonos solo está disponible para operaciones provenientes de apartados.');
+        return $this->generarComprobante($venta, false);
+    }
+
+    public function comprobanteCompra(VentaPaquete $venta)
+    {
+        return $this->generarComprobante($venta, true);
+    }
+
+    private function generarComprobante(VentaPaquete $venta, bool $compraSaldada)
+    {
         $venta->load(['cliente', 'detalles.servicio', 'usuario', 'pagos' => fn ($query) => $query->with('usuario')->whereNull('anulado_at')->orderBy('dFechaPago')->orderBy('iID')]);
+        if ($compraSaldada) {
+            abort_if($venta->cancelada_at || !$venta->finalizada_at || $venta->saldo_centavos !== 0, 422, 'El comprobante de compra saldada solo está disponible para ventas finalizadas y pagadas.');
+        }
         $rutaLogo = public_path('img/logo.jpg');
         $logo = is_file($rutaLogo) ? 'data:image/jpeg;base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
-        $pdf = Pdf::loadView('agencia.ventas.comprobante-pdf', compact('venta', 'logo'))
+        $pdf = Pdf::loadView('agencia.ventas.comprobante-pdf', compact('venta', 'logo', 'compraSaldada'))
             ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
         $pdf->render();
         $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
 
-        return $pdf->download('comprobante-'.$venta->folio.'.pdf');
+        return $pdf->download(($compraSaldada ? 'compra-saldada-' : 'comprobante-').$venta->folio.'.pdf');
     }
 
     public function pago(Request $request, VentaPaquete $venta)

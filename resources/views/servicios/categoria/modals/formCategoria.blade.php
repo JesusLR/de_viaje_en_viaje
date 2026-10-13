@@ -1,12 +1,12 @@
-<div class="modal fade" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade apartado-modal-shell" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalCategoriaTitle">Categoría Turística</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form id="formCategoria">
-                <div class="modal-body">
+                <div class="modal-body venta-detalle-page">
                     <input type="hidden" id="iID" name="iID" value="0">
 
                     <div class="mb-3">
@@ -21,7 +21,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1" aria-hidden="true"></i> Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="btnGuardar">
                         <i class="fas fa-save me-1"></i> Guardar Categoría
                     </button>

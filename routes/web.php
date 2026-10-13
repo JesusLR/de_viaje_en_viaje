@@ -102,6 +102,7 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class])->group(function () {
         Route::post('/', 'store')->name('store');
         Route::get('/{venta}', 'show')->name('show');
         Route::get('/{venta}/comprobante', 'comprobante')->name('comprobante');
+        Route::get('/{venta}/compra-saldada', 'comprobanteCompra')->name('comprobanteCompra');
         Route::post('/{venta}/pagos', 'pago')->name('pago');
         Route::post('/{venta}/cancelar', 'cancelar')->name('cancelar');
         Route::post('/{venta}/finalizar', 'finalizar')->name('finalizar');

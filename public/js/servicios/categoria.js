@@ -10,8 +10,17 @@ $(document).ready(function () {
 
     function initTabla() {
         tablaCategorias = $('#tablaCategorias').DataTable({
+            pageLength: 10,
+            lengthChange: false,
+            dom: 'rt<"catalogos-pie"ip>',
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                emptyTable: 'No hay registros disponibles',
+                zeroRecords: 'No se encontraron resultados',
+                info: 'Mostrando _START_ a _END_ de _TOTAL_ registros',
+                infoEmpty: 'Mostrando 0 registros',
+                infoFiltered: '(de _MAX_ registros)',
+                loadingRecords: 'Cargando…',
+                paginate: { previous: 'Anterior', next: 'Siguiente' }
             },
             ajax: {
                 url: '/catalogos/categorias/gridData',
@@ -41,19 +50,19 @@ $(document).ready(function () {
                 { 
                     data: 'iTotalServicios',
                     render: function (data) {
-                        return `<span class="badge bg-info text-dark">${data} servicios</span>`;
+                        return `<span class="apartados-contador">${data} servicios</span>`;
                     }
                 },
                 {
                     data: null,
                     orderable: false,
-                    className: 'text-center',
+                    className: 'text-end catalogo-acciones',
                     render: function (data, type, row) {
                         return `
-                            <button type="button" class="btn btn-sm btn-outline-warning btn-editar me-1" data-id="${row.iID}" title="Editar">
+                            <button type="button" class="apartado-icono btn-editar" data-id="${row.iID}" title="Editar" aria-label="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${row.iID}" title="Desactivar">
+                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         `;
@@ -64,6 +73,9 @@ $(document).ready(function () {
     }
 
     initTabla();
+    $('#buscarCatalogo').on('input', function () {
+        tablaCategorias.search(this.value).draw();
+    });
 
     $('#btnNuevo').on('click', function () {
         $('#formCategoria')[0].reset();

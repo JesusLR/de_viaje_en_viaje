@@ -1,12 +1,12 @@
-<div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade apartado-modal-shell" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalUsuarioTitle">Usuario</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form id="formUsuario">
-                <div class="modal-body">
+                <div class="modal-body venta-detalle-page">
                     <!-- Control ID (0 = nuevo, > 0 = edición) -->
                     <input type="hidden" id="iID" name="iID" value="0">
 
@@ -71,7 +71,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="cEmail" class="form-label fw-bold mb-0">Correo Electrónico <span class="text-danger">*</span></label>
-                            <span class="badge bg-info-subtle text-info border border-info-subtle" id="badgeAutoCorreo">
+                            <span class="apartados-contador" id="badgeAutoCorreo">
                                 <i class="fas fa-magic me-1"></i> Auto-generado
                             </span>
                         </div>
@@ -107,7 +107,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1" aria-hidden="true"></i> Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="btnGuardar">
                         <i class="fas fa-save me-1"></i> Guardar Usuario
                     </button>

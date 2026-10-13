@@ -62,8 +62,17 @@ $(document).ready(function () {
     // 3. Inicialización de DataTables AJAX
     function initTabla() {
         tablaUsuarios = $('#tablaUsuarios').DataTable({
+            pageLength: 10,
+            lengthChange: false,
+            dom: 'rt<"catalogos-pie"ip>',
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                emptyTable: 'No hay usuarios disponibles',
+                zeroRecords: 'No se encontraron resultados',
+                info: 'Mostrando _START_ a _END_ de _TOTAL_ usuarios',
+                infoEmpty: 'Mostrando 0 usuarios',
+                infoFiltered: '(de _MAX_ usuarios)',
+                loadingRecords: 'Cargando…',
+                paginate: { previous: 'Anterior', next: 'Siguiente' }
             },
             ajax: {
                 url: '/admin/usuarios/gridData',
@@ -105,13 +114,13 @@ $(document).ready(function () {
                 {
                     data: null,
                     orderable: false,
-                    className: 'text-center',
+                    className: 'text-end catalogo-acciones',
                     render: function (data, type, row) {
                         return `
-                            <button type="button" class="btn btn-sm btn-outline-warning btn-editar me-1" data-id="${row.iID}" title="Editar">
+                            <button type="button" class="apartado-icono btn-editar" data-id="${row.iID}" title="Editar" aria-label="Editar usuario">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${row.iID}" title="Desactivar">
+                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar usuario">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         `;
@@ -122,6 +131,9 @@ $(document).ready(function () {
     }
 
     initTabla();
+    $('#buscarUsuarios').on('input', function () {
+        tablaUsuarios.search(this.value).draw();
+    });
 
     // 4. Resetear formulario para Nuevo Usuario (iID = 0)
     $('#btnNuevo').on('click', function () {

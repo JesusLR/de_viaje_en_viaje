@@ -18,8 +18,8 @@ class FinanzasController extends Controller
             'hasta' => 'nullable|date_format:Y-m-d|after_or_equal:desde',
             'moneda' => 'nullable|string|max:10',
         ]);
-        $desde = $data['desde'] ?? today()->toDateString();
-        $hasta = $data['hasta'] ?? today()->toDateString();
+        $desde = $data['desde'] ?? today()->startOfMonth()->toDateString();
+        $hasta = $data['hasta'] ?? today()->endOfMonth()->toDateString();
         if ($hasta < $desde) {
             throw ValidationException::withMessages(['hasta' => 'La fecha final debe ser posterior a la inicial.']);
         }
@@ -48,10 +48,11 @@ class FinanzasController extends Controller
         $totales = (clone $query)->selectRaw("coalesce(sum(case when tipo = 'INGRESO' then importe else 0 end), 0) as ingresos, coalesce(sum(case when tipo = 'EGRESO' then importe else 0 end), 0) as egresos")->first();
         $metodos = (clone $query)->where('tipo', 'INGRESO')->selectRaw('metodo, sum(importe) as total')->groupBy('metodo')->get();
         $origenes = (clone $query)->where('tipo', 'INGRESO')->selectRaw('origen, sum(importe) as total')->groupBy('origen')->pluck('total', 'origen');
-        $movimientos = $query->orderByDesc('fecha')->orderByDesc('id')->paginate(20)->withQueryString();
+        $ingresos = (clone $query)->where('tipo', 'INGRESO')->orderByDesc('fecha')->orderByDesc('id')->paginate(10, ['*'], 'ingresos_page')->withQueryString();
+        $egresos = (clone $query)->where('tipo', 'EGRESO')->orderByDesc('fecha')->orderByDesc('id')->paginate(10, ['*'], 'egresos_page')->withQueryString();
         $monedas = DB::table('servicio_turisticos')->pluck('cMoneda')->merge(DB::table('movimientos_financieros')->pluck('cMoneda'))->merge(['MXN', 'USD', 'EUR', $moneda])->unique()->sort()->values();
 
-        return view('agencia.finanzas.index', compact('desde', 'hasta', 'moneda', 'totales', 'metodos', 'movimientos', 'monedas', 'origenes'));
+        return view('agencia.finanzas.index', compact('desde', 'hasta', 'moneda', 'totales', 'metodos', 'ingresos', 'egresos', 'monedas', 'origenes'));
     }
 
     public function store(Request $request)

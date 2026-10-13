@@ -103,6 +103,7 @@ class VentaPaqueteTest extends TestCase
         $this->get(route('agencia.apartados.index'))->assertRedirect(route('login'));
         $this->get(route('agencia.finanzas.index'))->assertRedirect(route('login'));
         $this->get(route('agencia.ventas.comprobante', 1))->assertRedirect(route('login'));
+        $this->get(route('agencia.ventas.comprobanteCompra', 1))->assertRedirect(route('login'));
     }
 
     public function test_comprobante_pdf_incluye_logo_y_solo_abonos_aplicados_sin_estado(): void
@@ -136,6 +137,25 @@ class VentaPaqueteTest extends TestCase
         $this->get(route('agencia.ventas.comprobante', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
     }
 
+    public function test_compra_saldada_pdf_solo_para_ventas_pagadas_y_sin_historial(): void
+    {
+        [$paquete, $data] = $this->datos();
+        $this->post(route('agencia.ventas.store'), $data)->assertSessionHasNoErrors();
+        $venta = VentaPaquete::latest('iID')->firstOrFail();
+        $this->getJson(route('agencia.ventas.comprobanteCompra', $venta))->assertUnprocessable();
+        $this->post(route('agencia.ventas.pago', $venta), ['dImporte' => 1800, 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
+        $this->getJson(route('agencia.ventas.comprobanteCompra', $venta))->assertUnprocessable();
+        $this->post(route('agencia.ventas.finalizar', $venta))->assertSessionHasNoErrors();
+        $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('compra-saldada-'.$venta->folio.'.pdf');
+        $html = view('agencia.ventas.comprobante-pdf', ['venta' => $venta->fresh()->load(['cliente', 'detalles.servicio', 'usuario', 'pagos']), 'logo' => null, 'compraSaldada' => true])->render();
+        $this->assertStringContainsString('COMPRA SALDADA', $html);
+        $this->assertStringContainsString('pagado en su totalidad', $html);
+        $this->assertStringNotContainsString('Saldo pendiente', $html);
+        $this->assertStringNotContainsString('POR ABONAR', $html);
+        $this->assertStringContainsString('TOTAL PAGADO', $html);
+        $this->assertStringNotContainsString('Historial de abonos', $html);
+    }
+
     public function test_venta_directa_con_varios_paquetes_es_atomica_y_respeta_moneda(): void
     {
         [$paquete, $data] = $this->datos();
@@ -153,6 +173,8 @@ class VentaPaqueteTest extends TestCase
         $this->assertEquals(0, $venta->saldo_centavos);
         $this->assertNotNull($venta->finalizada_at);
         $this->assertEquals('Tarjeta', $venta->pagos->first()->cMetodo);
+        $this->getJson(route('agencia.ventas.comprobante', $venta))->assertUnprocessable();
+        $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->get(route('agencia.ventas.index', ['cliente' => $data['iIDCliente']]))->assertSee($venta->folio);
         $this->postJson(route('agencia.ventas.agregarPaquete', $venta), ['iIDServicio' => $otro->iID, 'iCantidad' => 1])->assertUnprocessable();
         $otro->update(['cMoneda' => 'USD']);
@@ -224,9 +246,25 @@ class VentaPaqueteTest extends TestCase
         $this->assertNull($detalle->cPromocion);
         $this->get(route('agencia.ventas.show', $venta))->assertOk()->assertSee('Sin promoción')->assertSee($detalle->dFechaInicio->format('d/m/Y'))->assertSee($detalle->dFechaFin->format('d/m/Y'));
         $this->get(route('agencia.vender.index'))->assertOk()->assertSee('select2.min.js')->assertSee('Descuento total')->assertDontSee('name="dFechaViaje"', false);
-        $this->get(route('agencia.finanzas.index'))->assertOk()->assertViewHas('desde', today()->toDateString())->assertViewHas('hasta', today()->toDateString());
+        $this->get(route('agencia.finanzas.index'))->assertOk()->assertViewHas('desde', today()->startOfMonth()->toDateString())->assertViewHas('hasta', today()->endOfMonth()->toDateString());
         $venta->update(['created_at' => now()->subDay()]);
         $this->get(route('agencia.apartados.index'))->assertOk()->assertDontSee($venta->folio);
         $this->get(route('agencia.apartados.index', ['desde' => today()->subDay()->toDateString(), 'hasta' => today()->toDateString()]))->assertOk()->assertSee($venta->folio);
+    }
+
+    public function test_finanzas_pagina_ingresos_y_egresos_de_forma_independiente(): void
+    {
+        $this->actingAs(User::factory()->create(['lCambiarPassword' => false]));
+        foreach (['INGRESO' => 12, 'EGRESO' => 11] as $tipo => $cantidad) {
+            for ($i = 0; $i < $cantidad; $i++) {
+                MovimientoFinanciero::create(['cTipo' => $tipo, 'cConcepto' => 'Paginación '.$tipo.' '.$i, 'dImporte' => 100, 'cMoneda' => 'TPG', 'cMetodo' => 'Efectivo', 'dFecha' => today()]);
+            }
+        }
+        $this->get(route('agencia.finanzas.index', ['moneda' => 'TPG', 'ingresos_page' => 2]))->assertOk()
+            ->assertViewHas('ingresos', fn ($tabla) => $tabla->perPage() === 10 && $tabla->count() === 2 && $tabla->total() === 12 && $tabla->every(fn ($fila) => $fila->tipo === 'INGRESO'))
+            ->assertViewHas('egresos', fn ($tabla) => $tabla->count() === 10 && $tabla->total() === 11 && $tabla->currentPage() === 1 && $tabla->every(fn ($fila) => $fila->tipo === 'EGRESO'));
+        $this->get(route('agencia.finanzas.index', ['moneda' => 'TPG', 'egresos_page' => 2]))->assertOk()
+            ->assertViewHas('ingresos', fn ($tabla) => $tabla->count() === 10 && $tabla->currentPage() === 1)
+            ->assertViewHas('egresos', fn ($tabla) => $tabla->count() === 1 && $tabla->currentPage() === 2);
     }
 }
