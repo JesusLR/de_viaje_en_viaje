@@ -74,9 +74,9 @@
                             <div class="card border-0 shadow-sm p-3">
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <label for="iIDCategoria" class="form-label fw-bold">Categoría Turística <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="iIDCategoria" name="iIDCategoria" required>
-                                            <option value="">-- Seleccionar Categoría --</option>
+                                        <label for="iIDCategoria" class="form-label fw-bold">Categoría Turística (opcional)</label>
+                                        <select class="form-select" id="iIDCategoria" name="iIDCategoria">
+                                            <option value="">Sin categoría</option>
                                             @foreach($aCategorias as $oCat)
                                                 <option value="{{ $oCat->iID }}">{{ $oCat->cNombre }}</option>
                                             @endforeach
@@ -84,9 +84,9 @@
                                     </div>
 
                                     <div class="col-md-4">
-                                        <label for="iIDDestino" class="form-label fw-bold">Destino Turístico <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="iIDDestino" name="iIDDestino" required>
-                                            <option value="">-- Seleccionar Destino --</option>
+                                        <label for="iIDDestino" class="form-label fw-bold">Destino Turístico (opcional)</label>
+                                        <select class="form-select" id="iIDDestino" name="iIDDestino">
+                                            <option value="">Sin destino</option>
                                             @foreach($aDestinos as $oDest)
                                                 <option value="{{ $oDest->iID }}">{{ $oDest->cNombre }} ({{ $oDest->ubicacion_completa }})</option>
                                             @endforeach
@@ -273,6 +273,12 @@
                         <div class="tab-pane fade" id="tab-vigencia" role="tabpanel">
                             <div class="card border-0 shadow-sm p-3">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-check me-1"></i> Rango de Vigencia del Servicio</h6>
+                                <input type="hidden" name="lUsaVigencia" value="0">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="lUsaVigencia" name="lUsaVigencia" value="1" checked>
+                                    <label class="form-check-label" for="lUsaVigencia">Usar vigencia por fechas</label>
+                                    <div class="form-text">Desactívala para mantener el servicio disponible sin fecha de vencimiento.</div>
+                                </div>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-5">
                                         <label for="dFechaInicioVigencia" class="form-label fw-bold">Fecha de Inicio de Vigencia <span class="text-danger">*</span></label>

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class VentaPaqueteController extends Controller
 {
@@ -25,7 +26,9 @@ class VentaPaqueteController extends Controller
 
     private function paquetesDisponibles()
     {
-        return ServicioTuristico::where('lActivo', 1)->whereDate('dFechaInicioVigencia', '<=', today())->whereDate('dFechaFinVigencia', '>=', today())->orderBy('cNombre')->get();
+        return ServicioTuristico::where('lActivo', 1)->where(function ($query) {
+            $query->where('lUsaVigencia', false)->orWhere(fn ($q) => $q->where('lUsaVigencia', true)->whereDate('dFechaInicioVigencia', '<=', today())->whereDate('dFechaFinVigencia', '>=', today()));
+        })->orderBy('cNombre')->get();
     }
 
     public function index(Request $request)
@@ -78,7 +81,7 @@ class VentaPaqueteController extends Controller
             $buscar = $request->buscar;
             $query->where(fn ($q) => $q->where('cNombre', 'like', '%'.$buscar.'%')->orWhere('cPaquete', 'like', '%'.$buscar.'%')->orWhere('iID', (int) str_replace('VTA-', '', $buscar)));
         }
-        $ventas = $query->paginate(15)->withQueryString();
+        $ventas = $query->paginate(10)->withQueryString();
         $clientes = Cliente::orderBy('cNombre')->get();
         $usuarios = User::orderBy('name')->get();
 
@@ -152,6 +155,19 @@ class VentaPaqueteController extends Controller
         $paquetes = $this->paquetesDisponibles()->where('cMoneda', $venta->cMoneda);
 
         return view('agencia.ventas.show', compact('venta', 'paquetes', 'seccion'));
+    }
+
+    public function comprobante(VentaPaquete $venta)
+    {
+        $venta->load(['cliente', 'detalles.servicio', 'usuario', 'pagos' => fn ($query) => $query->with('usuario')->whereNull('anulado_at')->orderBy('dFechaPago')->orderBy('iID')]);
+        $rutaLogo = public_path('img/logo.jpg');
+        $logo = is_file($rutaLogo) ? 'data:image/jpeg;base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
+        $pdf = Pdf::loadView('agencia.ventas.comprobante-pdf', compact('venta', 'logo'))
+            ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
+        $pdf->render();
+        $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
+
+        return $pdf->download('comprobante-'.$venta->folio.'.pdf');
     }
 
     public function pago(Request $request, VentaPaquete $venta)
@@ -274,8 +290,9 @@ class VentaPaqueteController extends Controller
         return [
             'iIDServicio' => $paquete->iID, 'cPaquete' => $paquete->cNombre, 'iCantidad' => $cantidad,
             'dPrecioUnitario' => $final / 100, 'dSubtotal' => $final * $cantidad / 100,
-            'dFechaInicio' => $paquete->dFechaInicioVigencia->toDateString(),
-            'dFechaFin' => $paquete->dFechaFinVigencia->toDateString(),
+            'lUsaVigencia' => $paquete->lUsaVigencia,
+            'dFechaInicio' => $paquete->lUsaVigencia ? $paquete->dFechaInicioVigencia?->toDateString() : null,
+            'dFechaFin' => $paquete->lUsaVigencia ? $paquete->dFechaFinVigencia?->toDateString() : null,
             'dPrecioRegular' => $regular / 100, 'dDescuentoUnitario' => max(0, $regular - $final) / 100,
             'cPromocion' => $promocion ? ($paquete->cNombrePromocion ?: 'Promoción vigente') : null,
             'cTipoDescuento' => $promocion ? $paquete->cTipoDescuento : null,

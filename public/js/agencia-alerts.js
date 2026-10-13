@@ -12,8 +12,9 @@
         Swal.fire({
             title: formulario.dataset.confirm,
             text: formulario.dataset.confirmText || '',
-            icon: 'question', showCancelButton: true,
-            confirmButtonText: 'Sí, continuar', cancelButtonText: 'Volver',
+            icon: /anular|cancelar|borrar|eliminar|desactivar/i.test(formulario.dataset.confirm) ? 'warning' : 'question', showCancelButton: true,
+            confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar',
+            allowOutsideClick: false, allowEscapeKey: false,
             confirmButtonColor: '#536fe8', cancelButtonColor: '#64748b'
         }).then(function (resultado) {
             pendientes.delete(formulario);

@@ -21,7 +21,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @include('partials.select2-scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="{{ asset('js/agencia-alerts.js') }}"></script>
+    <script src="{{ asset('js/agencia-alerts.js') }}?v={{ filemtime(public_path('js/agencia-alerts.js')) }}"></script>
     @stack('scripts')
 </body>
 </html>

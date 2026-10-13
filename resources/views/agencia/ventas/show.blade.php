@@ -3,8 +3,6 @@
 @section('contenido')
 @if(!$seccion)
 <div class="d-flex justify-content-between mb-4"><a href="{{ route($venta->finalizada_at ? 'agencia.ventas.index' : 'agencia.apartados.index') }}" class="btn btn-outline-secondary">{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}</a><button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print me-2" aria-hidden="true"></i>Imprimir comprobante</button></div>
-@elseif($seccion === 'detalle')
-<button class="btn btn-primary mb-3" onclick="window.print()"><i class="fas fa-print me-2" aria-hidden="true"></i>Imprimir comprobante</button>
 @endif
 @include('agencia.partials.avisos')
 @if($seccion && $seccion !== 'detalle')

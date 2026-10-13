@@ -1,33 +1,40 @@
 @extends('layouts.app')
 @section('titulo', 'Vender')
 @section('contenido')
-<h3 class="fw-bold"><i class="fas fa-cart-plus text-primary me-2"></i>Vender paquetes</h3>
-<p class="text-muted">Selecciona los paquetes y registra una venta liquidada o un apartado.</p>
+<div class="apartados-panel vender-panel">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas fa-cart-plus" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">Vender paquetes</h3><p class="text-muted mb-0 small">Selecciona los paquetes y registra una venta liquidada o un apartado.</p></div></div>
+    <a class="apartado-icono" href="{{ route('agencia.apartados.index') }}" title="Ver apartados" aria-label="Ver apartados"><i class="fas fa-clipboard-list" aria-hidden="true"></i></a>
+</div>
 @include('agencia.partials.avisos')
 <form method="POST" action="{{ route('agencia.ventas.store') }}" id="formVenta">
     @csrf
-    <div class="card card-body mb-4"><div class="row g-3">
+    <div class="apartados-filtros mb-4"><h5 class="vender-seccion"><span>01</span>Datos de la operación</h5><div class="row g-3">
         <div class="col-md-6"><label for="cliente" class="form-label">Cliente</label><select id="cliente" name="iIDCliente" class="form-select" required><option value="">Selecciona un cliente</option>@foreach($clientes as $cliente)<option value="{{ $cliente->iID }}" @selected(old('iIDCliente') == $cliente->iID)>{{ $cliente->nombre_completo }}</option>@endforeach</select><a class="small" href="{{ route('catalogos.clientes.index') }}">Administrar clientes</a></div>
         <div class="col-md-6"><label for="nombre" class="form-label">Nombre de la operación (opcional)</label><input id="nombre" name="cNombre" maxlength="150" value="{{ old('cNombre') }}" class="form-control" placeholder="Ej. Viaje familiar a Cancún"></div>
         <div class="col-md-4"><label for="fechaRegistro" class="form-label">Fecha de registro</label><input id="fechaRegistro" type="date" value="{{ today()->toDateString() }}" class="form-control" readonly></div>
         <div class="col-md-8"><label for="observaciones" class="form-label">Observaciones</label><input id="observaciones" name="cObservaciones" maxlength="2000" value="{{ old('cObservaciones') }}" class="form-control"></div>
     </div></div>
-    <div class="card card-body mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="mb-0">Paquetes de la operación</h5><button type="button" id="agregarFila" class="btn btn-outline-primary btn-sm">Agregar paquete</button></div>
-        <div class="table-responsive"><table class="table align-middle"><thead><tr><th style="min-width:260px">Paquete / Promoción</th><th style="min-width:180px">Fecha de inicio / fin</th><th style="width:140px">Cantidad</th><th>Precio regular</th><th>Descuento</th><th>Subtotal</th><th></th></tr></thead><tbody id="lineas"></tbody></table></div>
-        <div class="text-end text-success mb-2">Descuento total: <strong id="descuentoTotal">0.00</strong></div>
-        <div class="text-end fs-5">Total estimado: <strong id="total">0.00</strong></div>
-        <small class="text-muted">Los precios incluyen las promociones vigentes y se verifican al guardar. Todos los paquetes deben tener la misma moneda.</small>
+    <div class="apartados-grid mb-4">
+        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center px-4 py-3 border-bottom"><h5 class="vender-seccion mb-0"><span>02</span>Paquetes de la operación</h5><button type="button" id="agregarFila" class="apartado-icono nuevo-apartado"><i class="fas fa-plus" aria-hidden="true"></i><span>Agregar paquete</span></button></div>
+        <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th style="min-width:260px">Paquete / Promoción</th><th style="min-width:180px">Inicio / Fin</th><th style="min-width:100px">Cantidad</th><th>Precio regular</th><th>Descuento</th><th class="text-end">Subtotal</th><th></th></tr></thead><tbody id="lineas"></tbody></table></div>
+        <div class="vender-resumen border-top"><div><small>Descuento total</small><strong id="descuentoTotal" class="text-success">0.00</strong></div><div class="vender-total"><small>Total estimado</small><strong id="total">0.00</strong></div></div>
+        <div class="px-4 pb-3"><small class="text-muted">Los precios incluyen las promociones vigentes y se verifican al guardar. Todos los paquetes deben tener la misma moneda.</small></div>
     </div>
-    <div class="card card-body"><div class="row g-3">
+    <div class="apartados-filtros"><h5 class="vender-seccion"><span>03</span>Confirmar operación</h5><div class="row g-3">
         <div class="col-md-4"><label for="accion" class="form-label">Operación</label><select id="accion" name="accion" class="form-select"><option value="vender" @selected(old('accion', 'vender') === 'vender')>Venta liquidada</option><option value="apartar" @selected(old('accion') === 'apartar')>Apartado (pago posterior)</option></select></div>
         <div class="col-md-4 pago-directo"><label for="metodo" class="form-label">Método de pago recibido</label><select id="metodo" name="cMetodo" class="form-select">@foreach(['Efectivo', 'Transferencia', 'Tarjeta'] as $metodo)<option @selected(old('cMetodo') === $metodo)>{{ $metodo }}</option>@endforeach</select></div>
         <div class="col-md-4 pago-directo"><label for="referencia" class="form-label">Referencia</label><input id="referencia" name="cReferencia" maxlength="150" value="{{ old('cReferencia') }}" class="form-control"></div>
-    </div><p class="text-muted mt-3 mb-2" id="explicacion"></p><div><button id="guardarVenta" class="btn btn-primary" @disabled($clientes->isEmpty() || $paquetes->isEmpty())>Registrar venta liquidada</button></div></div>
+    </div><div class="vender-confirmacion mt-4 pt-3 border-top"><p class="text-muted mb-0 small" id="explicacion"></p><button id="guardarVenta" class="vender-guardar" @disabled($clientes->isEmpty() || $paquetes->isEmpty())><i class="fas fa-check" aria-hidden="true"></i><span id="guardarVentaTexto">Registrar venta liquidada</span></button></div></div>
     @if($clientes->isEmpty() || $paquetes->isEmpty())<div class="alert alert-warning mt-3">Necesitas clientes activos y paquetes vigentes para registrar una operación.</div>@endif
 </form>
-<template id="filaPaquete"><tr><td><select class="form-select paquete" required>@include('agencia.ventas.opciones-paquetes')</select><small class="promocion d-block mt-2"></small></td><td class="fechas text-nowrap">Selecciona un paquete</td><td><input class="form-control cantidad" type="number" min="1" max="1000" value="1" required></td><td class="regular text-nowrap">0.00</td><td class="descuento text-success text-nowrap">0.00</td><td class="subtotal text-nowrap">0.00</td><td><button type="button" class="btn btn-outline-danger btn-sm quitar" aria-label="Quitar paquete"><i class="fas fa-times"></i></button></td></tr></template>
+<template id="filaPaquete"><tr><td><select class="form-select paquete" required>@include('agencia.ventas.opciones-paquetes')</select><small class="promocion d-block mt-2"></small></td><td class="fechas text-nowrap">Selecciona un paquete</td><td><input class="form-control cantidad" type="number" min="1" max="1000" value="1" required></td><td class="regular text-nowrap">0.00</td><td class="descuento text-success text-nowrap">0.00</td><td class="subtotal text-nowrap text-end">0.00</td><td><button type="button" class="apartado-icono accion-cancelar quitar" title="Quitar paquete" aria-label="Quitar paquete"><i class="fas fa-xmark" aria-hidden="true"></i></button></td></tr></template>
+</div>
 @endsection
+@push('styles')
+<link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">
+<link href="{{ asset('css/vender-module.css') }}" rel="stylesheet">
+@endpush
 @push('scripts')
 <script>
 const lineas = document.getElementById('lineas');
@@ -75,7 +82,7 @@ function operacion() {
     const venta = document.getElementById('accion').value === 'vender';
     document.querySelectorAll('.pago-directo').forEach(el => el.classList.toggle('d-none', !venta));
     document.getElementById('metodo').required = venta;
-    document.getElementById('guardarVenta').textContent = venta ? 'Registrar venta liquidada' : 'Crear apartado';
+    document.getElementById('guardarVentaTexto').textContent = venta ? 'Registrar venta liquidada' : 'Crear apartado';
     if (venta) document.getElementById('formVenta').dataset.confirm = '¿Confirmas que recibiste el pago completo de esta venta?';
     else delete document.getElementById('formVenta').dataset.confirm;
     document.getElementById('explicacion').textContent = venta ? 'Confirma que recibiste el importe total antes de registrar la venta.' : 'El apartado quedará abierto. Podrás registrar sus abonos desde Apartados.';

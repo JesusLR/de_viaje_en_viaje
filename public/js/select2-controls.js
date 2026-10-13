@@ -14,12 +14,14 @@
         const $raiz = $(raiz);
         $raiz.find('select').add($raiz.filter('select')).each(function () {
             const $select = $(this);
+            if ($select.closest('.swal2-container').length || $select.hasClass('swal2-select')) return;
             if (!$select.hasClass('select2-hidden-accessible')) {
                 const $modal = $select.closest('.modal');
                 $select.select2({ width: '100%', language: 'es', dropdownParent: $modal.length ? $modal : $(document.body) });
             }
         });
         $raiz.find('input[type="date"]').add($raiz.filter('input[type="date"]')).each(function () {
+            if ($(this).closest('.swal2-container').length) return;
             if (!this.value && !this.readOnly && !this.disabled) {
                 this.value = window.fechaActualAgencia();
                 this.defaultValue = this.value;

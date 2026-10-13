@@ -33,7 +33,7 @@ class FinanzasController extends Controller
             ->join('clientes as c', 'c.iID', '=', 'v.iIDCliente')
             ->whereNull('p.anulado_at')->where('v.cMoneda', $moneda)
             ->whereBetween('p.dFechaPago', [$desde, $hasta])
-            ->selectRaw("p.iID as id, v.iID as venta_id, p.dFechaPago as fecha, 'INGRESO' as tipo, case when v.cTipoOperacion = 'VENTA' then 'Venta' else 'Abono' end as origen, v.cPaquete as concepto, c.cNombre as detalle, p.cMetodo as metodo, p.dImporte as importe, v.cMoneda as moneda, 0 as manual");
+            ->selectRaw("p.iID as id, v.iID as venta_id, p.dFechaPago as fecha, 'INGRESO' as tipo, case when (v.cTipoOperacion = 'VENTA' or v.finalizada_at is not null) then 'Venta' else 'Abono' end as origen, v.cPaquete as concepto, c.cNombre as detalle, p.cMetodo as metodo, p.dImporte as importe, v.cMoneda as moneda, 0 as manual");
         $manuales = DB::table('movimientos_financieros as m')->leftJoin('users as u', 'u.id', '=', 'm.iIDUsuario')
             ->whereNull('m.anulado_at')->where('m.cMoneda', $moneda)->whereBetween('m.dFecha', [$desde, $hasta])
             ->selectRaw("m.iID as id, null as venta_id, m.dFecha as fecha, m.cTipo as tipo, 'Manual' as origen, m.cConcepto as concepto, m.cObservaciones as detalle, m.cMetodo as metodo, m.dImporte as importe, m.cMoneda as moneda, 1 as manual");
@@ -47,10 +47,11 @@ class FinanzasController extends Controller
         $query = $this->movimientos($desde, $hasta, $moneda);
         $totales = (clone $query)->selectRaw("coalesce(sum(case when tipo = 'INGRESO' then importe else 0 end), 0) as ingresos, coalesce(sum(case when tipo = 'EGRESO' then importe else 0 end), 0) as egresos")->first();
         $metodos = (clone $query)->where('tipo', 'INGRESO')->selectRaw('metodo, sum(importe) as total')->groupBy('metodo')->get();
+        $origenes = (clone $query)->where('tipo', 'INGRESO')->selectRaw('origen, sum(importe) as total')->groupBy('origen')->pluck('total', 'origen');
         $movimientos = $query->orderByDesc('fecha')->orderByDesc('id')->paginate(20)->withQueryString();
         $monedas = DB::table('servicio_turisticos')->pluck('cMoneda')->merge(DB::table('movimientos_financieros')->pluck('cMoneda'))->merge(['MXN', 'USD', 'EUR', $moneda])->unique()->sort()->values();
 
-        return view('agencia.finanzas.index', compact('desde', 'hasta', 'moneda', 'totales', 'metodos', 'movimientos', 'monedas'));
+        return view('agencia.finanzas.index', compact('desde', 'hasta', 'moneda', 'totales', 'metodos', 'movimientos', 'monedas', 'origenes'));
     }
 
     public function store(Request $request)

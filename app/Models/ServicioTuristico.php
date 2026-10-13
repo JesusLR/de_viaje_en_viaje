@@ -14,6 +14,7 @@ class ServicioTuristico extends Model
 
     protected $table = 'servicio_turisticos';
     protected $primaryKey = 'iID';
+    protected $attributes = ['lUsaVigencia' => true];
 
     protected $fillable = [
         'cCodigo',
@@ -36,6 +37,7 @@ class ServicioTuristico extends Model
         'dFechaFinPromocion',
         'lPromocionActiva',
         'dFechaInicioVigencia',
+        'lUsaVigencia',
         'dFechaFinVigencia',
         'lActivo',
         'iIDUsuario',
@@ -43,6 +45,7 @@ class ServicioTuristico extends Model
 
     protected $casts = [
         'lActivo'               => 'boolean',
+        'lUsaVigencia'          => 'boolean',
         'lTienePromocion'       => 'boolean',
         'lPromocionActiva'      => 'boolean',
         'dPrecioCompra'         => 'float',
@@ -169,6 +172,9 @@ class ServicioTuristico extends Model
         }
 
         $today = Carbon::today();
+        if (!$this->lUsaVigencia) {
+            return 'ACTIVO';
+        }
 
         if ($today->lt($this->dFechaInicioVigencia)) {
             return 'PROGRAMADO';

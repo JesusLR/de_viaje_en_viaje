@@ -1,107 +1,36 @@
 @extends('layouts.app')
-
 @section('titulo', 'Servicios y Paquetes Turísticos')
-
 @section('contenido')
-<div class="row mb-4 align-items-center">
-    <div class="col-md-6">
-        <h3 class="fw-bold mb-1"><i class="fas fa-boxes text-primary me-2"></i> Servicios y Paquetes Turísticos</h3>
-        <p class="text-muted mb-0">Catálogo general de paquetes vacacionales, tours, excursiones y promociones</p>
+<div class="apartados-panel servicios-panel">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas fa-box-open" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">Servicios y paquetes</h3><p class="text-muted mb-0 small">Administra tu catálogo de viajes, precios y promociones.</p></div></div>
+        <button type="button" class="apartado-icono nuevo-apartado" id="btnNuevo"><i class="fas fa-plus" aria-hidden="true"></i><span>Nuevo servicio</span></button>
     </div>
-    <div class="col-md-6 text-end">
-        <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" id="btnNuevo">
-            <i class="fas fa-plus me-2"></i> Nuevo Servicio
-        </button>
+    <div class="apartados-filtros mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-6"><label for="buscarServicio" class="form-label">Buscar servicio</label><div class="apartados-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input id="buscarServicio" class="form-control" placeholder="Código, nombre, destino o proveedor…" type="search"></div></div>
+            <div class="col-lg-3"><label for="filtroEstatus" class="form-label">Estado</label><select class="form-select" id="filtroEstatus"><option value="">Todos los estados</option><option value="ACTIVO">Activo</option><option value="PROGRAMADO">Programado</option><option value="VENCIDO">Vencido</option><option value="INACTIVO">Inactivo</option></select></div>
+            <div class="col-lg-3"><div class="d-flex gap-2"><button type="button" class="apartado-icono" data-bs-toggle="collapse" data-bs-target="#collapseFiltros" aria-expanded="false" aria-controls="collapseFiltros" title="Más filtros" aria-label="Más filtros"><i class="fas fa-sliders" aria-hidden="true"></i></button><button type="button" class="apartado-icono" id="limpiarFiltrosServicios" title="Limpiar filtros" aria-label="Limpiar filtros"><i class="fas fa-rotate-left" aria-hidden="true"></i></button></div></div>
+        </div>
+        <div class="collapse" id="collapseFiltros"><div class="row g-3 pt-3 mt-3 border-top">
+            <div class="col-md-4"><label for="filtroCategoria" class="form-label">Categoría</label><select class="form-select" id="filtroCategoria"><option value="">Todas las categorías</option>@foreach($aCategorias as $oCat)<option value="{{ $oCat->iID }}">{{ $oCat->cNombre }}</option>@endforeach</select></div>
+            <div class="col-md-4"><label for="filtroDestino" class="form-label">Destino</label><select class="form-select" id="filtroDestino"><option value="">Todos los destinos</option>@foreach($aDestinos as $oDest)<option value="{{ $oDest->iID }}">{{ $oDest->cNombre }} ({{ $oDest->cPais }})</option>@endforeach</select></div>
+            <div class="col-md-4"><label for="filtroPromocion" class="form-label">Promociones</label><select class="form-select" id="filtroPromocion"><option value="">Todos</option><option value="1">Con promoción vigente</option></select></div>
+        </div></div>
+    </div>
+    <div class="apartados-grid">
+        <div class="px-4 py-3 border-bottom fw-semibold">Tu catálogo <span id="totalServicios" class="apartados-contador ms-2" aria-live="polite">0</span></div>
+        <div class="table-responsive"><table class="table align-middle mb-0 w-100" id="tablaServicios" data-grid-url="{{ route('servicios.paquetes.gridData') }}"><thead><tr><th>Servicio</th><th>Destino / Proveedor</th><th>Inicio / Fin</th><th class="text-end">Precio de venta</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead><tbody></tbody></table></div>
+        <div id="serviciosPaginacion"></div>
     </div>
 </div>
-
-<div class="card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list me-1"></i> Listado de Servicios Turísticos</h6>
-        
-        <!-- Botón para alternar los filtros avanzados -->
-        <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiltros" aria-expanded="false">
-            <i class="fas fa-filter me-1"></i> Filtros Avanzados
-        </button>
-    </div>
-
-    <!-- Sección de Filtros integrada -->
-    <div class="collapse show" id="collapseFiltros">
-        <div class="card-body bg-light border-top border-bottom py-3">
-            <div class="row g-2 align-items-center">
-                <div class="col-md-3">
-                    <label for="filtroCategoria" class="form-label small fw-semibold text-muted mb-1">Categoría</label>
-                    <select class="form-select form-select-sm" id="filtroCategoria">
-                        <option value="">-- Todas las Categorías --</option>
-                        @foreach($aCategorias as $oCat)
-                            <option value="{{ $oCat->iID }}">{{ $oCat->cNombre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label for="filtroDestino" class="form-label small fw-semibold text-muted mb-1">Destino</label>
-                    <select class="form-select form-select-sm" id="filtroDestino">
-                        <option value="">-- Todos los Destinos --</option>
-                        @foreach($aDestinos as $oDest)
-                            <option value="{{ $oDest->iID }}">{{ $oDest->cNombre }} ({{ $oDest->cPais }})</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label for="filtroEstatus" class="form-label small fw-semibold text-muted mb-1">Estatus</label>
-                    <select class="form-select form-select-sm" id="filtroEstatus">
-                        <option value="">-- Todos los Estatus --</option>
-                        <option value="ACTIVO">Activos (Disponibles)</option>
-                        <option value="PROGRAMADO">Programados (Próximos)</option>
-                        <option value="VENCIDO">Vencidos (Finalizados)</option>
-                        <option value="INACTIVO">Desactivados (Manual)</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label for="filtroPromocion" class="form-label small fw-semibold text-muted mb-1">Promociones</label>
-                    <select class="form-select form-select-sm" id="filtroPromocion">
-                        <option value="">-- Todos --</option>
-                        <option value="1">Solo con Promoción Activa</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle w-100" id="tablaServicios">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 10%;">Código</th>
-                        <th style="width: 8%;">Imagen</th>
-                        <th style="width: 24%;">Servicio Turístico</th>
-                        <th style="width: 14%;">Categoría</th>
-                        <th style="width: 14%;">Destino</th>
-                        <th style="width: 14%;">Proveedor</th>
-                        <th style="width: 8%;">Estatus</th>
-                        <th style="width: 8%;" class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Carga dinámica vía AJAX DataTables -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Formulario Servicio / Paquete -->
 @include('servicios.paquete.modals.formServicio')
-
-<!-- Modal Detalle Completo de Servicio -->
 @include('servicios.paquete.modals.detalleServicio')
-
 @endsection
-
+@push('styles')
+<link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">
+<link href="{{ asset('css/servicios-module.css') }}" rel="stylesheet">
+@endpush
 @push('scripts')
-<script src="{{ asset('js/servicios/servicio.js') }}"></script>
+<script src="{{ asset('js/servicios/servicio.js') }}?v={{ filemtime(public_path('js/servicios/servicio.js')) }}"></script>
 @endpush

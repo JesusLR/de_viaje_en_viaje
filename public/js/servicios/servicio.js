@@ -6,6 +6,9 @@ $(document).ready(function () {
     });
 
     let tablaServicios = null;
+    function escapar(valor) {
+        return $('<div>').text(valor ?? '').html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     let modalServicio = new bootstrap.Modal(document.getElementById('modalServicio'));
     let modalDetalleServicio = new bootstrap.Modal(document.getElementById('modalDetalleServicio'));
 
@@ -13,11 +16,22 @@ $(document).ready(function () {
     function initTabla() {
         tablaServicios = $('#tablaServicios').DataTable({
             language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                emptyTable: 'No hay servicios registrados.',
+                zeroRecords: 'No hay servicios que coincidan con los filtros.',
+                info: 'Mostrando _START_–_END_ de _TOTAL_ servicios',
+                infoEmpty: 'Mostrando 0 servicios',
+                infoFiltered: '(de _MAX_ servicios)',
+                processing: 'Cargando servicios…',
+                loadingRecords: 'Cargando servicios…',
+                paginate: {first: 'Primero', last: 'Último', next: 'Siguiente', previous: 'Anterior'}
             },
-            serverSide: false,
+            serverSide: true,
+            processing: true,
+            lengthChange: false,
+            ordering: false,
+            searchDelay: 300,
             ajax: {
-                url: '/servicios/paquetes/gridData',
+                url: $('#tablaServicios').data('grid-url'),
                 type: 'GET',
                 data: function (d) {
                     d.iIDCategoria   = $('#filtroCategoria').val();
@@ -25,73 +39,73 @@ $(document).ready(function () {
                     d.cEstatusFiltro = $('#filtroEstatus').val();
                     d.lConPromocion  = $('#filtroPromocion').val();
                 },
-                dataSrc: function (json) {
-                    if (json.lSuccess) {
-                        return json.cData;
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error de carga',
-                            text: json.cMensaje || 'No se pudieron cargar los servicios turísticos.'
-                        });
-                        return [];
-                    }
+                dataSrc: 'data',
+                error: function (xhr) {
+                    Swal.fire({icon: 'error', title: 'No se pudieron cargar los servicios', text: xhr.responseJSON?.cMensaje || xhr.responseJSON?.message || 'Revisa tu sesión y vuelve a cargar el catálogo.'});
                 }
             },
+            dom: 'rt<"row servicios-pie"<"col-md-5"i><"col-md-7"p>>',
+            pageLength: 10,
+            initComplete: function () {
+                $('#tablaServicios_wrapper .servicios-pie').appendTo('#serviciosPaginacion');
+            },
+            drawCallback: function () {
+                $('#totalServicios').text(this.api().page.info().recordsDisplay);
+            },
             columns: [
-                { 
-                    data: 'cCodigo',
-                    render: function (data) {
-                        return `<span class="badge bg-dark font-monospace fs-6">${data}</span>`;
-                    }
-                },
-                { 
-                    data: 'cImagenPrincipal',
-                    orderable: false,
-                    render: function (data) {
-                        if (data) {
-                            return `<img src="${data}" class="rounded shadow-sm" style="width: 50px; height: 40px; object-fit: cover;">`;
-                        }
-                        return `<div class="bg-light rounded text-center text-muted py-2" style="width: 50px; font-size: 0.75rem;"><i class="fas fa-image"></i></div>`;
-                    }
-                },
-                { 
+                {
                     data: 'cNombre',
                     render: function (data, type, row) {
-                        let promoBadge = row.lTienePromocion && row.lPromocionVigente
-                            ? '<span class="badge bg-warning text-dark ms-1"><i class="fas fa-percentage me-1"></i>PROMO</span>' 
-                            : '';
-                        return `<strong>${data}</strong> ${promoBadge}`;
+                        if (type !== 'display') return row.cCodigo + ' ' + data + ' ' + row.cCategoria;
+                        const promocion = row.lPromocionVigente ? '<span class="servicio-promocion"><i class="fas fa-tag" aria-hidden="true"></i>Promoción vigente</span>' : '';
+                        return '<span class="apartado-folio">' + escapar(row.cCodigo) + '</span><div class="apartado-nombre" title="' + escapar(data) + '">' + escapar(data) + '</div><small class="servicio-meta">' + escapar(row.cCategoria) + '</small>' + promocion;
                     }
                 },
-                { data: 'cCategoria' },
-                { data: 'cDestino' },
-                { data: 'cProveedor' },
-                { 
+                {
+                    data: 'cDestino',
+                    render: function (data, type, row) {
+                        if (type !== 'display') return data + ' ' + row.cProveedor;
+                        return '<span class="apartado-cliente">' + escapar(data) + '</span><small class="servicio-meta">' + escapar(row.cProveedor) + '</small>';
+                    }
+                },
+                {
+                    data: 'dFechaInicioVigencia',
+                    render: function (data, type, row) {
+                        if (type === 'sort' || type === 'type') return data.split('/').reverse().join('-');
+                        if (!row.lUsaVigencia) return type === 'display' ? '<span class="servicio-meta">Sin vigencia</span>' : 'Sin vigencia';
+                        if (type !== 'display') return data + ' ' + row.dFechaFinVigencia;
+                        return '<div class="servicio-fechas"><small>Inicio</small> ' + escapar(data) + '<br><small>Fin</small> ' + escapar(row.dFechaFinVigencia) + '</div>';
+                    }
+                },
+                {
+                    data: 'dPrecioFinal',
+                    className: 'text-end apartado-importe',
+                    render: function (data, type, row) {
+                        if (type === 'sort' || type === 'type') return Number(String(data).replace(/,/g, ''));
+                        if (type !== 'display') return data + ' ' + row.cMoneda;
+                        const regular = row.lPromocionVigente ? '<div class="servicio-precio-anterior">' + escapar(row.dPrecioVenta) + '</div>' : '';
+                        return regular + '<strong>' + escapar(data) + '</strong><small>' + escapar(row.cMoneda || 'MXN') + '</small>';
+                    }
+                },
+                {
                     data: 'cEstatusDisponibilidad',
-                    render: function (data) {
-                        if (data === 'ACTIVO') return '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Activo</span>';
-                        if (data === 'PROGRAMADO') return '<span class="badge bg-info text-dark"><i class="fas fa-clock me-1"></i>Programado</span>';
-                        if (data === 'VENCIDO') return '<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i>Vencido</span>';
-                        return '<span class="badge bg-secondary"><i class="fas fa-minus-circle me-1"></i>Inactivo</span>';
+                    render: function (data, type) {
+                        if (type !== 'display') return data;
+                        const estados = {ACTIVO: ['liquidado', 'Activo'], PROGRAMADO: ['programado', 'Programado'], VENCIDO: ['abierto', 'Vencido'], INACTIVO: ['cancelado', 'Inactivo']};
+                        const estado = estados[data] || estados.INACTIVO;
+                        return '<span class="apartado-estado ' + estado[0] + '"><span class="estado-punto" aria-hidden="true"></span>' + estado[1] + '</span>';
                     }
                 },
                 {
                     data: null,
                     orderable: false,
-                    className: 'text-center',
+                    searchable: false,
+                    className: 'text-end',
                     render: function (data, type, row) {
-                        return `
-                            <button type="button" class="btn btn-sm btn-outline-info btn-detalle me-1" data-id="${row.iID}" title="Ver Detalle Completo">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-warning btn-editar me-1" data-id="${row.iID}" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${row.iID}" title="Desactivar">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        `;
+                        return '<div class="apartado-acciones">' +
+                            '<button type="button" class="apartado-icono btn-detalle" data-id="' + Number(row.iID) + '" title="Ver detalle" aria-label="Ver detalle"><i class="fas fa-eye" aria-hidden="true"></i></button>' +
+                            '<button type="button" class="apartado-icono btn-editar" data-id="' + Number(row.iID) + '" title="Editar servicio" aria-label="Editar servicio"><i class="fas fa-pen" aria-hidden="true"></i></button>' +
+                            '<button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-id="' + Number(row.iID) + '" title="Desactivar servicio" aria-label="Desactivar servicio"><i class="fas fa-ban" aria-hidden="true"></i></button></div>';
                     }
                 }
             ]
@@ -99,6 +113,19 @@ $(document).ready(function () {
     }
 
     initTabla();
+    let busquedaPendiente;
+    $('#buscarServicio').on('input', function () {
+        const valor = this.value;
+        clearTimeout(busquedaPendiente);
+        busquedaPendiente = setTimeout(function () { tablaServicios.search(valor).draw(); }, 300);
+    });
+    $('#limpiarFiltrosServicios').on('click', function () {
+        clearTimeout(busquedaPendiente);
+        $('#buscarServicio').val('');
+        $('#filtroCategoria, #filtroDestino, #filtroEstatus, #filtroPromocion').val('').trigger('change.select2');
+        tablaServicios.search('');
+        tablaServicios.ajax.reload();
+    });
 
     // Eventos para refrescar tabla cuando cambia un filtro
     $('#filtroCategoria, #filtroDestino, #filtroEstatus, #filtroPromocion').on('change', function () {
@@ -170,8 +197,8 @@ $(document).ready(function () {
                     }
 
                     // Vigencia
-                    $('#detFechaInicioVigencia').text(formatFechaDMY(oData.dFechaInicioVigencia));
-                    $('#detFechaFinVigencia').text(formatFechaDMY(oData.dFechaFinVigencia));
+                    $('#detFechaInicioVigencia').text(oData.lUsaVigencia ? formatFechaDMY(oData.dFechaInicioVigencia) : 'Sin vigencia');
+                    $('#detFechaFinVigencia').text(oData.lUsaVigencia ? formatFechaDMY(oData.dFechaFinVigencia) : 'Sin vigencia');
 
                     // Descripciones
                     $('#detDescCorta').text(oData.cDescripcionCorta || 'Sin descripción corta.');
@@ -292,11 +319,22 @@ $(document).ready(function () {
         }
     });
 
+    function actualizarVigencia() {
+        const activa = $('#lUsaVigencia').is(':checked');
+        $('#dFechaInicioVigencia, #dFechaFinVigencia').prop('disabled', !activa).prop('required', activa);
+        if (activa) {
+            $('#dFechaInicioVigencia, #dFechaFinVigencia').each(function () { if (!this.value) this.value = window.fechaActualAgencia(); });
+        }
+    }
+    $('#lUsaVigencia').on('change', actualizarVigencia);
+
     // Abrir Modal para Nuevo Servicio
     $('#btnNuevo').on('click', function () {
         $('#formServicio')[0].reset();
         $('#iID').val(0);
         $('#iIDProveedor').val('');
+        $('#iIDCategoria, #iIDDestino').val('').trigger('change.select2');
+        $('#lUsaVigencia').prop('checked', true).trigger('change');
 
         let hoy = window.fechaActualAgencia();
         $('#dFechaInicioVigencia').val(hoy);
@@ -336,8 +374,8 @@ $(document).ready(function () {
                     $('#cNombre').val(oData.cNombre);
                     $('#cDescripcionCorta').val(oData.cDescripcionCorta);
                     $('#cDescripcionCompleta').val(oData.cDescripcionCompleta);
-                    $('#iIDCategoria').val(oData.iIDCategoria);
-                    $('#iIDDestino').val(oData.iIDDestino);
+                    $('#iIDCategoria').val(oData.iIDCategoria || '');
+                    $('#iIDDestino').val(oData.iIDDestino || '');
                     $('#iIDProveedor').val(oData.iIDProveedor || '');
                     $('#dPrecioCompra').val(oData.dPrecioCompra);
                     $('#dPrecioVenta').val(oData.dPrecioVenta);
@@ -356,6 +394,7 @@ $(document).ready(function () {
                     // Vigencia y Estatus
                     $('#dFechaInicioVigencia').val(oData.dFechaInicioVigencia);
                     $('#dFechaFinVigencia').val(oData.dFechaFinVigencia);
+                    $('#lUsaVigencia').prop('checked', oData.lUsaVigencia !== false).trigger('change');
                     $('#lActivo').prop('checked', oData.lActivo == 1);
 
                     // Imágenes

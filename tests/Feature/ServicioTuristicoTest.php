@@ -16,6 +16,57 @@ class ServicioTuristicoTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_servicio_sin_catalogos_ni_vigencia_se_puede_vender_y_conserva_su_configuracion(): void
+    {
+        $datos = ['cNombre' => 'Servicio flexible '.uniqid(), 'dPrecioCompra' => 500, 'dPrecioVenta' => 1000, 'lUsaVigencia' => 0, 'lActivo' => 1];
+        $respuesta = $this->actingAs($this->user)->postJson(route('servicios.paquetes.saveData'), $datos)->assertOk()->assertJson(['lSuccess' => true]);
+        $servicio = ServicioTuristico::findOrFail($respuesta->json('cData.iID'));
+        $this->assertNull($servicio->iIDCategoria);
+        $this->assertNull($servicio->iIDDestino);
+        $this->assertNull($servicio->dFechaInicioVigencia);
+        $this->assertNull($servicio->dFechaFinVigencia);
+        $this->assertEquals('ACTIVO', $servicio->c_estatus_disponibilidad);
+        $this->getJson(route('servicios.paquetes.gridData', ['cEstatusFiltro' => 'ACTIVO', 'search' => ['value' => $datos['cNombre']]]))->assertOk()->assertJsonPath('recordsFiltered', 1);
+        $this->get(route('agencia.vender.index'))->assertOk()->assertSee($datos['cNombre'])->assertSee('Sin vigencia');
+        $cliente = \App\Models\Cliente::create(['cNombre' => 'Cliente', 'cPrimerApellido' => 'Flexible', 'lActivo' => true]);
+        $this->post(route('agencia.ventas.store'), ['iIDCliente' => $cliente->iID, 'items' => [['iIDServicio' => $servicio->iID, 'iCantidad' => 1]], 'accion' => 'apartar'])->assertSessionHasNoErrors();
+        $venta = \App\Models\VentaPaquete::latest('iID')->firstOrFail();
+        $this->assertNull($venta->dFechaViaje);
+        $detalle = $venta->detalles()->firstOrFail();
+        $this->assertFalse($detalle->lUsaVigencia);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['iID' => $servicio->iID, 'lUsaVigencia' => 1]))->assertStatus(422);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['iID' => $servicio->iID, 'lUsaVigencia' => 1, 'dFechaInicioVigencia' => today()->toDateString(), 'dFechaFinVigencia' => today()->addWeek()->toDateString()]))->assertOk()->assertJson(['lSuccess' => true]);
+        $this->assertFalse($detalle->fresh()->lUsaVigencia);
+        $this->get(route('agencia.ventas.show', $venta))->assertOk()->assertSee('Sin vigencia');
+        $this->get(route('agencia.ventas.comprobante', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $servicio->update(['lUsaVigencia' => false, 'lActivo' => false]);
+        $this->assertEquals('INACTIVO', $servicio->fresh()->c_estatus_disponibilidad);
+    }
+
+    public function test_grid_pagina_diez_registros_en_servidor_y_aplica_busqueda(): void
+    {
+        $categoria = CategoriaTuristica::create(['cNombre' => 'Paginación '.uniqid()]);
+        $destino = DestinoTuristico::create(['cNombre' => 'Destino '.uniqid()]);
+        $ids = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $servicio = ServicioTuristico::create([
+                'cCodigo' => uniqid('PAG'), 'cNombre' => 'Servicio paginado '.$i,
+                'iIDCategoria' => $categoria->iID, 'iIDDestino' => $destino->iID,
+                'dPrecioVenta' => 100, 'dFechaInicioVigencia' => today(),
+                'dFechaFinVigencia' => today()->addMonth(), 'lActivo' => true,
+            ]);
+            $ids[] = $servicio->iID;
+        }
+        $params = ['iIDCategoria' => $categoria->iID, 'draw' => 2, 'length' => -1];
+        $primera = $this->actingAs($this->user)->getJson(route('servicios.paquetes.gridData', $params))
+            ->assertOk()->assertJsonPath('draw', 2)->assertJsonPath('recordsFiltered', 12)->assertJsonCount(10, 'cData')->assertJsonCount(10, 'data');
+        $segunda = $this->getJson(route('servicios.paquetes.gridData', $params + ['start' => 10]))
+            ->assertOk()->assertJsonPath('recordsFiltered', 12)->assertJsonCount(2, 'cData');
+        $this->assertEquals(array_reverse($ids), array_merge(array_column($primera->json('cData'), 'iID'), array_column($segunda->json('cData'), 'iID')));
+        $this->getJson(route('servicios.paquetes.gridData', $params + ['search' => ['value' => 'Servicio paginado 12']]))
+            ->assertOk()->assertJsonPath('recordsFiltered', 1)->assertJsonCount(1, 'cData');
+    }
+
     protected User $user;
 
     protected function setUp(): void

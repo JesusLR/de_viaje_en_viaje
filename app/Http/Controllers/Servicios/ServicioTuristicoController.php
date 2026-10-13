@@ -32,8 +32,14 @@ class ServicioTuristicoController extends Controller
 
     public function gridData(Request $request)
     {
+        $request->validate([
+            'draw' => 'nullable|integer|min:0',
+            'start' => 'nullable|integer|min:0',
+            'search.value' => 'nullable|string|max:150',
+        ]);
         try {
             $query = ServicioTuristico::with(['categoria', 'destino', 'proveedor']);
+            $totalRegistros = ServicioTuristico::count();
 
             // Filtros dinámicos por solicitud AJAX
             if ($request->filled('iIDCategoria')) {
@@ -55,21 +61,33 @@ class ServicioTuristicoController extends Controller
                 if ($cEstatus === 'INACTIVO') {
                     $query->where('lActivo', 0);
                 } else if ($cEstatus === 'PROGRAMADO') {
-                    $query->where('lActivo', 1)->where('dFechaInicioVigencia', '>', $today);
+                    $query->where('lActivo', 1)->where('lUsaVigencia', true)->where('dFechaInicioVigencia', '>', $today);
                 } else if ($cEstatus === 'VENCIDO') {
-                    $query->where('lActivo', 1)->where('dFechaFinVigencia', '<', $today);
+                    $query->where('lActivo', 1)->where('lUsaVigencia', true)->where('dFechaFinVigencia', '<', $today);
                 } else if ($cEstatus === 'ACTIVO') {
-                    $query->where('lActivo', 1)
-                          ->where('dFechaInicioVigencia', '<=', $today)
-                          ->where('dFechaFinVigencia', '>=', $today);
+                    $query->where('lActivo', 1)->where(function ($q) use ($today) {
+                        $q->where('lUsaVigencia', false)->orWhere(fn ($vigente) => $vigente->where('lUsaVigencia', true)->where('dFechaInicioVigencia', '<=', $today)->where('dFechaFinVigencia', '>=', $today));
+                    });
                 }
             }
 
             if ($request->filled('lConPromocion')) {
-                $query->where('lTienePromocion', 1);
+                $query->where('lTienePromocion', 1)->where('lPromocionActiva', 1)
+                    ->where('dFechaInicioPromocion', '<=', now())
+                    ->where('dFechaFinPromocion', '>=', now());
             }
 
-            $cData = $query->orderBy('iID', 'desc')->get()->map(function ($oServ) {
+            if ($request->filled('search.value')) {
+                $busqueda = '%'.$request->input('search.value').'%';
+                $query->where(function ($q) use ($busqueda) {
+                    $q->where('cCodigo', 'like', $busqueda)->orWhere('cNombre', 'like', $busqueda)
+                        ->orWhereHas('categoria', fn ($rel) => $rel->where('cNombre', 'like', $busqueda))
+                        ->orWhereHas('destino', fn ($rel) => $rel->where('cNombre', 'like', $busqueda)->orWhere('cPais', 'like', $busqueda)->orWhere('cCiudad', 'like', $busqueda))
+                        ->orWhereHas('proveedor', fn ($rel) => $rel->where('cNombre', 'like', $busqueda));
+                });
+            }
+            $totalFiltrados = (clone $query)->count();
+            $cData = $query->orderBy('iID', 'desc')->offset((int) $request->input('start', 0))->limit(10)->get()->map(function ($oServ) {
                 return [
                     'iID'                    => $oServ->iID,
                     'cCodigo'                => $oServ->cCodigo,
@@ -81,6 +99,7 @@ class ServicioTuristicoController extends Controller
                     'dPrecioCompra'          => number_format($oServ->dPrecioCompra, 2),
                     'dPrecioVenta'           => number_format($oServ->dPrecioVenta, 2),
                     'dPrecioFinal'           => number_format($oServ->d_precio_final, 2),
+                    'cMoneda'                => $oServ->cMoneda,
                     'dGananciaEfectiva'      => number_format($oServ->d_ganancia_efectiva, 2),
                     'dPorcentajeUtilidad'    => $oServ->d_porcentaje_utilidad,
                     'lTienePromocion'        => $oServ->lTienePromocion,
@@ -88,6 +107,7 @@ class ServicioTuristicoController extends Controller
                     'dFechaInicioVigencia'   => $oServ->dFechaInicioVigencia ? $oServ->dFechaInicioVigencia->format('d/m/Y') : '',
                     'dFechaFinVigencia'      => $oServ->dFechaFinVigencia ? $oServ->dFechaFinVigencia->format('d/m/Y') : '',
                     'lActivo'                => $oServ->lActivo,
+                    'lUsaVigencia'           => $oServ->lUsaVigencia,
                     'cEstatusDisponibilidad' => $oServ->c_estatus_disponibilidad,
                 ];
             });
@@ -96,12 +116,20 @@ class ServicioTuristicoController extends Controller
                 'lSuccess' => true,
                 'cMensaje' => 'Servicios cargados correctamente.',
                 'cData'    => $cData,
+                'data' => $cData,
+                'draw' => (int) $request->input('draw', 0),
+                'recordsTotal' => $totalRegistros,
+                'recordsFiltered' => $totalFiltrados,
             ]);
         } catch (Exception $ex) {
             return response()->json([
                 'lSuccess' => false,
                 'cMensaje' => 'Error al obtener la lista de servicios: ' . $ex->getMessage(),
                 'cData'    => [],
+                'data' => [],
+                'draw' => (int) $request->input('draw', 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
             ], 500);
         }
     }
@@ -144,6 +172,7 @@ class ServicioTuristicoController extends Controller
                 'dFechaInicioVigencia'  => $oServ->dFechaInicioVigencia ? $oServ->dFechaInicioVigencia->format('Y-m-d') : '',
                 'dFechaFinVigencia'     => $oServ->dFechaFinVigencia ? $oServ->dFechaFinVigencia->format('Y-m-d') : '',
                 'lActivo'               => $oServ->lActivo,
+                'lUsaVigencia'          => $oServ->lUsaVigencia,
                 'aGaleria'              => $oServ->imagenes->map(function ($img) {
                     return [
                         'iID'   => $img->iID,
@@ -170,16 +199,18 @@ class ServicioTuristicoController extends Controller
     {
         try {
             $iID = (int) $request->input('iID', 0);
+            $request->merge(['lUsaVigencia' => $request->boolean('lUsaVigencia', true)]);
 
             $request->validate([
                 'cNombre'              => 'required|string|max:255',
-                'iIDCategoria'         => 'required|exists:categoria_turisticas,iID',
-                'iIDDestino'           => 'required|exists:destino_turisticos,iID',
+                'iIDCategoria'         => 'nullable|exists:categoria_turisticas,iID',
+                'iIDDestino'           => 'nullable|exists:destino_turisticos,iID',
                 'iIDProveedor'         => 'nullable|exists:proveedores,iID',
                 'dPrecioCompra'        => 'required|numeric|min:0',
                 'dPrecioVenta'         => 'required|numeric|min:0',
-                'dFechaInicioVigencia' => 'required|date',
-                'dFechaFinVigencia'    => 'required|date|after_or_equal:dFechaInicioVigencia',
+                'lUsaVigencia' => 'boolean',
+                'dFechaInicioVigencia' => 'exclude_if:lUsaVigencia,false|required|date',
+                'dFechaFinVigencia'    => 'exclude_if:lUsaVigencia,false|required|date|after_or_equal:dFechaInicioVigencia',
                 'cImagenFile'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             ], [
                 'cNombre.required'                  => 'El nombre del servicio es obligatorio.',
@@ -221,8 +252,8 @@ class ServicioTuristicoController extends Controller
                 'cNombre'               => trim($request->input('cNombre')),
                 'cDescripcionCorta'     => trim($request->input('cDescripcionCorta')),
                 'cDescripcionCompleta'  => trim($request->input('cDescripcionCompleta')),
-                'iIDCategoria'          => (int) $request->input('iIDCategoria'),
-                'iIDDestino'            => (int) $request->input('iIDDestino'),
+                'iIDCategoria'          => $request->filled('iIDCategoria') ? (int) $request->input('iIDCategoria') : null,
+                'iIDDestino'            => $request->filled('iIDDestino') ? (int) $request->input('iIDDestino') : null,
                 'iIDProveedor'          => $request->input('iIDProveedor') ? (int) $request->input('iIDProveedor') : null,
                 'dPrecioCompra'         => $dPrecioCompra,
                 'dPrecioVenta'          => $dPrecioVenta,
@@ -235,8 +266,9 @@ class ServicioTuristicoController extends Controller
                 'dFechaInicioPromocion' => $request->input('dFechaInicioPromocion') ?: null,
                 'dFechaFinPromocion'    => $request->input('dFechaFinPromocion') ?: null,
                 'lPromocionActiva'      => $request->boolean('lPromocionActiva') ? 1 : 0,
-                'dFechaInicioVigencia'  => $request->input('dFechaInicioVigencia'),
-                'dFechaFinVigencia'     => $request->input('dFechaFinVigencia'),
+                'lUsaVigencia'          => $request->boolean('lUsaVigencia'),
+                'dFechaInicioVigencia'  => $request->boolean('lUsaVigencia') ? $request->input('dFechaInicioVigencia') : null,
+                'dFechaFinVigencia'     => $request->boolean('lUsaVigencia') ? $request->input('dFechaFinVigencia') : null,
                 'lActivo'               => $request->boolean('lActivo', true) ? 1 : 0,
             ];
 
