@@ -234,14 +234,14 @@
                     </a>
                 </li>
 
-                @if(Route::has('categoria.index'))
+                {{-- @if(Route::has('categoria.index'))
                 <li class="nav-item">
                     <a href="{{ route('categoria.index') }}" class="nav-link {{ request()->routeIs('categoria.*') ? 'active' : '' }}">
                         <i class="fas fa-tags"></i>
                         <span>Categorías</span>
                     </a>
                 </li>
-                @endif
+                @endif --}}
             </ul>
 
             <!-- Módulo Administración y Catálogos -->
