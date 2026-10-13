@@ -89,6 +89,27 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class])->group(function () {
         });
     });
 
+    Route::get('agencia/vender', [\App\Http\Controllers\Agencia\VentaPaqueteController::class, 'vender'])->name('agencia.vender.index');
+    Route::get('agencia/apartados', [\App\Http\Controllers\Agencia\VentaPaqueteController::class, 'apartados'])->name('agencia.apartados.index');
+    Route::prefix('agencia/finanzas')->name('agencia.finanzas.')->controller(\App\Http\Controllers\Agencia\FinanzasController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/exportar', 'exportar')->name('exportar');
+        Route::post('/', 'store')->name('store');
+        Route::post('/{movimiento}/anular', 'anular')->name('anular');
+    });
+    Route::prefix('agencia/ventas')->name('agencia.ventas.')->controller(\App\Http\Controllers\Agencia\VentaPaqueteController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{venta}', 'show')->name('show');
+        Route::post('/{venta}/pagos', 'pago')->name('pago');
+        Route::post('/{venta}/cancelar', 'cancelar')->name('cancelar');
+        Route::post('/{venta}/finalizar', 'finalizar')->name('finalizar');
+        Route::post('/{venta}/nombre', 'nombre')->name('nombre');
+        Route::post('/{venta}/paquetes', 'agregarPaquete')->name('agregarPaquete');
+        Route::post('/{venta}/pagos/{pago}/anular', 'anularPago')->name('anularPago');
+        Route::post('/{venta}/pagos/{pago}/fecha', 'fechaPago')->name('fechaPago');
+    });
+
     // Módulo Servicios y Paquetes Turísticos
     Route::prefix('servicios')->name('servicios.')->group(function () {
         // Alias de compatibilidad para Categorías y Destinos

@@ -298,7 +298,7 @@ $(document).ready(function () {
         $('#iID').val(0);
         $('#iIDProveedor').val('');
 
-        let hoy = new Date().toISOString().split('T')[0];
+        let hoy = window.fechaActualAgencia();
         $('#dFechaInicioVigencia').val(hoy);
         $('#dFechaFinVigencia').val(hoy);
         $('#dFechaInicioPromocion').val(hoy);

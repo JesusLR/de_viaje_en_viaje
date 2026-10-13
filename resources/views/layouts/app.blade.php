@@ -19,6 +19,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    @include('partials.select2-styles')
 
     <style>
         :root {
@@ -267,12 +268,46 @@
                     </div>
                 </li>
 
-                <!-- Módulo Servicios Turísticos -->
+                <!-- Módulo Agencia -->
                 <li class="nav-item mt-1">
-                    <a href="{{ route('servicios.paquetes.index') }}" class="nav-link {{ request()->routeIs('servicios.*') ? 'active' : '' }}">
-                        <i class="fas fa-boxes me-1"></i>
-                        <span>Servicios y Paquetes</span>
+                    <a href="#menuAgencia" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('servicios.*', 'agencia.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('servicios.*', 'agencia.*') ? 'true' : 'false' }}" aria-controls="menuAgencia">
+                        <div>
+                            <i class="fas fa-plane me-1"></i>
+                            <span>Agencia</span>
+                        </div>
+                        <i class="fas fa-chevron-down small"></i>
                     </a>
+                    <div class="collapse {{ request()->routeIs('servicios.*', 'agencia.*') ? 'show' : '' }}" id="menuAgencia">
+                        <ul class="sidebar-subnav mt-1">
+                            <li class="nav-item">
+                                <a href="{{ route('servicios.paquetes.index') }}" class="nav-link {{ request()->routeIs('servicios.*') ? 'active' : '' }}">
+                                    <i class="fas fa-boxes me-1"></i>
+                                    <span>Servicios y Paquetes</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('agencia.vender.index') }}" class="nav-link {{ request()->routeIs('agencia.vender.*') ? 'active' : '' }}">
+                                    <i class="fas fa-shopping-cart me-1"></i>
+                                    <span>Vender</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('agencia.apartados.index') }}" class="nav-link {{ request()->routeIs('agencia.apartados.*') ? 'active' : '' }}">
+                                    <i class="fas fa-clipboard-list me-1"></i><span>Apartados</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('agencia.ventas.index') }}" class="nav-link {{ request()->routeIs('agencia.ventas.*') ? 'active' : '' }}">
+                                    <i class="fas fa-list me-1"></i><span>Ventas</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('agencia.finanzas.index') }}" class="nav-link {{ request()->routeIs('agencia.finanzas.*') ? 'active' : '' }}">
+                                    <i class="fas fa-wallet me-1"></i><span>Finanzas</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
                 <!-- Módulo Catálogos -->
@@ -361,6 +396,7 @@
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    @include('partials.select2-scripts')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
