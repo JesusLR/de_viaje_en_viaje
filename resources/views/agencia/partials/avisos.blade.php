@@ -1,6 +1,17 @@
-@if(session('success'))
-    <div class="alert alert-success" role="status">{{ session('success') }}</div>
+@push('scripts')
+@if(session('success') || $errors->any())
+    @php
+        $avisoIcono = $errors->any() ? 'error' : 'success';
+        $avisoTitulo = $errors->any() ? 'Revisa los datos' : 'Operación completada';
+        $avisoTexto = $errors->any() ? implode("\n", $errors->all()) : session('success');
+    @endphp
+    <script>
+    Swal.fire({
+        icon: @json($avisoIcono),
+        title: @json($avisoTitulo),
+        text: @json($avisoTexto),
+        confirmButtonText: 'Entendido', confirmButtonColor: '#536fe8'
+    });
+    </script>
 @endif
-@if($errors->any())
-    <div class="alert alert-danger" role="alert"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
-@endif
+@endpush

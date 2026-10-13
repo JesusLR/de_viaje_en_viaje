@@ -39,9 +39,9 @@
             @endforeach
             @if(!$venta->cancelada_at && !$venta->finalizada_at)
                 @if($venta->saldo_centavos === 0)
-                <form method="POST" action="{{ route('agencia.ventas.finalizar', $venta) }}" onsubmit="return confirm('¿Finalizar este apartado liquidado?');">@csrf<button class="btn btn-success btn-sm">Finalizar</button></form>
+                <form method="POST" action="{{ route('agencia.ventas.finalizar', $venta) }}" data-confirm="¿Finalizar este apartado liquidado?">@csrf<button class="btn btn-success btn-sm">Finalizar</button></form>
                 @endif
-                <form method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" onsubmit="return confirm('¿Cancelar este apartado? Los abonos recibidos se conservarán en finanzas.');">@csrf<button class="btn btn-outline-danger btn-sm">Cancelar</button></form>
+                <form method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" data-confirm="¿Cancelar este apartado? Los abonos recibidos se conservarán en finanzas.">@csrf<button class="btn btn-outline-danger btn-sm">Cancelar</button></form>
             @endif
         </div>
         @else

@@ -76,6 +76,8 @@ function operacion() {
     document.querySelectorAll('.pago-directo').forEach(el => el.classList.toggle('d-none', !venta));
     document.getElementById('metodo').required = venta;
     document.getElementById('guardarVenta').textContent = venta ? 'Registrar venta liquidada' : 'Crear apartado';
+    if (venta) document.getElementById('formVenta').dataset.confirm = '¿Confirmas que recibiste el pago completo de esta venta?';
+    else delete document.getElementById('formVenta').dataset.confirm;
     document.getElementById('explicacion').textContent = venta ? 'Confirma que recibiste el importe total antes de registrar la venta.' : 'El apartado quedará abierto. Podrás registrar sus abonos desde Apartados.';
 }
 $('#accion').on('change', operacion);
@@ -83,7 +85,7 @@ const anteriores = @json(old('items', []));
 if (Object.keys(anteriores).length) Object.values(anteriores).forEach(agregar); else agregar();
 operacion();
 document.getElementById('formVenta').addEventListener('submit', function(e) {
-    if (document.getElementById('accion').value === 'vender' && !confirm('¿Confirmas que recibiste el pago completo de esta venta?')) { e.preventDefault(); return; }
+    if (e.defaultPrevented) return;
     document.getElementById('guardarVenta').disabled = true;
 });
 </script>

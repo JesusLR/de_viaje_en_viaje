@@ -82,7 +82,7 @@ class VentaPaqueteController extends Controller
         $clientes = Cliente::orderBy('cNombre')->get();
         $usuarios = User::orderBy('name')->get();
 
-        return view('agencia.ventas.listado', compact('ventas', 'clientes', 'usuarios', 'apartados'));
+        return view($apartados ? 'agencia.ventas.apartados' : 'agencia.ventas.listado', compact('ventas', 'clientes', 'usuarios', 'apartados'));
     }
 
     public function store(Request $request)
