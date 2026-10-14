@@ -7,7 +7,7 @@
 <div class="auth-card">
     <div class="auth-header">
         <div class="brand-icon overflow-hidden">
-            <img src="{{ asset('img/logo.jpg') }}" alt="{{ config('app.name') }}" style="width: 100%; height: 100%; object-fit: contain;">
+            <img src="{{ $logoAgenciaUrl }}" alt="{{ config('app.name') }}" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <div class="auth-brand-name">{{ config('app.name') }}</div>
         <h4 class="fw-bold mb-1">Bienvenido de nuevo</h4>
@@ -36,7 +36,7 @@
 
             <!-- Email -->
             <div class="mb-3">
-                <label for="email" class="form-label fw-semibold text-secondary small">Correo Electrónico</label>
+                <label for="email" class="form-label fw-semibold text-secondary small">Usuario</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                     <input type="email" 

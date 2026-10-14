@@ -14,6 +14,24 @@ use Tests\TestCase;
 
 class ServicioTuristicoTest extends TestCase
 {
+    public function test_publicacion_y_viaje_son_independientes_y_se_puede_inactivar(): void
+    {
+        $this->actingAs(\App\Models\User::factory()->create(['lCambiarPassword' => false]));
+        $datos = ['cNombre' => 'Viaje independiente '.uniqid(), 'dPrecioCompra' => 500, 'dPrecioVenta' => 1000,
+            'lActivo' => 1, 'lUsaVigencia' => 1,
+            'dFechaInicioVigencia' => today()->subDay()->toDateString(), 'dFechaFinVigencia' => today()->addDays(2)->toDateString(),
+            'dFechaInicioViaje' => today()->addMonth()->toDateString(), 'dFechaFinViaje' => today()->addMonth()->addWeek()->toDateString()];
+        $this->postJson(route('servicios.paquetes.saveData'), $datos)->assertOk()->assertJson(['lSuccess' => true]);
+        $servicio = \App\Models\ServicioTuristico::where('cNombre', $datos['cNombre'])->firstOrFail();
+        $this->assertSame($datos['dFechaInicioViaje'], $servicio->dFechaInicioViaje->toDateString());
+        $this->assertSame('ACTIVO', $servicio->c_estatus_disponibilidad);
+        $this->getJson(route('servicios.paquetes.getData', $servicio->iID))->assertJsonPath('cData.dFechaInicioViaje', $datos['dFechaInicioViaje']);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['iID' => $servicio->iID, 'lActivo' => 0]))->assertOk();
+        $this->assertSame('INACTIVO', $servicio->fresh()->c_estatus_disponibilidad);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['dFechaFinViaje' => today()->toDateString()]))->assertStatus(422);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['dFechaFinViaje' => null]))->assertStatus(422);
+    }
+
     use DatabaseTransactions;
 
     public function test_servicio_sin_catalogos_ni_vigencia_se_puede_vender_y_conserva_su_configuracion(): void
@@ -27,7 +45,7 @@ class ServicioTuristicoTest extends TestCase
         $this->assertNull($servicio->dFechaFinVigencia);
         $this->assertEquals('ACTIVO', $servicio->c_estatus_disponibilidad);
         $this->getJson(route('servicios.paquetes.gridData', ['cEstatusFiltro' => 'ACTIVO', 'search' => ['value' => $datos['cNombre']]]))->assertOk()->assertJsonPath('recordsFiltered', 1);
-        $this->get(route('agencia.vender.index'))->assertOk()->assertSee($datos['cNombre'])->assertSee('Sin vigencia');
+        $this->get(route('agencia.vender.index'))->assertOk()->assertSee($datos['cNombre'])->assertSee('Sin fechas de viaje');
         $cliente = \App\Models\Cliente::create(['cNombre' => 'Cliente', 'cPrimerApellido' => 'Flexible', 'lActivo' => true]);
         $this->post(route('agencia.ventas.store'), ['iIDCliente' => $cliente->iID, 'items' => [['iIDServicio' => $servicio->iID, 'iCantidad' => 1]], 'accion' => 'apartar'])->assertSessionHasNoErrors();
         $venta = \App\Models\VentaPaquete::latest('iID')->firstOrFail();
@@ -37,7 +55,7 @@ class ServicioTuristicoTest extends TestCase
         $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['iID' => $servicio->iID, 'lUsaVigencia' => 1]))->assertStatus(422);
         $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['iID' => $servicio->iID, 'lUsaVigencia' => 1, 'dFechaInicioVigencia' => today()->toDateString(), 'dFechaFinVigencia' => today()->addWeek()->toDateString()]))->assertOk()->assertJson(['lSuccess' => true]);
         $this->assertFalse($detalle->fresh()->lUsaVigencia);
-        $this->get(route('agencia.ventas.show', $venta))->assertOk()->assertSee('Sin vigencia');
+        $this->get(route('agencia.ventas.show', $venta))->assertOk()->assertSee('Sin fechas de viaje');
         $this->get(route('agencia.ventas.comprobante', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $servicio->update(['lUsaVigencia' => false, 'lActivo' => false]);
         $this->assertEquals('INACTIVO', $servicio->fresh()->c_estatus_disponibilidad);

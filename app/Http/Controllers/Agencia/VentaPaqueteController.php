@@ -54,6 +54,7 @@ class VentaPaqueteController extends Controller
             'buscar' => 'nullable|string|max:150',
         ]);
         $query = VentaPaquete::with(['cliente', 'pagos', 'usuario', 'detalles'])->orderByDesc('iID');
+        if (!$request->user()->hasPermission(($apartados ? 'apartados' : 'ventas').'.todos')) $query->where('iIDUsuario', $request->user()->id);
         if ($apartados) {
             $query->where('cTipoOperacion', 'APARTADO')->whereNull('finalizada_at');
             if ($request->estado === 'Cancelado') {
@@ -174,8 +175,8 @@ class VentaPaqueteController extends Controller
         if ($compraSaldada) {
             abort_if($venta->cancelada_at || !$venta->finalizada_at || $venta->saldo_centavos !== 0, 422, 'El comprobante de compra saldada solo está disponible para ventas finalizadas y pagadas.');
         }
-        $rutaLogo = public_path('img/logo.jpg');
-        $logo = is_file($rutaLogo) ? 'data:image/jpeg;base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
+        $rutaLogo = \App\Models\LandingSetting::current()->logoFilePath();
+        $logo = is_file($rutaLogo) ? 'data:'.mime_content_type($rutaLogo).';base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
         $pdf = Pdf::loadView('agencia.ventas.comprobante-pdf', compact('venta', 'logo', 'compraSaldada'))
             ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
         $pdf->render();
@@ -304,9 +305,9 @@ class VentaPaqueteController extends Controller
         return [
             'iIDServicio' => $paquete->iID, 'cPaquete' => $paquete->cNombre, 'iCantidad' => $cantidad,
             'dPrecioUnitario' => $final / 100, 'dSubtotal' => $final * $cantidad / 100,
-            'lUsaVigencia' => $paquete->lUsaVigencia,
-            'dFechaInicio' => $paquete->lUsaVigencia ? $paquete->dFechaInicioVigencia?->toDateString() : null,
-            'dFechaFin' => $paquete->lUsaVigencia ? $paquete->dFechaFinVigencia?->toDateString() : null,
+            'lUsaVigencia' => (bool) ($paquete->dFechaInicioViaje && $paquete->dFechaFinViaje),
+            'dFechaInicio' => $paquete->dFechaInicioViaje?->toDateString(),
+            'dFechaFin' => $paquete->dFechaFinViaje?->toDateString(),
             'dPrecioRegular' => $regular / 100, 'dDescuentoUnitario' => max(0, $regular - $final) / 100,
             'cPromocion' => $promocion ? ($paquete->cNombrePromocion ?: 'Promoción vigente') : null,
             'cTipoDescuento' => $promocion ? $paquete->cTipoDescuento : null,

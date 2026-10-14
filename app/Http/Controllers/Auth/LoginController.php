@@ -25,6 +25,7 @@ class LoginController extends Controller
     {
         try {
             $credentials = $request->only('email', 'password');
+            $credentials['lActivo'] = true;
             $remember = $request->boolean('remember');
 
             if (Auth::attempt($credentials, $remember)) {

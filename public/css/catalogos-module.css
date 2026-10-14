@@ -18,3 +18,4 @@
 .catalogos-panel .modal-body{padding:22px;background:#f8fafc}
 .catalogos-panel .input-group-text{border-color:#e0e6ef;background:#edf1f8;color:#79869b;border-radius:10px;font-size:13px}
 @media(max-width:575px){.catalogos-panel .catalogos-pie{padding:14px;flex-wrap:wrap}.catalogos-panel .modal-body{padding:16px}}
+.usuario-identidad{display:flex;align-items:center;gap:12px}.usuario-foto{width:42px;height:42px;border-radius:13px;overflow:hidden;background:#edf1ff;color:#798bc9;display:grid;place-items:center;flex-shrink:0}.usuario-foto img{width:100%;height:100%;object-fit:cover}

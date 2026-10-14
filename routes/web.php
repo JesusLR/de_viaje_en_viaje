@@ -12,6 +12,9 @@ use App\Http\Middleware\EnsurePasswordIsChanged;
 
 // Landing Page Pública de la Agencia de Viajes ("De Viaje")
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/pagina/imagen/{image}', [LandingController::class, 'image'])->name('landing.image');
+Route::get('/catalogo', [\App\Http\Controllers\PublicCatalogController::class, 'index'])->name('catalogo.publico.index');
+Route::get('/catalogo/{servicio}', [\App\Http\Controllers\PublicCatalogController::class, 'show'])->whereNumber('servicio')->name('catalogo.publico.show');
 
 // Rutas Públicas de Autenticación (Middleware 'guest' evita que usuarios logueados accedan al login)
 Route::middleware('guest')->group(function () {
@@ -20,14 +23,19 @@ Route::middleware('guest')->group(function () {
 });
 
 // Rutas Privadas Protegidas (Middleware 'auth' + EnsurePasswordIsChanged)
-Route::middleware(['auth', EnsurePasswordIsChanged::class])->group(function () {
+Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\CheckModulePermissions::class])->group(function () {
     // Cambio Obligatorio de Contraseña (Accesible cuando lCambiarPassword = 1)
     Route::get('/password/cambiar', [PasswordController::class, 'showChangeForm'])->name('password.change');
     Route::post('/password/update', [PasswordController::class, 'updatePassword'])->name('password.update');
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    Route::get('/perfil', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('perfil.edit');
+    Route::put('/perfil', [\App\Http\Controllers\ProfileController::class, 'update'])->name('perfil.update');
+    Route::get('/perfil/foto', [\App\Http\Controllers\ProfileController::class, 'photo'])->name('perfil.photo');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/configuracion/pagina-inicio', [\App\Http\Controllers\Configuracion\LandingSettingsController::class, 'edit'])->name('configuracion.landing.edit');
+    Route::put('/configuracion/pagina-inicio', [\App\Http\Controllers\Configuracion\LandingSettingsController::class, 'update'])->name('configuracion.landing.update');
 
     // Módulo Categorías (CRUD AJAX)
     Route::prefix('categoria')->name('categoria.')->group(function () {
@@ -40,8 +48,16 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class])->group(function () {
 
     // Módulo Administración
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('permisos')->name('permisos.')->controller(\App\Http\Controllers\Admin\PermissionController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/roles', 'store')->name('store');
+            Route::put('/roles/{role}', 'update')->name('update');
+            Route::delete('/roles/{role}', 'destroy')->name('destroy');
+            Route::put('/usuarios/{user}', 'assign')->name('assign');
+        });
         // Submódulo Usuarios
         Route::prefix('usuarios')->name('usuarios.')->group(function () {
+            Route::get('/{user}/foto', [UsuarioController::class, 'foto'])->name('foto');
             Route::get('/', [UsuarioController::class, 'index'])->name('index');
             Route::get('/gridData', [UsuarioController::class, 'gridData'])->name('gridData');
             Route::get('/getData/{id}', [UsuarioController::class, 'getData'])->name('getData');

@@ -59,10 +59,10 @@ $(document).ready(function () {
                     className: 'text-end catalogo-acciones',
                     render: function (data, type, row) {
                         return `
-                            <button type="button" class="apartado-icono btn-editar" data-id="${row.iID}" title="Editar" aria-label="Editar">
+                            <button type="button" class="apartado-icono btn-editar" data-permission="categorias.editar" data-id="${row.iID}" title="Editar" aria-label="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar">
+                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-permission="categorias.activar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         `;

@@ -11,6 +11,15 @@ use Exception;
 
 class UsuarioController extends Controller
 {
+    public function foto(User $user)
+    {
+        $path = $user->profile_photo_path;
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        abort_unless($path && $disk->exists($path), 404);
+
+        return response()->file($disk->path($path), ['Cache-Control' => 'private, no-cache']);
+    }
+
     /**
      * Muestra la vista principal del submódulo de Usuarios.
      */
@@ -35,6 +44,7 @@ class UsuarioController extends Controller
                         'cPrimerApellido'    => $oUser->cPrimerApellido,
                         'cSegundoApellido'   => $oUser->cSegundoApellido,
                         'cNombreCompleto'    => $oUser->nombre_completo ?: $oUser->name,
+                        'fotoUrl'            => $oUser->profile_photo_path ? route('admin.usuarios.foto', ['user' => $oUser->id, 'v' => $oUser->updated_at?->timestamp]) : null,
                         'cTelefono'          => $oUser->cTelefono ?: 'N/A',
                         'cEmail'             => $oUser->email,
                         'lActivo'            => $oUser->lActivo,

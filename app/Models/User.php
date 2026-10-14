@@ -13,6 +13,22 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    protected $attributes = ['lActivo' => true];
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class)->withTimestamps();
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        $this->loadMissing('roles');
+        return $this->lActivo && $this->roles->contains(fn ($role) => $role->slug === 'administrador' || in_array($permission, $role->permissions ?? [], true));
+    }
+
+    public function permissionKeys(): array
+    {
+        return array_values(array_filter(Role::permissionKeys(), fn ($key) => $this->hasPermission($key)));
+    }
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
     

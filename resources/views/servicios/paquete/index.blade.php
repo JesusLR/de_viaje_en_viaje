@@ -20,7 +20,7 @@
     </div>
     <div class="apartados-grid">
         <div class="px-4 py-3 border-bottom fw-semibold">Tu catálogo <span id="totalServicios" class="apartados-contador ms-2" aria-live="polite">0</span></div>
-        <div class="table-responsive"><table class="table align-middle mb-0 w-100" id="tablaServicios" data-grid-url="{{ route('servicios.paquetes.gridData') }}"><thead><tr><th>Servicio</th><th>Destino / Proveedor</th><th>Inicio / Fin</th><th class="text-end">Precio de venta</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead><tbody></tbody></table></div>
+        <div class="table-responsive"><table class="table align-middle mb-0 w-100" id="tablaServicios" data-grid-url="{{ route('servicios.paquetes.gridData') }}"><thead><tr><th>Servicio</th><th>Destino / Proveedor</th><th>Viaje / Publicación</th><th class="text-end">Precio de venta</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead><tbody></tbody></table></div>
         <div id="serviciosPaginacion"></div>
     </div>
 </div>

@@ -3,8 +3,8 @@
 <option value="{{ $paquete->iID }}"
     data-precio="{{ $paquete->d_precio_final }}" data-regular="{{ $paquete->dPrecioVenta }}"
     data-moneda="{{ $paquete->cMoneda }}"
-    data-inicio="{{ $paquete->lUsaVigencia ? $paquete->dFechaInicioVigencia?->format('d/m/Y') : 'Sin vigencia' }}"
-    data-fin="{{ $paquete->lUsaVigencia ? $paquete->dFechaFinVigencia?->format('d/m/Y') : 'Sin vigencia' }}"
+    data-inicio="{{ $paquete->dFechaInicioViaje?->format('d/m/Y') ?? 'Sin fechas de viaje' }}"
+    data-fin="{{ $paquete->dFechaFinViaje?->format('d/m/Y') ?? 'Sin fechas de viaje' }}"
     data-promocion="{{ $paquete->l_promocion_vigente ? ($paquete->cNombrePromocion ?: 'Promoción vigente') : '' }}"
     data-tipo-descuento="{{ $paquete->l_promocion_vigente ? $paquete->cTipoDescuento : '' }}"
     data-valor-descuento="{{ $paquete->l_promocion_vigente ? $paquete->dValorDescuento : 0 }}">

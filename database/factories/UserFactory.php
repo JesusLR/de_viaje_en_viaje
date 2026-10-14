@@ -12,6 +12,13 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
+    public function configure(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user) {
+            $admin = \App\Models\Role::where('slug', 'administrador')->first();
+            if ($admin) $user->roles()->attach($admin);
+        });
+    }
     /**
      * The current password being used by the factory.
      */

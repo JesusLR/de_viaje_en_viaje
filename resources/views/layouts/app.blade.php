@@ -47,6 +47,15 @@
 
         /* Sidebar Styling */
         #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            height: 100dvh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
             width: var(--sidebar-width);
             min-width: var(--sidebar-width);
             background-color: var(--sidebar-bg);
@@ -59,6 +68,21 @@
 
         #sidebar.toggled {
             margin-left: calc(-1 * var(--sidebar-width));
+        }
+
+        #content-wrapper {
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        #sidebar.toggled + #content-wrapper {
+            margin-left: 0;
+        }
+
+        #sidebar > .sidebar-brand,
+        #sidebar > .sidebar-section,
+        #sidebar > .sidebar-nav {
+            flex-shrink: 0;
         }
 
         .sidebar-brand {
@@ -204,14 +228,16 @@
         @media (max-width: 768px) {
             #sidebar {
                 margin-left: calc(-1 * var(--sidebar-width));
-                position: fixed;
-                height: 100vh;
             }
             #sidebar.toggled {
                 margin-left: 0;
             }
+            #content-wrapper {
+                margin-left: 0;
+            }
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/perfil-module.css') }}?v={{ filemtime(public_path('css/perfil-module.css')) }}">
     @stack('styles')
 </head>
 <body>
@@ -220,7 +246,7 @@
         <!-- Sidebar Navigation -->
         <aside id="sidebar">
             <a href="{{ route('dashboard') }}" class="sidebar-brand d-flex align-items-center gap-2">
-                <img src="{{ asset('img/logo.jpg') }}" alt="Logo" class="rounded-circle border border-2 border-white shadow-sm" style="height: 38px; width: 38px; object-fit: cover;">
+                <img src="{{ $logoAgenciaUrl }}" alt="Logo" class="rounded-circle border border-2 border-white shadow-sm" style="height: 38px; width: 38px; object-fit: contain; background: white;">
                 <span>{{ config('app.name', 'Laravel') }}</span>
             </a>
 
@@ -244,6 +270,7 @@
                 @endif --}}
             </ul>
 
+            @canany(['usuarios.ver', 'permisos.ver', 'servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
             <!-- Módulo Administración y Catálogos -->
             <div class="sidebar-section">Módulos</div>
             <ul class="sidebar-nav">
@@ -258,12 +285,17 @@
                     </a>
                     <div class="collapse {{ request()->routeIs('admin.*') ? 'show' : '' }}" id="menuAdmin">
                         <ul class="sidebar-subnav mt-1">
-                            <li class="nav-item">
+                            @can('permisos.ver')
+                            <li class="nav-item"><a href="{{ route('admin.permisos.index') }}" class="nav-link {{ request()->routeIs('admin.permisos.*') ? 'active' : '' }}"><i class="fas fa-user-lock me-1"></i><span>Roles y permisos</span></a></li>
+                            @endcan
+                            @can('usuarios.ver')
+<li class="nav-item">
                                 <a href="{{ route('admin.usuarios.index') }}" class="nav-link {{ request()->routeIs('admin.usuarios.*') ? 'active' : '' }}">
                                     <i class="fas fa-users me-1"></i>
                                     <span>Usuarios</span>
                                 </a>
                             </li>
+@endcan
                         </ul>
                     </div>
                 </li>
@@ -279,38 +311,58 @@
                     </a>
                     <div class="collapse {{ request()->routeIs('servicios.*', 'agencia.*') ? 'show' : '' }}" id="menuAgencia">
                         <ul class="sidebar-subnav mt-1">
-                            <li class="nav-item">
+                            @can('servicios.ver')
+<li class="nav-item">
                                 <a href="{{ route('servicios.paquetes.index') }}" class="nav-link {{ request()->routeIs('servicios.*') ? 'active' : '' }}">
                                     <i class="fas fa-boxes me-1"></i>
                                     <span>Servicios y Paquetes</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('vender.ver')
+<li class="nav-item">
                                 <a href="{{ route('agencia.vender.index') }}" class="nav-link {{ request()->routeIs('agencia.vender.*') ? 'active' : '' }}">
                                     <i class="fas fa-shopping-cart me-1"></i>
                                     <span>Vender</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('apartados.ver')
+<li class="nav-item">
                                 <a href="{{ route('agencia.apartados.index') }}" class="nav-link {{ request()->routeIs('agencia.apartados.*') ? 'active' : '' }}">
                                     <i class="fas fa-clipboard-list me-1"></i><span>Apartados</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('ventas.ver')
+<li class="nav-item">
                                 <a href="{{ route('agencia.ventas.index') }}" class="nav-link {{ request()->routeIs('agencia.ventas.*') ? 'active' : '' }}">
                                     <i class="fas fa-list me-1"></i><span>Ventas</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('finanzas.ver')
+<li class="nav-item">
                                 <a href="{{ route('agencia.finanzas.index') }}" class="nav-link {{ request()->routeIs('agencia.finanzas.*') ? 'active' : '' }}">
                                     <i class="fas fa-wallet me-1"></i><span>Finanzas</span>
                                 </a>
                             </li>
+@endcan
                         </ul>
                     </div>
                 </li>
 
                 <!-- Módulo Catálogos -->
+                <li class="nav-item mt-1">
+                    <a href="#menuConfiguracion" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('configuracion.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('configuracion.*') ? 'true' : 'false' }}">
+                        <div><i class="fas fa-cog me-1"></i><span>Configuración</span></div><i class="fas fa-chevron-down small"></i>
+                    </a>
+                    <div class="collapse {{ request()->routeIs('configuracion.*') ? 'show' : '' }}" id="menuConfiguracion">
+                        <ul class="sidebar-subnav mt-1">@can('configuracion.ver')
+<li class="nav-item"><a href="{{ route('configuracion.landing.edit') }}" class="nav-link {{ request()->routeIs('configuracion.landing.*') ? 'active' : '' }}"><i class="fas fa-globe me-1"></i><span>Página de inicio</span></a></li>
+@endcan</ul>
+                    </div>
+                </li>
                 <li class="nav-item mt-1">
                     <a href="#menuCatalogos" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('catalogos.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('catalogos.*') ? 'true' : 'false' }}">
                         <div>
@@ -321,34 +373,43 @@
                     </a>
                     <div class="collapse {{ request()->routeIs('catalogos.*') ? 'show' : '' }}" id="menuCatalogos">
                         <ul class="sidebar-subnav mt-1">
-                            <li class="nav-item">
+                            @can('clientes.ver')
+<li class="nav-item">
                                 <a href="{{ route('catalogos.clientes.index') }}" class="nav-link {{ request()->routeIs('catalogos.clientes.*') ? 'active' : '' }}">
                                     <i class="fas fa-address-book me-1"></i>
                                     <span>Clientes</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('categorias.ver')
+<li class="nav-item">
                                 <a href="{{ route('catalogos.categorias.index') }}" class="nav-link {{ request()->routeIs('catalogos.categorias.*') ? 'active' : '' }}">
                                     <i class="fas fa-tags me-1"></i>
                                     <span>Categorías</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('destinos.ver')
+<li class="nav-item">
                                 <a href="{{ route('catalogos.destinos.index') }}" class="nav-link {{ request()->routeIs('catalogos.destinos.*') ? 'active' : '' }}">
                                     <i class="fas fa-map-marked-alt me-1"></i>
                                     <span>Destinos</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
+@endcan
+                            @can('proveedores.ver')
+<li class="nav-item">
                                 <a href="{{ route('catalogos.proveedores.index') }}" class="nav-link {{ request()->routeIs('catalogos.proveedores.*') ? 'active' : '' }}">
                                     <i class="fas fa-truck-loading me-1"></i>
                                     <span>Proveedores</span>
                                 </a>
                             </li>
+@endcan
                         </ul>
                     </div>
                 </li>
             </ul>
+            @endcanany
         </aside>
 
         <!-- Main Content Area -->
@@ -364,17 +425,24 @@
 
                 <div class="user-menu">
                     @auth
-                        <div class="user-badge">
-                            <i class="fas fa-user-circle fs-5 text-primary"></i>
-                            <span>{{ Auth::user()->name }}</span>
-                        </div>
-
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" id="btnLogout" title="Cerrar Sesión">
-                                <i class="fas fa-sign-out-alt me-1"></i> Salir
+                        <div class="dropdown">
+                            <button class="user-badge perfil-menu-boton" type="button" id="menuPerfil" data-bs-toggle="dropdown" aria-expanded="false">
+                                @if(Auth::user()->profile_photo_path)
+                                    <img class="perfil-avatar-navbar" src="{{ route('perfil.photo', ['v' => Auth::user()->updated_at?->timestamp]) }}" alt="Foto de perfil">
+                                @else
+                                    <i class="fas fa-user-circle fs-5 text-primary" aria-hidden="true"></i>
+                                @endif
+                                <span>{{ Auth::user()->name }}</span><i class="fas fa-chevron-down small" aria-hidden="true"></i>
                             </button>
-                        </form>
+                            <ul class="dropdown-menu dropdown-menu-end perfil-menu" aria-labelledby="menuPerfil">
+                                <li><a class="dropdown-item" href="{{ route('perfil.edit') }}"><i class="fas fa-user-edit me-2" aria-hidden="true"></i>Editar perfil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><form id="logout-form" action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger" id="btnLogout"><i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>Cerrar sesión</button>
+                                </form></li>
+                            </ul>
+                        </div>
                     @endauth
                 </div>
             </header>
@@ -455,6 +523,8 @@
             });
         });
     </script>
+    <script>window.userPermissions = @json(auth()->user()?->permissionKeys() ?? []);</script>
+    <script src="{{ asset('js/permissions-ui.js') }}?v={{ filemtime(public_path('js/permissions-ui.js')) }}"></script>
     @stack('scripts')
 </body>
 </html>

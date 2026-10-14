@@ -38,7 +38,7 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link fw-semibold" id="vigencia-tab" data-bs-toggle="tab" data-bs-target="#tab-vigencia" type="button" role="tab">
-                                <i class="fas fa-calendar-alt me-1"></i> 5. Vigencia & Galería
+                                <i class="fas fa-calendar-alt me-1"></i> 5. Fechas y galería
                             </button>
                         </li>
                     </ul>
@@ -272,33 +272,42 @@
                         <!-- PESTAÑA 5: VIGENCIA DEL SERVICIO E IMÁGENES -->
                         <div class="tab-pane fade" id="tab-vigencia" role="tabpanel">
                             <div class="card border-0 shadow-sm p-3">
-                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-check me-1"></i> Rango de Vigencia del Servicio</h6>
+                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-check me-1"></i> Vigencia de publicación</h6>
                                 <input type="hidden" name="lUsaVigencia" value="0">
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" role="switch" id="lUsaVigencia" name="lUsaVigencia" value="1" checked>
-                                    <label class="form-check-label" for="lUsaVigencia">Usar vigencia por fechas</label>
-                                    <div class="form-text">Desactívala para mantener el servicio disponible sin fecha de vencimiento.</div>
+                                    <label class="form-check-label" for="lUsaVigencia">Limitar la publicación por fechas</label>
+                                    <div class="form-text">Este rango determina cuándo se publica y puede venderse el servicio. Desactívalo para publicarlo sin fecha de vencimiento; las fechas del viaje son independientes.</div>
                                 </div>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-5">
-                                        <label for="dFechaInicioVigencia" class="form-label fw-bold">Fecha de Inicio de Vigencia <span class="text-danger">*</span></label>
+                                        <label for="dFechaInicioVigencia" class="form-label fw-bold">Publicar desde <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="dFechaInicioVigencia" name="dFechaInicioVigencia" value="{{ date('Y-m-d') }}" required>
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="dFechaFinVigencia" class="form-label fw-bold">Fecha de Fin de Vigencia <span class="text-danger">*</span></label>
+                                        <label for="dFechaFinVigencia" class="form-label fw-bold">Publicar hasta <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="dFechaFinVigencia" name="dFechaFinVigencia" value="{{ date('Y-m-d') }}" required>
                                     </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label fw-semibold">Estatus Manual</label>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold">Activación del servicio</label>
                                         <div class="form-check form-switch mt-2">
+                                            <input type="hidden" name="lActivo" value="0">
                                             <input class="form-check-input" type="checkbox" role="switch" id="lActivo" name="lActivo" value="1" checked>
-                                            <label class="form-check-label" for="lActivo">Habilitado</label>
+                                            <label class="form-check-label" for="lActivo">Servicio activo</label><div class="form-text">Desactiva esta opción para ocultarlo y evitar nuevas ventas, incluso dentro de su vigencia.</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <hr>
-
+                                <h6 class="fw-bold text-primary mb-2"><i class="fas fa-plane-departure me-1"></i> Fechas del viaje</h6>
+                                <p class="text-muted small">Salida y regreso del viaje. No determinan el período de publicación.</p>
+                                <input type="hidden" name="lTieneFechasViaje" value="0">
+                                <div class="form-check form-switch mb-3"><input type="checkbox" class="form-check-input" id="lTieneFechasViaje" name="lTieneFechasViaje" value="1" checked><label class="form-check-label" for="lTieneFechasViaje">Este servicio tiene fechas de viaje</label></div>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6"><label for="dFechaInicioViaje" class="form-label">Fecha de salida</label><input type="date" class="form-control" id="dFechaInicioViaje" name="dFechaInicioViaje" value="{{ today()->toDateString() }}"></div>
+                                    <div class="col-md-6"><label for="dFechaFinViaje" class="form-label">Fecha de regreso</label><input type="date" class="form-control" id="dFechaFinViaje" name="dFechaFinViaje" value="{{ today()->toDateString() }}"></div>
+                                </div>
+                                <hr>
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-images me-1"></i> Gestión de Imágenes</h6>
                                 <div class="row g-3">
                                     <div class="col-md-6">

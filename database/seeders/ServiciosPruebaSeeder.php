@@ -70,6 +70,7 @@ class ServiciosPruebaSeeder extends Seeder
                     'dFechaInicioPromocion' => $promocion ? today()->startOfDay() : null,
                     'dFechaFinPromocion' => $promocion ? today()->addDays(30)->endOfDay() : null,
                     'dFechaInicioVigencia' => today(), 'dFechaFinVigencia' => today()->addDays(30 + $numero),
+                    'dFechaInicioViaje' => today()->addDays(30 + $numero), 'dFechaFinViaje' => today()->addDays(35 + $numero),
                     'lActivo' => true,
                 ]);
                 if ($servicio->wasRecentlyCreated) $cantidad++;

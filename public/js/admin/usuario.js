@@ -94,8 +94,14 @@ $(document).ready(function () {
                 { data: 'iID' },
                 { 
                     data: 'cNombreCompleto',
-                    render: function (data) {
-                        return `<strong>${data}</strong>`;
+                    render: function (data, type, row) {
+                        if (type !== 'display') return data;
+                        const nombre = $('<span>').text(data || '').html();
+                        const fotoUrl = $('<span>').text(row.fotoUrl || '').html();
+                        const imagen = fotoUrl
+                            ? `<img src="${fotoUrl}" alt="Foto de perfil" loading="lazy">`
+                            : '<i class="fas fa-user" aria-hidden="true"></i>';
+                        return `<div class="usuario-identidad"><span class="usuario-foto">${imagen}</span><strong>${nombre}</strong></div>`;
                     }
                 },
                 { 
@@ -117,10 +123,11 @@ $(document).ready(function () {
                     className: 'text-end catalogo-acciones',
                     render: function (data, type, row) {
                         return `
-                            <button type="button" class="apartado-icono btn-editar" data-id="${row.iID}" title="Editar" aria-label="Editar usuario">
+                            <a class="apartado-icono" data-permission="permisos.asignar" href="/admin/permisos?buscar=${encodeURIComponent(row.cEmail)}" title="Asignar roles" aria-label="Asignar roles"><i class="fas fa-user-tag" aria-hidden="true"></i></a>
+                            <button type="button" class="apartado-icono btn-editar" data-permission="usuarios.editar" data-id="${row.iID}" title="Editar" aria-label="Editar usuario">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar usuario">
+                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-permission="usuarios.activar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar usuario">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         `;

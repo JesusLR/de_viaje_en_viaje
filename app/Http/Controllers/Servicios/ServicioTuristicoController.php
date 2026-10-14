@@ -108,6 +108,8 @@ class ServicioTuristicoController extends Controller
                     'dFechaFinVigencia'      => $oServ->dFechaFinVigencia ? $oServ->dFechaFinVigencia->format('d/m/Y') : '',
                     'lActivo'                => $oServ->lActivo,
                     'lUsaVigencia'           => $oServ->lUsaVigencia,
+                    'dFechaInicioViaje' => $oServ->dFechaInicioViaje?->format('d/m/Y') ?? '',
+                    'dFechaFinViaje' => $oServ->dFechaFinViaje?->format('d/m/Y') ?? '',
                     'cEstatusDisponibilidad' => $oServ->c_estatus_disponibilidad,
                 ];
             });
@@ -173,6 +175,8 @@ class ServicioTuristicoController extends Controller
                 'dFechaFinVigencia'     => $oServ->dFechaFinVigencia ? $oServ->dFechaFinVigencia->format('Y-m-d') : '',
                 'lActivo'               => $oServ->lActivo,
                 'lUsaVigencia'          => $oServ->lUsaVigencia,
+                'dFechaInicioViaje' => $oServ->dFechaInicioViaje?->format('Y-m-d') ?? '',
+                'dFechaFinViaje' => $oServ->dFechaFinViaje?->format('Y-m-d') ?? '',
                 'aGaleria'              => $oServ->imagenes->map(function ($img) {
                     return [
                         'iID'   => $img->iID,
@@ -209,6 +213,9 @@ class ServicioTuristicoController extends Controller
                 'dPrecioCompra'        => 'required|numeric|min:0',
                 'dPrecioVenta'         => 'required|numeric|min:0',
                 'lUsaVigencia' => 'boolean',
+                'lActivo' => 'boolean',
+                'dFechaInicioViaje' => 'nullable|required_with:dFechaFinViaje|date',
+                'dFechaFinViaje' => 'nullable|required_with:dFechaInicioViaje|date|after_or_equal:dFechaInicioViaje',
                 'dFechaInicioVigencia' => 'exclude_if:lUsaVigencia,false|required|date',
                 'dFechaFinVigencia'    => 'exclude_if:lUsaVigencia,false|required|date|after_or_equal:dFechaInicioVigencia',
                 'cImagenFile'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
@@ -221,6 +228,9 @@ class ServicioTuristicoController extends Controller
                 'dFechaInicioVigencia.required'     => 'La fecha de inicio de vigencia es obligatoria.',
                 'dFechaFinVigencia.required'        => 'La fecha de finalización de vigencia es obligatoria.',
                 'dFechaFinVigencia.after_or_equal'  => 'La fecha final de vigencia no puede ser anterior a la fecha inicial.',
+                'dFechaInicioViaje.required_with' => 'Ingresa la fecha de salida del viaje.',
+                'dFechaFinViaje.required_with' => 'Ingresa la fecha de regreso del viaje.',
+                'dFechaFinViaje.after_or_equal' => 'El regreso no puede ser anterior a la salida del viaje.',
                 'cImagenFile.max'                   => 'La imagen principal no debe exceder los 5MB.',
             ]);
 
@@ -267,6 +277,8 @@ class ServicioTuristicoController extends Controller
                 'dFechaFinPromocion'    => $request->input('dFechaFinPromocion') ?: null,
                 'lPromocionActiva'      => $request->boolean('lPromocionActiva') ? 1 : 0,
                 'lUsaVigencia'          => $request->boolean('lUsaVigencia'),
+                'dFechaInicioViaje'     => $request->input('dFechaInicioViaje') ?: null,
+                'dFechaFinViaje'        => $request->input('dFechaFinViaje') ?: null,
                 'dFechaInicioVigencia'  => $request->boolean('lUsaVigencia') ? $request->input('dFechaInicioVigencia') : null,
                 'dFechaFinVigencia'     => $request->boolean('lUsaVigencia') ? $request->input('dFechaFinVigencia') : null,
                 'lActivo'               => $request->boolean('lActivo', true) ? 1 : 0,

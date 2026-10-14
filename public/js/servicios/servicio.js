@@ -69,12 +69,12 @@ $(document).ready(function () {
                     }
                 },
                 {
-                    data: 'dFechaInicioVigencia',
+                    data: 'dFechaInicioViaje',
                     render: function (data, type, row) {
-                        if (type === 'sort' || type === 'type') return data.split('/').reverse().join('-');
-                        if (!row.lUsaVigencia) return type === 'display' ? '<span class="servicio-meta">Sin vigencia</span>' : 'Sin vigencia';
-                        if (type !== 'display') return data + ' ' + row.dFechaFinVigencia;
-                        return '<div class="servicio-fechas"><small>Inicio</small> ' + escapar(data) + '<br><small>Fin</small> ' + escapar(row.dFechaFinVigencia) + '</div>';
+                        if (type !== 'display') return (data || '') + ' ' + (row.dFechaFinViaje || '');
+                        const viaje = data && row.dFechaFinViaje ? '<div class="servicio-fechas"><small>Salida</small> ' + escapar(data) + '<br><small>Regreso</small> ' + escapar(row.dFechaFinViaje) + '</div>' : '<span class="servicio-meta">Sin fechas de viaje</span>';
+                        const publicacion = row.lUsaVigencia ? escapar(row.dFechaInicioVigencia) + ' — ' + escapar(row.dFechaFinVigencia) : 'Sin vencimiento';
+                        return viaje + '<small class="servicio-meta">Publicación: ' + publicacion + '</small>';
                     }
                 },
                 {
@@ -104,8 +104,8 @@ $(document).ready(function () {
                     render: function (data, type, row) {
                         return '<div class="apartado-acciones">' +
                             '<button type="button" class="apartado-icono btn-detalle" data-id="' + Number(row.iID) + '" title="Ver detalle" aria-label="Ver detalle"><i class="fas fa-eye" aria-hidden="true"></i></button>' +
-                            '<button type="button" class="apartado-icono btn-editar" data-id="' + Number(row.iID) + '" title="Editar servicio" aria-label="Editar servicio"><i class="fas fa-pen" aria-hidden="true"></i></button>' +
-                            '<button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-id="' + Number(row.iID) + '" title="Desactivar servicio" aria-label="Desactivar servicio"><i class="fas fa-ban" aria-hidden="true"></i></button></div>';
+                            '<button type="button" class="apartado-icono btn-editar" data-permission="servicios.editar" data-id="' + Number(row.iID) + '" title="Editar servicio" aria-label="Editar servicio"><i class="fas fa-pen" aria-hidden="true"></i></button>' +
+                            '<button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-permission="servicios.activar" data-id="' + Number(row.iID) + '" title="Desactivar servicio" aria-label="Desactivar servicio"><i class="fas fa-ban" aria-hidden="true"></i></button></div>';
                     }
                 }
             ]
@@ -197,6 +197,8 @@ $(document).ready(function () {
                     }
 
                     // Vigencia
+                    $('#detFechaInicioViaje').text(oData.dFechaInicioViaje ? formatFechaDMY(oData.dFechaInicioViaje) : 'Sin fechas de viaje');
+                    $('#detFechaFinViaje').text(oData.dFechaFinViaje ? formatFechaDMY(oData.dFechaFinViaje) : 'Sin fechas de viaje');
                     $('#detFechaInicioVigencia').text(oData.lUsaVigencia ? formatFechaDMY(oData.dFechaInicioVigencia) : 'Sin vigencia');
                     $('#detFechaFinVigencia').text(oData.lUsaVigencia ? formatFechaDMY(oData.dFechaFinVigencia) : 'Sin vigencia');
 
@@ -327,6 +329,11 @@ $(document).ready(function () {
         }
     }
     $('#lUsaVigencia').on('change', actualizarVigencia);
+    $('#lTieneFechasViaje').on('change', function () {
+        const activa = this.checked;
+        $('#dFechaInicioViaje, #dFechaFinViaje').prop('disabled', !activa).prop('required', activa);
+        if (activa) $('#dFechaInicioViaje, #dFechaFinViaje').each(function () { if (!this.value) this.value = window.fechaActualAgencia(); });
+    });
 
     // Abrir Modal para Nuevo Servicio
     $('#btnNuevo').on('click', function () {
@@ -339,6 +346,8 @@ $(document).ready(function () {
         let hoy = window.fechaActualAgencia();
         $('#dFechaInicioVigencia').val(hoy);
         $('#dFechaFinVigencia').val(hoy);
+        $('#dFechaInicioViaje, #dFechaFinViaje').val(hoy);
+        $('#lTieneFechasViaje').prop('checked', true).trigger('change');
         $('#dFechaInicioPromocion').val(hoy);
         $('#dFechaFinPromocion').val(hoy);
 
@@ -394,6 +403,9 @@ $(document).ready(function () {
                     // Vigencia y Estatus
                     $('#dFechaInicioVigencia').val(oData.dFechaInicioVigencia);
                     $('#dFechaFinVigencia').val(oData.dFechaFinVigencia);
+                    $('#dFechaInicioViaje').val(oData.dFechaInicioViaje);
+                    $('#dFechaFinViaje').val(oData.dFechaFinViaje);
+                    $('#lTieneFechasViaje').prop('checked', !!(oData.dFechaInicioViaje && oData.dFechaFinViaje)).trigger('change');
                     $('#lUsaVigencia').prop('checked', oData.lUsaVigencia !== false).trigger('change');
                     $('#lActivo').prop('checked', oData.lActivo == 1);
 

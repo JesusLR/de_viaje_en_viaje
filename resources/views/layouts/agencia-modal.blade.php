@@ -22,6 +22,8 @@
     @include('partials.select2-scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('js/agencia-alerts.js') }}?v={{ filemtime(public_path('js/agencia-alerts.js')) }}"></script>
-    @stack('scripts')
+    <script>window.userPermissions = @json(auth()->user()?->permissionKeys() ?? []);</script>
+<script src="{{ asset('js/permissions-ui.js') }}?v={{ filemtime(public_path('js/permissions-ui.js')) }}"></script>
+@stack('scripts')
 </body>
 </html>

@@ -8,23 +8,13 @@
 @if($venta->cNombre)<h2>{{ $venta->cNombre }}</h2>@endif
 <table class="info"><tr><td><div class="label">CLIENTE</div><strong>{{ $venta->cliente->nombre_completo }}</strong><br>{{ $venta->cliente->cTelefono }}<br>{{ $venta->cliente->cEmail }}</td><td><div class="label">VENDEDOR</div>{{ $venta->usuario?->nombre_completo ?? 'No registrado' }}<br><span class="label">MONEDA</span> {{ $venta->cMoneda }}@if($venta->finalizada_at)<br><span class="label">FINALIZADO</span> {{ $venta->finalizada_at->format('d/m/Y') }}@endif</td></tr></table>
 @php
-    $serviciosConFechas = $venta->detalles->filter(function ($detalle) {
-        return $detalle->lUsaVigencia
-            && ($detalle->dFechaInicio ?? $detalle->servicio?->dFechaInicioVigencia)
-            && ($detalle->dFechaFin ?? $detalle->servicio?->dFechaFinVigencia);
-    });
+    $serviciosConFechas = $venta->detalles->filter(fn ($detalle) => $detalle->dFechaInicio && $detalle->dFechaFin);
 @endphp
 @if($serviciosConFechas->isNotEmpty())
 <h2>Fechas del viaje</h2>
-<table><thead><tr><th style="width:50%">Servicio</th><th>Fecha de inicio</th><th>Fecha de fin</th></tr></thead><tbody>
+<table><thead><tr><th style="width:50%">Servicio</th><th>Salida</th><th>Regreso</th></tr></thead><tbody>
 @foreach($serviciosConFechas as $detalle)
-    @php
-        $inicioViajePdf = $detalle->lUsaVigencia ? ($detalle->dFechaInicio ?? $detalle->servicio?->dFechaInicioVigencia) : null;
-        $finViajePdf = $detalle->lUsaVigencia ? ($detalle->dFechaFin ?? $detalle->servicio?->dFechaFinVigencia) : null;
-    @endphp
-    <tr><td>{{ $detalle->cPaquete }}
-        @if($detalle->lUsaVigencia && (!$detalle->dFechaInicio || !$detalle->dFechaFin))<br><span class="muted">Fechas del servicio en catálogo; la operación antigua no conservó copia.</span>@endif
-    </td><td><strong>{{ $detalle->lUsaVigencia ? ($inicioViajePdf?->format('d/m/Y') ?? '—') : 'Sin vigencia' }}</strong></td><td><strong>{{ $detalle->lUsaVigencia ? ($finViajePdf?->format('d/m/Y') ?? '—') : 'Sin vigencia' }}</strong></td></tr>
+    <tr><td>{{ $detalle->cPaquete }}</td><td><strong>{{ $detalle->dFechaInicio->format('d/m/Y') }}</strong></td><td><strong>{{ $detalle->dFechaFin->format('d/m/Y') }}</strong></td></tr>
 @endforeach
 </tbody></table>
 @endif

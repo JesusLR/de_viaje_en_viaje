@@ -21,6 +21,7 @@
             }
         });
         $raiz.find('input[type="date"]').add($raiz.filter('input[type="date"]')).each(function () {
+            if (this.hasAttribute('data-fecha-opcional')) return;
             if ($(this).closest('.swal2-container').length) return;
             if (!this.value && !this.readOnly && !this.disabled) {
                 this.value = window.fechaActualAgencia();

@@ -1,19 +1,20 @@
 @extends('layouts.auth')
 
 @section('titulo', 'Cambio Obligatorio de Contraseña')
+@section('auth-page-class', 'auth-login auth-password')
 
 @section('contenido')
 <div class="auth-card">
-    <div class="auth-header bg-warning bg-gradient text-dark">
-        <div class="brand-icon bg-white bg-opacity-50 text-warning">
-            <i class="fas fa-shield-alt fs-2"></i>
+    <div class="auth-header">
+        <div class="brand-icon password-emblema">
+            <i class="fas fa-shield-alt fs-2" aria-hidden="true"></i>
         </div>
-        <h4 class="fw-bold mb-1 text-dark">Actualiza tu Contraseña</h4>
-        <p class="text-dark-50 small mb-0">Por tu seguridad, debes cambiar tu contraseña inicial</p>
+        <h4 class="fw-bold mb-1">Actualiza tu Contraseña</h4>
+        <p class="text-muted small mb-0">Por tu seguridad, debes cambiar tu contraseña inicial</p>
     </div>
 
     <div class="auth-body">
-        <div class="alert alert-info rounded-3 small mb-4">
+        <div class="password-aviso mb-4">
             <i class="fas fa-info-circle me-1"></i>
             Has ingresado con una contraseña inicial o autogenerada. Por favor define una nueva clave segura.
         </div>
@@ -30,6 +31,7 @@
                            class="form-control" 
                            id="cPasswordActual" 
                            name="cPasswordActual" 
+                           autocomplete="current-password"
                            placeholder="Ingresa tu contraseña actual" 
                            required 
                            autofocus>
@@ -45,6 +47,8 @@
                            class="form-control" 
                            id="cPasswordNueva" 
                            name="cPasswordNueva" 
+                           autocomplete="new-password"
+                           minlength="6"
                            placeholder="Mínimo 6 caracteres" 
                            required>
                 </div>
@@ -59,6 +63,8 @@
                            class="form-control" 
                            id="cPasswordConfirm" 
                            name="cPasswordConfirm" 
+                           autocomplete="new-password"
+                           minlength="6"
                            placeholder="Repite la nueva contraseña" 
                            required>
                 </div>
@@ -73,13 +79,40 @@
                 </span>
             </button>
         </form>
+        <form id="formSalirPassword" action="{{ route('logout') }}" method="POST" class="mt-3">
+            @csrf
+            <button type="submit" class="btn password-salir w-100"><i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>Cerrar sesión</button>
+        </form>
     </div>
 </div>
 @endsection
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/login-module.css') }}?v={{ filemtime(public_path('css/login-module.css')) }}">
+<style>
+.auth-password .auth-header .password-emblema{width:56px;height:56px;background:#edf1ff;border:0;border-radius:16px;color:#536fe8}
+.auth-password .password-aviso{padding:14px 16px;background:#f8fafc;border:1px solid #e8edf4;border-radius:12px;color:#64748b;font-size:12px;line-height:1.7}
+.auth-password .password-aviso i{color:#536fe8}
+.auth-password .password-salir{background:#f3f5fa;color:#64748b;border-radius:10px;min-height:44px;font-size:13px;font-weight:600}
+.auth-password .password-salir:hover{background:#eaf0ff;color:#536fe8}
+</style>
+@endpush
+
 @push('scripts')
 <script>
 $(document).ready(function () {
+    $('#formSalirPassword').on('submit', function (event) {
+        event.preventDefault();
+        const form = this;
+        Swal.fire({
+            icon: 'question', title: '¿Deseas cerrar sesión?',
+            text: 'Volverás a la pantalla de inicio de sesión.',
+            showCancelButton: true, confirmButtonText: 'Sí, cerrar sesión',
+            cancelButtonText: 'Cancelar', confirmButtonColor: '#536fe8'
+        }).then((result) => {
+            if (result.isConfirmed) form.submit();
+        });
+    });
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),

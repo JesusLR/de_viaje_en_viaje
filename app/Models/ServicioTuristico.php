@@ -39,6 +39,8 @@ class ServicioTuristico extends Model
         'dFechaInicioVigencia',
         'lUsaVigencia',
         'dFechaFinVigencia',
+        'dFechaInicioViaje',
+        'dFechaFinViaje',
         'lActivo',
         'iIDUsuario',
     ];
@@ -53,11 +55,28 @@ class ServicioTuristico extends Model
         'dValorDescuento'       => 'float',
         'dFechaInicioVigencia'  => 'date',
         'dFechaFinVigencia'     => 'date',
+        'dFechaInicioViaje'     => 'date',
+        'dFechaFinViaje'        => 'date',
         'dFechaInicioPromocion' => 'datetime',
         'dFechaFinPromocion'    => 'datetime',
     ];
 
     // Relaciones
+    public function scopePublicados(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->where('lActivo', true)->where(function ($publication) {
+            $publication->where('lUsaVigencia', false)->orWhere(function ($dated) {
+                $dated->whereDate('dFechaInicioVigencia', '<=', today())->whereDate('dFechaFinVigencia', '>=', today());
+            });
+        });
+    }
+
+    public static function publicPriceExpression(): array
+    {
+        $sql = "GREATEST(0, ROUND(dPrecioVenta - CASE WHEN lTienePromocion = 1 AND lPromocionActiva = 1 AND dFechaInicioPromocion <= ? AND dFechaFinPromocion >= ? THEN CASE WHEN cTipoDescuento = 'PORCENTAJE' THEN ROUND(dPrecioVenta * dValorDescuento / 100, 2) WHEN cTipoDescuento = 'IMPORTE' THEN LEAST(dPrecioVenta, GREATEST(0, dValorDescuento)) ELSE 0 END ELSE 0 END, 2))";
+        return [$sql, [now()->toDateTimeString(), now()->toDateTimeString()]];
+    }
+
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(CategoriaTuristica::class, 'iIDCategoria', 'iID');

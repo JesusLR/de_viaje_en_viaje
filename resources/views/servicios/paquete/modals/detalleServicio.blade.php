@@ -117,13 +117,13 @@
                 <div class="card border-0 shadow-sm rounded-3 mb-3">
                     <div class="card-header bg-white py-2 border-0">
                         <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-calendar-check me-1"></i> Vigencia Operativa del Servicio
+                            <i class="fas fa-calendar-check me-1"></i> Vigencia de publicación
                         </h6>
                     </div>
                     <div class="card-body py-2 px-3">
                         <div class="row text-center text-md-start">
                             <div class="col-md-6 py-1">
-                                <span class="text-muted small d-block">Fecha Inicio:</span>
+                                <span class="text-muted small d-block">Publicar desde:</span>
                                 <strong id="detFechaInicioVigencia" class="text-dark">-</strong>
                             </div>
                             <div class="col-md-6 py-1">
@@ -134,6 +134,7 @@
                     </div>
                 </div>
 
+                <div class="card border-0 shadow-sm rounded-3 mb-3"><div class="card-body"><h6 class="fw-bold text-primary mb-3"><i class="fas fa-plane-departure me-1"></i>Fechas del viaje</h6><div class="row"><div class="col-6"><small class="text-muted d-block">Salida</small><strong id="detFechaInicioViaje">—</strong></div><div class="col-6"><small class="text-muted d-block">Regreso</small><strong id="detFechaFinViaje">—</strong></div></div></div></div>
                 <!-- Descripciones -->
                 <div class="card border-0 shadow-sm rounded-3 mb-3">
                     <div class="card-header bg-white py-2 border-0">

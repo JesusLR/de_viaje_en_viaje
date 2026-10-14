@@ -4,13 +4,13 @@
 <div class="apartados-panel vender-panel">
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas fa-cart-plus" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">Vender paquetes</h3><p class="text-muted mb-0 small">Selecciona los paquetes y registra una venta liquidada o un apartado.</p></div></div>
-    <a class="apartado-icono" href="{{ route('agencia.apartados.index') }}" title="Ver apartados" aria-label="Ver apartados"><i class="fas fa-clipboard-list" aria-hidden="true"></i></a>
+    <a data-permission="apartados.ver" class="apartado-icono" href="{{ route('agencia.apartados.index') }}" title="Ver apartados" aria-label="Ver apartados"><i class="fas fa-clipboard-list" aria-hidden="true"></i></a>
 </div>
 @include('agencia.partials.avisos')
 <form method="POST" action="{{ route('agencia.ventas.store') }}" id="formVenta">
     @csrf
     <div class="apartados-filtros mb-4"><h5 class="vender-seccion"><span>01</span>Datos de la operación</h5><div class="row g-3">
-        <div class="col-md-6"><label for="cliente" class="form-label">Cliente</label><select id="cliente" name="iIDCliente" class="form-select" required><option value="">Selecciona un cliente</option>@foreach($clientes as $cliente)<option value="{{ $cliente->iID }}" @selected(old('iIDCliente') == $cliente->iID)>{{ $cliente->nombre_completo }}</option>@endforeach</select><a class="small" href="{{ route('catalogos.clientes.index') }}">Administrar clientes</a></div>
+        <div class="col-md-6"><label for="cliente" class="form-label">Cliente</label><select id="cliente" name="iIDCliente" class="form-select" required><option value="">Selecciona un cliente</option>@foreach($clientes as $cliente)<option value="{{ $cliente->iID }}" @selected(old('iIDCliente') == $cliente->iID)>{{ $cliente->nombre_completo }}</option>@endforeach</select><a data-permission="clientes.ver" class="small" href="{{ route('catalogos.clientes.index') }}">Administrar clientes</a></div>
         <div class="col-md-6"><label for="nombre" class="form-label">Nombre de la operación (opcional)</label><input id="nombre" name="cNombre" maxlength="150" value="{{ old('cNombre') }}" class="form-control" placeholder="Ej. Viaje familiar a Cancún"></div>
         <div class="col-md-4"><label for="fechaRegistro" class="form-label">Fecha de registro</label><input id="fechaRegistro" type="date" value="{{ today()->toDateString() }}" class="form-control" readonly></div>
         <div class="col-md-8"><label for="observaciones" class="form-label">Observaciones</label><input id="observaciones" name="cObservaciones" maxlength="2000" value="{{ old('cObservaciones') }}" class="form-control"></div>
@@ -22,7 +22,7 @@
         <div class="px-4 pb-3"><small class="text-muted">Los precios incluyen las promociones vigentes y se verifican al guardar. Todos los paquetes deben tener la misma moneda.</small></div>
     </div>
     <div class="apartados-filtros"><h5 class="vender-seccion"><span>03</span>Confirmar operación</h5><div class="row g-3">
-        <div class="col-md-4"><label for="accion" class="form-label">Operación</label><select id="accion" name="accion" class="form-select"><option value="vender" @selected(old('accion', 'vender') === 'vender')>Venta liquidada</option><option value="apartar" @selected(old('accion') === 'apartar')>Apartado (pago posterior)</option></select></div>
+        <div class="col-md-4"><label for="accion" class="form-label">Operación</label><select id="accion" name="accion" class="form-select"><option data-permission="vender.venta" value="vender" @selected(old('accion', 'vender') === 'vender')>Venta liquidada</option><option data-permission="vender.apartado" value="apartar" @selected(old('accion') === 'apartar')>Apartado (pago posterior)</option></select></div>
         <div class="col-md-4 pago-directo"><label for="metodo" class="form-label">Método de pago recibido</label><select id="metodo" name="cMetodo" class="form-select">@foreach(['Efectivo', 'Transferencia', 'Tarjeta'] as $metodo)<option @selected(old('cMetodo') === $metodo)>{{ $metodo }}</option>@endforeach</select></div>
         <div class="col-md-4 pago-directo"><label for="referencia" class="form-label">Referencia</label><input id="referencia" name="cReferencia" maxlength="150" value="{{ old('cReferencia') }}" class="form-control"></div>
     </div><div class="vender-confirmacion mt-4 pt-3 border-top"><p class="text-muted mb-0 small" id="explicacion"></p><button id="guardarVenta" class="vender-guardar" @disabled($clientes->isEmpty() || $paquetes->isEmpty())><i class="fas fa-check" aria-hidden="true"></i><span id="guardarVentaTexto">Registrar venta liquidada</span></button></div></div>

@@ -1,450 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name', '') }} | Agencia de Viajes y Experiencias Inolvidables</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap 5 CSS -->
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $content['brand'] }} | Viajes y experiencias</title>
+    <meta name="description" content="{{ $content['hero_description'] }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome 6 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    @include('partials.select2-styles')
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #1e293b;
-            background-color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        /* Navbar Landing */
-        .navbar-landing {
-            background-color: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
-            padding: 1rem 0;
-            transition: all 0.3s ease;
-        }
-
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 1.5rem;
-            color: #ffffff !important;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-link {
-            color: #cbd5e1 !important;
-            font-weight: 500;
-            margin: 0 0.5rem;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: #60a5fa !important;
-        }
-
-        /* Hero Section */
-        .hero-section {
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%), 
-                        url('https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-            min-height: 85vh;
-            display: flex;
-            align-items: center;
-            color: #ffffff;
-            position: relative;
-            padding: 7rem 0 5rem;
-        }
-
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 800;
-            line-height: 1.15;
-            letter-spacing: -1px;
-            margin-bottom: 1.25rem;
-        }
-
-        .hero-title span {
-            background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtitle {
-            font-size: 1.2rem;
-            color: #94a3b8;
-            max-width: 600px;
-            margin-bottom: 2.5rem;
-        }
-
-        /* Search Box */
-        .search-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(16px);
-            border-radius: 1.5rem;
-            padding: 1.75rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
-            color: #1e293b;
-        }
-
-        .form-select, .form-control {
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
-            border: 1.5px solid #e2e8f0;
-            font-size: 0.95rem;
-        }
-
-        .form-select:focus, .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-        }
-
-        /* Destination Cards */
-        .card-destination {
-            border: none;
-            border-radius: 1.25rem;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-
-        .card-destination:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-        }
-
-        .card-img-wrapper {
-            position: relative;
-            height: 240px;
-            overflow: hidden;
-        }
-
-        .card-img-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-        .card-destination:hover .card-img-wrapper img {
-            transform: scale(1.08);
-        }
-
-        .badge-price {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            color: #ffffff;
-            font-weight: 700;
-            padding: 0.4rem 0.9rem;
-            border-radius: 2rem;
-            font-size: 0.9rem;
-        }
-
-        .badge-tag {
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            background: #2563eb;
-            color: #ffffff;
-            font-weight: 600;
-            padding: 0.3rem 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        /* Features Section */
-        .feature-box {
-            padding: 2rem;
-            border-radius: 1.25rem;
-            background: #f8fafc;
-            text-align: center;
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-
-        .feature-box:hover {
-            background: #ffffff;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            width: 70px;
-            height: 70px;
-            background: rgba(37, 99, 235, 0.1);
-            color: #2563eb;
-            border-radius: 1.25rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Footer Landing */
-        .footer-landing {
-            background-color: #0f172a;
-            color: #94a3b8;
-            padding: 4rem 0 2rem;
-        }
-
-        .footer-title {
-            color: #ffffff;
-            font-weight: 700;
-            margin-bottom: 1.25rem;
-        }
-    </style>
+    <link href="{{ asset('css/landing-module.css') }}?v={{ filemtime(public_path('css/landing-module.css')) }}" rel="stylesheet">
 </head>
 <body>
-
-    <!-- Header Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-landing fixed-top">
+    <nav class="navbar navbar-expand-lg landing-nav">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('landing') }}">
-                <i class="fas fa-paper-plane text-primary"></i>
-                <span>{{ config('app.name', '') }}</span>
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navLanding">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navLanding">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active" href="#inicio">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#destinos">Destinos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#nosotros">Por qué elegirnos</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
-                </ul>
-            </div>
+            <a class="navbar-brand landing-brand" href="{{ route('landing') }}"><img src="{{ $settings->logo_path ? route('landing.image', ['image' => 'logo', 'v' => $settings->updated_at?->timestamp]) : asset('img/logo.jpg') }}" alt="Logo de {{ $content['brand'] }}"><span>{{ $content['brand'] }}</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navLanding" aria-controls="navLanding" aria-expanded="false" aria-label="Abrir menú"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navLanding"><ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+                <li><a class="nav-link" href="#paquetes">Paquetes</a></li><li><a class="nav-link" href="{{ route('catalogo.publico.index') }}">Catálogo</a></li><li><a class="nav-link" href="#nosotros">Nuestra agencia</a></li><li><a class="nav-link" href="#contacto">Contacto</a></li>
+                <li><a class="landing-button compact" href="{{ $whatsappUrl ?? '#contacto' }}" @if($whatsappUrl) target="_blank" rel="noopener" @endif><i class="fas fa-comment-dots" aria-hidden="true"></i>Planea tu viaje</a></li>
+            </ul></div>
         </div>
     </nav>
-
-    <!-- Hero Section -->
-    <section class="hero-section" id="inicio">
-        <div class="container">
-            <div class="row align-items-center gy-5">
+    <main>
+        <section class="landing-hero" id="inicio">
+            <div class="container"><div class="row align-items-center g-5">
                 <div class="col-lg-6">
-                    <span class="badge bg-primary bg-opacity-20 text-info px-3 py-2 rounded-pill fw-semibold mb-3">
-                        <i class="fas fa-compass me-1"></i> La mejor agencia de viajes de México
-                    </span>
-                    <h1 class="hero-title">Explora el Mundo a <span>Tu Manera</span></h1>
-                    <p class="hero-subtitle">
-                        Descubre destinos fascinantes, paquetes todo incluido y experiencias inolvidables diseñadas para hacer tus sueños realidad.
-                    </p>
-                    <div class="d-flex gap-3">
-                        <a href="#destinos" class="btn btn-primary rounded-pill px-4 py-3 fw-bold">
-                            Ver Destinos <i class="fas fa-arrow-right ms-2"></i>
-                        </a>
-                        <a href="#contacto" class="btn btn-outline-light rounded-pill px-4 py-3 fw-bold">
-                            Cotizar Viaje
-                        </a>
-                    </div>
+                    <span class="landing-eyebrow"><i class="fas fa-compass me-2" aria-hidden="true"></i>{{ $content['hero_label'] }}</span>
+                    <h1>{{ $content['hero_title'] }}</h1><p>{{ $content['hero_description'] }}</p>
+                    <div class="d-flex flex-wrap gap-3"><a class="landing-button" href="{{ route('catalogo.publico.index') }}">{{ $content['hero_button'] }}<i class="fas fa-arrow-right" aria-hidden="true"></i></a><a class="landing-button secondary" href="{{ $whatsappUrl ?? '#contacto' }}" @if($whatsappUrl) target="_blank" rel="noopener" @endif>Hablar con un asesor<i class="fas fa-comment-dots" aria-hidden="true"></i></a></div>
+                    <div class="landing-hero-note"><i class="fas fa-paper-plane" aria-hidden="true"></i>El siguiente destino lo eliges tú.</div>
                 </div>
-
-                <!-- Buscador rápido -->
-                <div class="col-lg-6">
-                    <div class="search-card">
-                        <h4 class="fw-bold mb-3"><i class="fas fa-search-location text-primary me-2"></i>Encuentra tu próximo viaje</h4>
-                        <form onsubmit="event.preventDefault(); alert('Buscador disponible próximamente');">
-                            <div class="mb-3">
-                                <label class="form-label text-secondary small fw-semibold">Destino deseado</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                    <select class="form-select">
-                                        <option selected>Selecciona un destino...</option>
-                                        <option>Cancún & Riviera Maya</option>
-                                        <option>París, Francia</option>
-                                        <option>Tokio, Japón</option>
-                                        <option>Santorini, Grecia</option>
-                                        <option>Machu Picchu, Perú</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary small fw-semibold">Fecha de Salida</label>
-                                    <input type="date" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary small fw-semibold">Pasajeros</label>
-                                    <select class="form-select">
-                                        <option>1 Pasajero</option>
-                                        <option selected>2 Pasajeros</option>
-                                        <option>Family (3-5)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm">
-                                <i class="fas fa-plane-departure me-2"></i>Buscar Paquetes Disponibles
-                            </button>
-                        </form>
+                <div class="col-lg-6"><div class="landing-hero-visual">
+                    @php($slides = $settings->slides())
+                    @if(count($slides))
+                    <div id="portadaCarrusel" class="carousel slide" data-bs-interval="5000" aria-label="Imágenes de nuestros viajes">
+                        <div class="carousel-inner">
+                            @foreach($slides as $index => $slide)
+                            <div class="carousel-item {{ $loop->first ? 'active' : '' }}"><img src="{{ route('landing.image', ['image' => 'slide-'.$index, 'v' => $settings->updated_at?->timestamp]) }}" alt="Inspiración para tu próximo viaje {{ $index + 1 }}" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif></div>
+                            @endforeach
+                        </div>
+                        @if(count($slides) > 1)
+                        <div class="carousel-indicators">@foreach($slides as $index => $slide)<button type="button" data-bs-target="#portadaCarrusel" data-bs-slide-to="{{ $index }}" class="{{ $loop->first ? 'active' : '' }}" @if($loop->first) aria-current="true" @endif aria-label="Ver imagen {{ $index + 1 }}"></button>@endforeach</div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#portadaCarrusel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Imagen anterior</span></button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#portadaCarrusel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Imagen siguiente</span></button>
+                        <button type="button" id="portadaPausa" class="landing-carousel-pause" aria-label="Pausar carrusel" aria-pressed="false"><i class="fas fa-pause" aria-hidden="true"></i></button>
+                        @endif
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Destinos Destacados -->
-    <section class="py-5" id="destinos">
-        <div class="container py-4">
-            <div class="text-center max-width-600 mx-auto mb-5">
-                <span class="text-primary fw-bold text-uppercase tracking-wider small">Destinos Populares</span>
-                <h2 class="fw-bold fs-1 mt-1">Paquetes Más Solicitados</h2>
-                <p class="text-muted">Elige entre nuestros destinos preferidos por miles de viajeros.</p>
-            </div>
-
+                    @else
+                    <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80" alt="Inspiración para tu próximo viaje" fetchpriority="high">
+                    @endif
+                    <div class="landing-visual-caption"><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i></span><div><strong>Un nuevo lugar. Una nueva historia.</strong><small>Empieza a planear tu próxima experiencia.</small></div></div>
+                </div></div>
+            </div></div>
+        </section>
+        <section class="landing-section" id="paquetes"><div class="container">
+            <div class="landing-section-heading"><div><span class="landing-eyebrow">EXPLORA NUESTROS PAQUETES</span><h2>{{ $content['packages_title'] }}</h2><p>{{ $content['packages_description'] }}</p></div><a class="landing-text-link" href="{{ route('catalogo.publico.index') }}">Ver catálogo completo<i class="fas fa-arrow-right ms-2" aria-hidden="true"></i></a></div>
             <div class="row g-4">
-                <!-- Destino 1 -->
-                <div class="col-md-4">
-                    <div class="card card-destination">
-                        <div class="card-img-wrapper">
-                            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" alt="Cancún">
-                            <span class="badge-price">Desde $699 USD</span>
-                            <span class="badge-tag">Playa & Sol</span>
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-warning small"><i class="fas fa-star"></i> 4.9 (120 opiniones)</span>
-                                <span class="text-muted small"><i class="far fa-clock me-1"></i>5 Días / 4 Noches</span>
-                            </div>
-                            <h5 class="fw-bold">Cancún & Riviera Maya</h5>
-                            <p class="text-muted small">Playas turquesa, resorts todo incluido y cenotes mágicos.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Destino 2 -->
-                <div class="col-md-4">
-                    <div class="card card-destination">
-                        <div class="card-img-wrapper">
-                            <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80" alt="París">
-                            <span class="badge-price">Desde $1,299 USD</span>
-                            <span class="badge-tag">Romance & Cultura</span>
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-warning small"><i class="fas fa-star"></i> 5.0 (210 opiniones)</span>
-                                <span class="text-muted small"><i class="far fa-clock me-1"></i>7 Días / 6 Noches</span>
-                            </div>
-                            <h5 class="fw-bold">París, Francia</h5>
-                            <p class="text-muted small">Recorre la ciudad del amor, el Louvre y la emblemática Torre Eiffel.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Destino 3 -->
-                <div class="col-md-4">
-                    <div class="card card-destination">
-                        <div class="card-img-wrapper">
-                            <img src="https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80" alt="Tokio">
-                            <span class="badge-price">Desde $1,850 USD</span>
-                            <span class="badge-tag">Aventura & Futuro</span>
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-warning small"><i class="fas fa-star"></i> 4.9 (95 opiniones)</span>
-                                <span class="text-muted small"><i class="far fa-clock me-1"></i>10 Días / 9 Noches</span>
-                            </div>
-                            <h5 class="fw-bold">Tokio & Kioto, Japón</h5>
-                            <p class="text-muted small">Templos milenarios, cerezos en flor y tecnología futurista.</p>
-                        </div>
-                    </div>
-                </div>
+                @forelse($paquetes as $paquete)
+                    <div class="col-md-6 col-xl-4">@include('publico.partials.paquete-card')</div>
+                @empty
+                    <div class="col-12"><div class="landing-empty"><i class="fas fa-compass mb-3" aria-hidden="true"></i><h3>Tu próximo viaje está por comenzar</h3><p>Consulta con nuestro equipo las próximas opciones disponibles.</p><a class="landing-text-link" href="#contacto">Contactar a la agencia<i class="fas fa-arrow-right ms-2" aria-hidden="true"></i></a></div></div>
+                @endforelse
+            </div>
+        </div></section>
+        <section class="landing-about landing-section" id="nosotros"><div class="container">
+            <div class="row g-5 align-items-center"><div class="col-lg-5"><span class="landing-eyebrow">VIAJA CON {{ $content['brand'] }}</span><h2>{{ $content['about_title'] }}</h2><p>{{ $content['about_description'] }}</p></div>
+                <div class="col-lg-7"><div class="landing-benefits">@foreach($content['benefits'] as $benefit)<article><span><i class="fas {{ ['fa-headset', 'fa-compass', 'fa-shield-alt'][$loop->index] }}" aria-hidden="true"></i></span><div><h3>{{ $benefit['title'] }}</h3><p>{{ $benefit['description'] }}</p></div></article>@endforeach</div></div>
+            </div>
+        </div></section>
+        <section class="landing-section" id="contacto"><div class="container"><div class="landing-contact">
+            <div><span class="landing-eyebrow">ESTAMOS PARA AYUDARTE</span><h2>{{ $content['contact_title'] }}</h2><p>{{ $content['contact_description'] }}</p></div>
+            <div class="landing-contact-details">
+                @if($whatsappUrl)<a class="landing-button" href="{{ $whatsappUrl }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp" aria-hidden="true"></i>Escríbenos por WhatsApp</a>@endif
+                @if($content['phone'])<a href="tel:{{ preg_replace('/[^0-9+]/', '', $content['phone']) }}"><i class="fas fa-phone" aria-hidden="true"></i>{{ $content['phone'] }}</a>@endif
+                @if($content['email'])<a href="mailto:{{ $content['email'] }}"><i class="fas fa-envelope" aria-hidden="true"></i>{{ $content['email'] }}</a>@endif
+                @if($content['facebook'])<a href="{{ $content['facebook'] }}" target="_blank" rel="noopener"><i class="fab fa-facebook" aria-hidden="true"></i>Facebook</a>@endif
+                @if($content['instagram'])<a href="{{ $content['instagram'] }}" target="_blank" rel="noopener"><i class="fab fa-instagram" aria-hidden="true"></i>Instagram</a>@endif
+                @if($content['address'])<span><i class="fas fa-map-marker-alt" aria-hidden="true"></i>{{ $content['address'] }}</span>@endif
             </div>
         </div>
-    </section>
-
-    <!-- Por qué elegirnos -->
-    <section class="py-5 bg-light" id="nosotros">
-        <div class="container py-4">
-            <div class="text-center mb-5">
-                <span class="text-primary fw-bold text-uppercase tracking-wider small">Nuestra Promesa</span>
-                <h2 class="fw-bold fs-1 mt-1">¿Por qué viajar con {{ config('app.name', '') }}?</h2>
+        @if($content['maps_embed_url'] || $content['maps_url'])
+            <div class="landing-map mt-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><h3><i class="fas fa-map-marker-alt me-2" aria-hidden="true"></i>Visítanos</h3>@if($content['maps_url'])<a class="landing-text-link" href="{{ $content['maps_url'] }}" target="_blank" rel="noopener">Abrir en Google Maps<i class="fas fa-external-link-alt ms-2" aria-hidden="true"></i></a>@endif</div>
+                @if($content['maps_embed_url'])<iframe src="{{ $content['maps_embed_url'] }}" title="Ubicación de {{ $content['brand'] }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>@endif
             </div>
-
-            <div class="row g-4">
-                <div class="col-md-3">
-                    <div class="feature-box">
-                        <div class="feature-icon"><i class="fas fa-user-shield"></i></div>
-                        <h5 class="fw-bold mb-2">Viajes Seguros</h5>
-                        <p class="text-muted small mb-0">Seguro de viajero incluido y asistencia médica 24/7 en cualquier destino.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="feature-box">
-                        <div class="feature-icon"><i class="fas fa-tags"></i></div>
-                        <h5 class="fw-bold mb-2">Mejores Precios</h5>
-                        <p class="text-muted small mb-0">Garantizamos tarifas exclusivas en vuelos y hoteles 5 estrellas.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="feature-box">
-                        <div class="feature-icon"><i class="fas fa-headset"></i></div>
-                        <h5 class="fw-bold mb-2">Soporte 24/7</h5>
-                        <p class="text-muted small mb-0">Agentes de viajes dedicados antes, durante y después de tu itinerario.</p>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="feature-box">
-                        <div class="feature-icon"><i class="fas fa-credit-card"></i></div>
-                        <h5 class="fw-bold mb-2">Pagos Flexibles</h5>
-                        <p class="text-muted small mb-0">Reserva con enganche mínimo y paga a meses sin intereses.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer Landing -->
-    <footer class="footer-landing" id="contacto">
-        <div class="container">
-            <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                    <h5 class="footer-title d-flex align-items-center gap-2">
-                        <i class="fas fa-paper-plane text-primary"></i> {{ config('app.name', '') }}
-                    </h5>
-                    <p class="small">
-                        Tu agencia de viajes de confianza. Creamos itinerarios únicos para que vivas experiencias mágicas e inolvidables alrededor del mundo.
-                    </p>
-                </div>
-                <div class="col-md-6">
-                    <h5 class="footer-title">Contacto</h5>
-                    <ul class="list-unstyled small">
-                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2 text-primary"></i> Av. Reforma 123, Ciudad de México</li>
-                        <li class="mb-2"><i class="fas fa-phone me-2 text-primary"></i> +52 (55) 1234 5678</li>
-                        <li class="mb-2"><i class="fas fa-envelope me-2 text-primary"></i> contacto@deviaje.com</li>
-                    </ul>
-                </div>
-            </div>
-
-            <hr class="border-secondary my-4">
-            <div class="d-flex justify-content-between flex-wrap small">
-                <span>&copy; {{ date('Y') }} {{ config('app.name', '') }}. Todos los derechos reservados.</span>
-                <span>Desarrollado con Laravel 12 & Blade</span>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Bootstrap 5 Bundle JS -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    @include('partials.select2-scripts')
+        @endif
+        </div></section>
+    </main>
+    <footer class="landing-footer"><div class="container"><span>© {{ date('Y') }} {{ $content['brand'] }}. Todos los derechos reservados.</span></div></footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<script>
+const portada = document.getElementById('portadaCarrusel');
+const pausa = document.getElementById('portadaPausa');
+if (portada && pausa) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const carrusel = new bootstrap.Carousel(portada, {interval: 5000});
+    let paused = reducedMotion;
+    function actualizarPausa() {
+        pausa.setAttribute('aria-pressed', String(paused));
+        pausa.setAttribute('aria-label', paused ? 'Reanudar carrusel' : 'Pausar carrusel');
+        pausa.innerHTML = '<i class="fas ' + (paused ? 'fa-play' : 'fa-pause') + '" aria-hidden="true"></i>';
+        if (paused) carrusel.pause(); else carrusel.cycle();
+    }
+    actualizarPausa();
+    pausa.addEventListener('click', () => { paused = !paused; actualizarPausa(); });
+}
+</script>
+</body></html>

@@ -38,7 +38,10 @@ class FinanzasController extends Controller
             ->whereNull('m.anulado_at')->where('m.cMoneda', $moneda)->whereBetween('m.dFecha', [$desde, $hasta])
             ->selectRaw("m.iID as id, null as venta_id, m.dFecha as fecha, m.cTipo as tipo, 'Manual' as origen, m.cConcepto as concepto, m.cObservaciones as detalle, m.cMetodo as metodo, m.dImporte as importe, m.cMoneda as moneda, 1 as manual");
 
-        return DB::query()->fromSub($pagos->unionAll($manuales), 'movimientos');
+        $tipos = [];
+        if (auth()->user()->hasPermission('finanzas.ingresos')) $tipos[] = 'INGRESO';
+        if (auth()->user()->hasPermission('finanzas.egresos')) $tipos[] = 'EGRESO';
+        return DB::query()->fromSub($pagos->unionAll($manuales), 'movimientos')->whereIn('tipo', $tipos);
     }
 
     public function index(Request $request)

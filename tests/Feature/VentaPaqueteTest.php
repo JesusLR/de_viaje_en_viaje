@@ -26,7 +26,8 @@ class VentaPaqueteTest extends TestCase
             'cCodigo' => uniqid('TEST'), 'cNombre' => 'Paquete de prueba',
             'iIDCategoria' => $categoria->iID, 'iIDDestino' => $destino->iID,
             'dPrecioVenta' => 1000, 'cMoneda' => 'MXN', 'lActivo' => true,
-            'dFechaInicioVigencia' => today()->subDay(), 'dFechaFinVigencia' => today()->addMonth(),
+            'dFechaInicioVigencia' => today()->subDay(), 'dFechaFinVigencia' => today()->addDays(2),
+            'dFechaInicioViaje' => today()->addWeek(), 'dFechaFinViaje' => today()->addMonth(),
             'lTienePromocion' => true, 'lPromocionActiva' => true, 'cTipoDescuento' => 'PORCENTAJE',
             'dValorDescuento' => 10, 'dFechaInicioPromocion' => now()->subDay(), 'dFechaFinPromocion' => now()->addDay(),
         ]);
@@ -41,12 +42,12 @@ class VentaPaqueteTest extends TestCase
         $venta = VentaPaquete::latest('iID')->firstOrFail();
         $this->assertEquals('1800.00', $venta->dTotal);
         $detalle = $venta->detalles()->firstOrFail();
-        $this->assertEquals($paquete->dFechaInicioVigencia->toDateString(), $detalle->dFechaInicio->toDateString());
-        $this->assertEquals($paquete->dFechaFinVigencia->toDateString(), $detalle->dFechaFin->toDateString());
+        $this->assertEquals($paquete->dFechaInicioViaje->toDateString(), $detalle->dFechaInicio->toDateString());
+        $this->assertEquals($paquete->dFechaFinViaje->toDateString(), $detalle->dFechaFin->toDateString());
         $this->assertEquals('1000.00', $detalle->dPrecioRegular);
         $this->assertEquals('100.00', $detalle->dDescuentoUnitario);
         $this->assertEquals('Promoción vigente', $detalle->cPromocion);
-        $paquete->update(['dPrecioVenta' => 9999, 'dFechaFinVigencia' => today()->addYear(), 'cNombrePromocion' => 'Otra promoción', 'dFechaFinPromocion' => now()->subHour()]);
+        $paquete->update(['dPrecioVenta' => 9999, 'dFechaFinVigencia' => today()->addYear(), 'dFechaInicioViaje' => today()->addYear(), 'dFechaFinViaje' => today()->addYear()->addMonth(), 'cNombrePromocion' => 'Otra promoción', 'dFechaFinPromocion' => now()->subHour()]);
         $this->assertEquals('900.00', $venta->fresh()->dPrecioUnitario);
         $this->assertEquals('100.00', $detalle->fresh()->dDescuentoUnitario);
         $this->assertEquals('Promoción vigente', $detalle->fresh()->cPromocion);
@@ -241,7 +242,7 @@ class VentaPaqueteTest extends TestCase
         $this->post(route('agencia.ventas.store'), $data + ['dFechaInicio' => '2000-01-01', 'dDescuentoUnitario' => 500])->assertSessionHasNoErrors();
         $venta = VentaPaquete::latest('iID')->firstOrFail();
         $detalle = $venta->detalles()->firstOrFail();
-        $this->assertEquals($paquete->dFechaInicioVigencia->toDateString(), $detalle->dFechaInicio->toDateString());
+        $this->assertEquals($paquete->dFechaInicioViaje->toDateString(), $detalle->dFechaInicio->toDateString());
         $this->assertEquals('0.00', $detalle->dDescuentoUnitario);
         $this->assertNull($detalle->cPromocion);
         $this->get(route('agencia.ventas.show', $venta))->assertOk()->assertSee('Sin promoción')->assertSee($detalle->dFechaInicio->format('d/m/Y'))->assertSee($detalle->dFechaFin->format('d/m/Y'));

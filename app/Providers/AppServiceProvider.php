@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\View::composer(['layouts.app', 'auth.login'], function ($view) {
+            $view->with('logoAgenciaUrl', \App\Models\LandingSetting::current()->logoUrl());
+        });
+        foreach (\App\Models\Role::permissionKeys() as $permission) {
+            \Illuminate\Support\Facades\Gate::define($permission, fn (\App\Models\User $user) => $user->hasPermission($permission));
+        }
     }
 }

@@ -4,7 +4,7 @@
 <div class="apartados-panel">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas {{ $apartados ? 'fa-plane-departure' : 'fa-receipt' }}" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">{{ $apartados ? 'Apartados' : 'Ventas liquidadas' }}</h3><p class="text-muted mb-0 small">{{ $apartados ? 'Gestiona tus reservas y sigue el avance de sus pagos.' : 'Consulta tus ventas directas y apartados finalizados.' }}</p></div></div>
-        <a href="{{ route('agencia.vender.index') }}" class="apartado-icono nuevo-apartado" title="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}" aria-label="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}"><i class="fas fa-plus" aria-hidden="true"></i><span>{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}</span></a>
+        <a data-permission="vender.ver" href="{{ route('agencia.vender.index') }}" class="apartado-icono nuevo-apartado" title="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}" aria-label="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}"><i class="fas fa-plus" aria-hidden="true"></i><span>{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}</span></a>
     </div>
     @include('agencia.partials.avisos')
     <form method="GET" class="apartados-filtros mb-4">
@@ -35,7 +35,15 @@
                 $estadoClase = $venta->cancelada_at ? 'cancelado' : ($venta->saldo_centavos === 0 ? 'liquidado' : 'abierto');
             @endphp
             <tr>
-                <td><span class="apartado-folio">{{ $venta->folio }}</span><div class="apartado-nombre" title="{{ $venta->cNombre ?: $venta->cPaquete }}">{{ $venta->cNombre ?: $venta->cPaquete }}</div><small class="text-muted">{{ ($apartados ? $venta->created_at : $venta->finalizada_at)->format('d/m/Y') }} <span class="mx-1">·</span> {{ $venta->detalles->count() }} {{ $venta->detalles->count() === 1 ? 'paquete' : 'paquetes' }}</small></td>
+                <td><span class="apartado-folio">{{ $venta->folio }}</span><div class="apartado-nombre" title="{{ $venta->cNombre ?: $venta->cPaquete }}">{{ $venta->cNombre ?: $venta->cPaquete }}</div><small class="text-muted">{{ ($apartados ? $venta->created_at : $venta->finalizada_at)->format('d/m/Y') }} <span class="mx-1">·</span> {{ $venta->detalles->count() }} {{ $venta->detalles->count() === 1 ? 'paquete' : 'paquetes' }}</small>
+                    @php
+                        $fechasViajes = $venta->detalles->filter(fn ($detalle) => $detalle->dFechaInicio && $detalle->dFechaFin)
+                            ->map(fn ($detalle) => $detalle->dFechaInicio->format('d/m/Y').' — '.$detalle->dFechaFin->format('d/m/Y'))->unique()->values();
+                    @endphp
+                    @if($fechasViajes->isNotEmpty())
+                    <small class="d-block text-muted mt-1" title="{{ $fechasViajes->implode(' · ') }}"><i class="fas fa-calendar-alt me-1" aria-hidden="true"></i>{{ $fechasViajes->first() }}{{ $fechasViajes->count() > 1 ? ' · +'.($fechasViajes->count() - 1).' viajes' : '' }}</small>
+                    @endif
+                </td>
                 <td><span class="apartado-cliente">{{ $venta->cliente->nombre_completo }}</span></td>
                 <td class="apartado-importe text-end"><strong>{{ number_format($totalCentavos / 100, 2) }}</strong><small>{{ $venta->cMoneda }}</small></td>
                 <td class="apartado-importe text-end"><strong class="text-success">{{ number_format(($totalCentavos - $venta->saldo_centavos) / 100, 2) }}</strong><small>{{ $venta->cMoneda }}</small></td>
@@ -47,21 +55,21 @@
                 <td><span class="apartado-estado {{ $estadoClase }}"><span class="estado-punto" aria-hidden="true"></span>{{ $apartados ? $venta->estado_apartado : 'Liquidada' }}</span></td>
                 <td><div class="apartado-acciones">
                     @if(!$apartados && $venta->saldo_centavos === 0)
-                    <a href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF de {{ $venta->folio }}"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>
+                    <a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF de {{ $venta->folio }}"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>
                     @endif
                     @if($apartados || $venta->cTipoOperacion === 'APARTADO')
-                    <a href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF de {{ $venta->folio }}"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>
+                    <a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF de {{ $venta->folio }}"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>
                     @endif
                     @foreach(['detalle' => ['fa-receipt', 'Ver compra'], 'historial' => ['fa-clock-rotate-left', 'Historial de abonos'], 'abono' => ['fa-money-bill-wave', 'Registrar abono'], 'paquetes' => ['fa-box-open', 'Agregar paquetes'], 'nombre' => ['fa-pen', 'Cambiar nombre']] as $accion => [$icono, $titulo])
                         @if(!in_array($accion, ['abono', 'paquetes']) || (!$venta->cancelada_at && !$venta->finalizada_at && ($accion !== 'abono' || $venta->saldo_centavos > 0)))
-                            <button type="button" class="apartado-icono {{ $accion === 'abono' ? 'accion-abono' : '' }}" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => $accion]) }}" data-titulo="{{ $titulo }} · {{ $venta->folio }}" title="{{ $titulo }}" aria-label="{{ $titulo }} de {{ $venta->folio }}"><i class="fas {{ $icono }}" aria-hidden="true"></i></button>
+                            <button type="button" class="apartado-icono {{ $accion === 'abono' ? 'accion-abono' : '' }}" data-bs-toggle="modal" data-bs-target="#accionApartado" data-operation-module="{{ $venta->finalizada_at ? 'ventas' : 'apartados' }}" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => $accion]) }}" data-titulo="{{ $titulo }} · {{ $venta->folio }}" title="{{ $titulo }}" aria-label="{{ $titulo }} de {{ $venta->folio }}"><i class="fas {{ $icono }}" aria-hidden="true"></i></button>
                         @endif
                     @endforeach
                     @if(!$venta->cancelada_at && !$venta->finalizada_at)
                         @if($venta->saldo_centavos === 0)
-                            <form method="POST" action="{{ route('agencia.ventas.finalizar', $venta) }}" data-confirm="¿Finalizar este apartado liquidado?">@csrf<button class="apartado-icono accion-abono" title="Finalizar apartado" aria-label="Finalizar {{ $venta->folio }}"><i class="fas fa-check" aria-hidden="true"></i></button></form>
+                            <form data-permission="apartados.finalizar" method="POST" action="{{ route('agencia.ventas.finalizar', $venta) }}" data-confirm="¿Finalizar este apartado liquidado?">@csrf<button class="apartado-icono accion-abono" title="Finalizar apartado" aria-label="Finalizar {{ $venta->folio }}"><i class="fas fa-check" aria-hidden="true"></i></button></form>
                         @endif
-                        <form method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" data-confirm="¿Cancelar este apartado?" data-confirm-text="Los abonos recibidos se conservarán en finanzas.">@csrf<button class="apartado-icono accion-cancelar" title="Cancelar apartado" aria-label="Cancelar {{ $venta->folio }}"><i class="fas fa-ban" aria-hidden="true"></i></button></form>
+                        <form data-permission="apartados.cancelar" method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" data-confirm="¿Cancelar este apartado?" data-confirm-text="Los abonos recibidos se conservarán en finanzas.">@csrf<button class="apartado-icono accion-cancelar" title="Cancelar apartado" aria-label="Cancelar {{ $venta->folio }}"><i class="fas fa-ban" aria-hidden="true"></i></button></form>
                     @endif
                 </div></td>
             </tr>

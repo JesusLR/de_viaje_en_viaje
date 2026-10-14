@@ -15,6 +15,11 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $proximosViajes = ServicioTuristico::with('destino')->where('lActivo', true)
+            ->whereNotNull('dFechaFinViaje')
+            ->whereDate('dFechaInicioViaje', '>=', today())
+            ->whereColumn('dFechaFinViaje', '>=', 'dFechaInicioViaje')
+            ->orderBy('dFechaInicioViaje')->orderBy('iID')->limit(5)->get();
         $desde = today()->startOfMonth();
         $hasta = $desde->copy()->addMonth();
         $mes = $desde->locale('es')->translatedFormat('F Y');
@@ -42,6 +47,18 @@ class DashboardController extends Controller
         $fechaDesde = $desde->toDateString();
         $fechaHasta = $hasta->copy()->subDay()->toDateString();
         $desdeApartados = substr(VentaPaquete::where('cTipoOperacion', 'APARTADO')->min('created_at') ?? $fechaDesde, 0, 10);
-        return view('dashboard.index', compact('user', 'mes', 'serviciosMes', 'serviciosActivosMes', 'apartadosAbiertos', 'finanzas', 'fechaDesde', 'fechaHasta', 'desdeApartados'));
+        if (!$user->hasPermission('dashboard.finanzas')) $finanzas = collect();
+        else $finanzas = $finanzas->map(function ($importes) use ($user) {
+            if (!$user->hasPermission('dashboard.ingresos')) $importes['ingresos'] = 0;
+            if (!$user->hasPermission('dashboard.origen')) foreach (['ventas', 'abonos', 'manuales'] as $field) $importes[$field] = 0;
+            if (!$user->hasPermission('dashboard.egresos')) $importes['egresos'] = 0;
+            if (!$user->hasPermission('dashboard.ingresos') || !$user->hasPermission('dashboard.egresos')) $importes['balance'] = 0;
+            return $importes;
+        });
+        if (!$user->hasPermission('dashboard.apartados')) $apartadosAbiertos = 0;
+        elseif (!$user->hasPermission('apartados.todos')) $apartadosAbiertos = VentaPaquete::where('iIDUsuario', $user->id)->where('cTipoOperacion', 'APARTADO')->whereNull('cancelada_at')->whereNull('finalizada_at')->whereRaw('dTotal > (select coalesce(sum(dImporte), 0) from pagos_ventas where pagos_ventas.iIDVenta = ventas_paquetes.iID and anulado_at is null)')->count();
+        if (!$user->hasPermission('dashboard.servicios')) $serviciosMes = $serviciosActivosMes = 0;
+        if (!$user->hasPermission('dashboard.viajes')) $proximosViajes = collect();
+        return view('dashboard.index', compact('user', 'mes', 'serviciosMes', 'serviciosActivosMes', 'apartadosAbiertos', 'finanzas', 'fechaDesde', 'fechaHasta', 'desdeApartados', 'proximosViajes'));
     }
 }
