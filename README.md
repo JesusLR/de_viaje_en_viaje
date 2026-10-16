@@ -2,6 +2,8 @@
 
 Sistema web monolítico integral diseñado para la administración y comercialización de servicios turísticos, paquetes vacacionales, tours, excursiones y viajes nacionales e internacionales.
 
+Instalación en servidor con Docker: [guía de instalación y respaldos](docs/DOCKER.md).
+
 ---
 
 ## 🏛️ Arquitectura del Sistema

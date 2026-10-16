@@ -1,0 +1,57 @@
+name: de-viaje
+services:
+  app:
+    image: de-viaje-app:local
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      APP_KEY: ${APP_KEY:?Configura APP_KEY en .env.docker}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_CONNECTION: mysql
+    ports:
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8080}:80"
+    volumes:
+      - archivos:/var/www/html/storage/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1/up') === false ? 1 : 0);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-de_viaje}
+      MYSQL_USER: ${DB_USERNAME:-agencia}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Configura DB_PASSWORD en .env.docker}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Configura DB_ROOT_PASSWORD en .env.docker}
+    volumes:
+      - base_datos:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --user=\"$$MYSQL_USER\" --database=\"$$MYSQL_DATABASE\" --execute='SELECT 1' --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  base_datos:
+  archivos:
