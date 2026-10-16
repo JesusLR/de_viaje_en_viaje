@@ -368,6 +368,34 @@ class ServicioTuristicoTest extends TestCase
     }
 
     /** 14. Carga y simulación de imágenes */
+    public function test_editar_galeria_conserva_agrega_y_elimina_solo_imagenes_propias(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->user);
+        $datos = ['cNombre' => 'Galería '.uniqid(), 'dPrecioCompra' => 100, 'dPrecioVenta' => 200, 'lUsaVigencia' => 0];
+        $respuesta = $this->postJson(route('servicios.paquetes.saveData'), $datos + ['cGaleriaFiles' => [UploadedFile::fake()->image('uno.jpg')]])->assertOk()->assertJson(['lSuccess' => true]);
+        $servicio = ServicioTuristico::findOrFail($respuesta->json('cData.iID'));
+        $original = $servicio->imagenes()->firstOrFail();
+        $datos['iID'] = $servicio->iID;
+        $this->postJson(route('servicios.paquetes.saveData'), $datos)->assertOk();
+        $this->assertSame(1, $servicio->imagenes()->count());
+        $this->postJson(route('servicios.paquetes.saveData'), $datos + ['cGaleriaFiles' => [UploadedFile::fake()->image('dos.jpg')]])->assertOk();
+        $this->assertSame(2, $servicio->imagenes()->count());
+        $otro = $servicio->replicate();
+        $otro->cCodigo = 'GAL-'.uniqid();
+        $otro->save();
+        $ajena = $otro->imagenes()->create(['cRutaImagen' => 'public/servicios/galeria/ajena.jpg', 'iOrden' => 0]);
+        $this->postJson(route('servicios.paquetes.saveData'), $datos + ['imagenesEliminar' => [$ajena->iID]])->assertStatus(422);
+        $this->assertSame(2, $servicio->imagenes()->count());
+        $this->postJson(route('servicios.paquetes.saveData'), $datos + ['imagenesEliminar' => [$original->iID], 'cGaleriaFiles' => [UploadedFile::fake()->image('tres.jpg')]])->assertOk();
+        $this->assertSame(2, $servicio->imagenes()->count());
+        $this->assertDatabaseMissing('servicio_imagenes', ['iID' => $original->iID]);
+        Storage::disk('public')->assertMissing(str_replace('public/', '', $original->cRutaImagen));
+        $this->assertDatabaseHas('servicio_imagenes', ['iID' => $ajena->iID]);
+        $this->postJson(route('servicios.paquetes.saveData'), $datos + ['cGaleriaFiles' => [UploadedFile::fake()->create('archivo.pdf')]])->assertStatus(422);
+        $this->assertSame(2, $servicio->imagenes()->count());
+    }
+
     public function test_carga_de_imagenes(): void
     {
         Storage::fake('public');

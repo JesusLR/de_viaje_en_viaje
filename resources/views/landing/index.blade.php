@@ -9,8 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/landing-module.css') }}?v={{ filemtime(public_path('css/landing-module.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/viajes-inmersivo.css') }}?v={{ filemtime(public_path('css/viajes-inmersivo.css')) }}" rel="stylesheet">
 </head>
-<body>
+<body class="viajes-landing">
     <nav class="navbar navbar-expand-lg landing-nav">
         <div class="container">
             <a class="navbar-brand landing-brand" href="{{ route('landing') }}"><img src="{{ $settings->logo_path ? route('landing.image', ['image' => 'logo', 'v' => $settings->updated_at?->timestamp]) : asset('img/logo.jpg') }}" alt="Logo de {{ $content['brand'] }}"><span>{{ $content['brand'] }}</span></a>
@@ -28,7 +29,7 @@
                     <span class="landing-eyebrow"><i class="fas fa-compass me-2" aria-hidden="true"></i>{{ $content['hero_label'] }}</span>
                     <h1>{{ $content['hero_title'] }}</h1><p>{{ $content['hero_description'] }}</p>
                     <div class="d-flex flex-wrap gap-3"><a class="landing-button" href="{{ route('catalogo.publico.index') }}">{{ $content['hero_button'] }}<i class="fas fa-arrow-right" aria-hidden="true"></i></a><a class="landing-button secondary" href="{{ $whatsappUrl ?? '#contacto' }}" @if($whatsappUrl) target="_blank" rel="noopener" @endif>Hablar con un asesor<i class="fas fa-comment-dots" aria-hidden="true"></i></a></div>
-                    <div class="landing-hero-note"><i class="fas fa-paper-plane" aria-hidden="true"></i>El siguiente destino lo eliges tú.</div>
+                    <a class="landing-hero-note" href="#paquetes"><span>Descubre nuestros viajes</span><i class="fas fa-arrow-down" aria-hidden="true"></i></a>
                 </div>
                 <div class="col-lg-6"><div class="landing-hero-visual">
                     @php($slides = $settings->slides())
@@ -47,7 +48,7 @@
                         @endif
                     </div>
                     @else
-                    <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80" alt="Inspiración para tu próximo viaje" fetchpriority="high">
+                    <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=2000&q=85" alt="Inspiración para tu próximo viaje" fetchpriority="high">
                     @endif
                     <div class="landing-visual-caption"><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i></span><div><strong>Un nuevo lugar. Una nueva historia.</strong><small>Empieza a planear tu próxima experiencia.</small></div></div>
                 </div></div>
@@ -89,6 +90,7 @@
     </main>
     <footer class="landing-footer"><div class="container"><span>© {{ date('Y') }} {{ $content['brand'] }}. Todos los derechos reservados.</span></div></footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/viajes-publico.js') }}?v={{ filemtime(public_path('js/viajes-publico.js')) }}" defer></script>
 <script>
 const portada = document.getElementById('portadaCarrusel');
 const pausa = document.getElementById('portadaPausa');

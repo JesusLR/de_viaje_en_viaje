@@ -1,0 +1,73 @@
+/* Photographs lead the public travel pages. */
+.viajes-landing .landing-nav{position:absolute;left:0;right:0;background:transparent;backdrop-filter:none;border:0;padding:24px 0;z-index:10}
+.viajes-landing .landing-brand,.viajes-landing .landing-nav .nav-link{color:#fff;text-shadow:0 1px 12px #0006}
+.viajes-landing .landing-brand img{background:#fff;border-radius:50%}
+.viajes-landing .landing-nav .landing-button{background:#ffffff16;border-color:#ffffff70;box-shadow:none;backdrop-filter:blur(10px)}
+.viajes-landing .landing-nav .navbar-toggler{background:#ffffffdf}
+.viajes-landing .landing-hero{min-height:760px;height:100svh;max-height:1050px;padding:150px 0 100px;display:flex;align-items:center;background:#25324b;isolation:isolate}
+.viajes-landing .landing-hero>.container{position:static}
+.viajes-landing .landing-hero .row{--bs-gutter-x:0;--bs-gutter-y:0;margin:0}
+.viajes-landing .landing-hero .row>.col-lg-6:first-child{position:relative;z-index:2;width:100%;max-width:850px;padding:0}
+.viajes-landing .landing-hero .row>.col-lg-6:last-child{position:absolute;inset:0;padding:0;width:100%;z-index:0}
+.viajes-landing .landing-hero:before,.viajes-landing .landing-hero:after{display:none}
+.viajes-landing .landing-hero-visual{position:absolute;inset:0;margin:0;padding:0;border:0;border-radius:0;transform:none;background:none}
+.viajes-landing .landing-hero-visual:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#25324bb3 0%,#25324b70 55%,#25324b1a),linear-gradient(0deg,#25324b55,transparent 45%);pointer-events:none;z-index:1}
+.viajes-landing .landing-hero-visual>img,.viajes-landing .landing-hero-visual .carousel,.viajes-landing .landing-hero-visual .carousel-inner,.viajes-landing .landing-hero-visual .carousel-item,.viajes-landing .landing-hero-visual .carousel-item img{width:100%;height:100%;border-radius:0;object-fit:cover;box-shadow:none}
+.viajes-landing .landing-hero .landing-eyebrow{font-size:12px;letter-spacing:3px;color:#fff;margin-bottom:25px}
+.viajes-landing .landing-hero h1{font-size:clamp(48px,6.7vw,90px);line-height:1.04;letter-spacing:-4px;max-width:850px;text-shadow:0 3px 25px #0002;margin-bottom:25px}
+.viajes-landing .landing-hero p{font-size:16px;color:#ffffffe0;max-width:550px;line-height:1.7;margin-bottom:32px}
+.viajes-landing .landing-hero .landing-button{background:#536fe8;border-color:#536fe8;color:#fff;padding:18px 28px}
+.viajes-landing .landing-hero .landing-button:hover{background:#405cd2;border-color:#405cd2;color:#fff}
+.viajes-landing .landing-hero .landing-button.secondary{background:transparent;border-color:#ffffff70;color:#fff;backdrop-filter:blur(8px)}
+.viajes-landing .landing-hero-note{display:inline-flex;color:#fff;gap:25px;margin-top:45px;font-size:11px;text-transform:uppercase;letter-spacing:2px}
+.viajes-landing .landing-hero-note i{color:#fff;animation:viajes-down 2s ease-in-out infinite}
+.viajes-landing .landing-visual-caption{display:none}
+.viajes-landing .landing-hero-visual .carousel-indicators{z-index:3;justify-content:flex-end;margin:0 7% 35px}
+.viajes-landing .landing-hero-visual .carousel-control-prev,.viajes-landing .landing-hero-visual .carousel-control-next{top:auto;bottom:75px;width:44px;height:44px;border:1px solid #ffffff80;border-radius:50%;z-index:4;opacity:1}
+.viajes-landing .landing-hero-visual .carousel-control-prev{left:auto;right:calc(7% + 60px)}
+.viajes-landing .landing-hero-visual .carousel-control-next{right:7%}
+.viajes-landing .landing-carousel-pause{z-index:4;top:auto;bottom:75px;right:calc(7% + 120px);border-radius:50%;height:44px;width:44px}
+.landing-section{padding:75px 0}.landing-section-heading p{max-width:500px}.landing-section-heading h2{max-width:650px}
+.landing-package{position:relative;border:0;border-radius:22px;overflow:hidden;min-height:480px;color:#fff;box-shadow:0 12px 35px #25324b20;isolation:isolate;background:#25324b}
+.landing-package-image{position:absolute;inset:0;height:100%;z-index:-2}
+.landing-package-image:after{background:linear-gradient(0deg,#25324bf5 0%,#25324b99 36%,#25324b00 80%)}
+.landing-package-image>img{height:100%;width:100%;object-fit:cover}
+.landing-package-placeholder{justify-content:flex-start;padding-top:100px;background:radial-gradient(ellipse at 10% 0%,#879bef,transparent 60%),linear-gradient(150deg,#536fe8,#25324b)}
+.landing-package-placeholder>i{font-size:80px;opacity:.7;color:#edf1ff}
+.landing-package-placeholder>span:not(.viajes-placeholder-label){display:none}
+.landing-package-body{justify-content:flex-end;flex:1;padding:28px;pointer-events:none}
+.landing-package-body a{pointer-events:auto}
+.landing-package-location{color:#fff;font-size:11px;letter-spacing:1px;margin-bottom:10px}
+.landing-package h3{font-size:25px;line-height:1.2;margin-bottom:12px;font-weight:750;text-shadow:0 1px 10px #0002}
+.landing-package h3 a:hover{color:#cbd6ff}
+.landing-package p{display:none}
+.landing-package-dates{padding:0;background:none;color:#d1dfe7;font-size:11px;margin-bottom:15px}
+.landing-package-bottom{border-top:1px solid #ffffff30;margin-top:0;padding-top:15px}
+.landing-package-bottom strong{color:#fff;font-size:27px}
+.landing-package-bottom div>small,.landing-package-bottom strong small,.landing-package-bottom del{color:#d1dfe7}
+.landing-package-link{background:#fff;color:#25324b;border-radius:50%}
+.landing-discount{color:#cbd6ff;font-size:10px}
+.landing-promo{background:#fff;color:#4464df;top:22px;left:22px;font-size:10px}
+.landing-benefits article{box-shadow:none;background:transparent;border-bottom:1px solid #e8edf4;border-radius:0;padding:20px 0}
+.catalogo-cabecera{padding:58px 0 70px;min-height:300px}.catalogo-cabecera h1{font-size:clamp(38px,4.5vw,58px)}
+.catalogo-cabecera p,.catalogo-portada-nota{display:none}
+.catalogo-filtros{padding:20px 24px;border-radius:18px;margin-bottom:30px!important}
+.catalogo-mas-filtros{margin-top:15px;border-top:1px solid #e8edf4;padding-top:14px}
+.catalogo-mas-filtros summary{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:650;color:#64748b;cursor:pointer;list-style:none;width:fit-content}
+.catalogo-mas-filtros summary::-webkit-details-marker{display:none}
+.catalogo-mas-filtros[open] summary .fa-chevron-down{transform:rotate(180deg)}
+.catalogo-filtros>.d-flex:last-child{margin-top:14px!important;padding-top:14px!important}
+.catalogo-total{font-size:12px}
+@keyframes viajes-down{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+@media(min-width:1200px){.landing-package{min-height:510px}}
+@media(max-width:991px){.viajes-landing .landing-nav .navbar-collapse{background:#25324bf5;border-radius:18px;padding:18px;margin-top:15px}.viajes-landing .landing-hero{min-height:700px;max-height:none}.viajes-landing .landing-hero h1{letter-spacing:-2px}.landing-package{min-height:460px}}
+@media(max-width:575px){.viajes-landing .landing-nav{padding:15px 0}.viajes-landing .landing-hero{height:90svh;min-height:650px;padding:130px 0 110px}.viajes-landing .landing-hero h1{font-size:48px;letter-spacing:-2px}.viajes-landing .landing-hero p{font-size:14px;max-width:330px}.viajes-landing .landing-hero .landing-eyebrow{font-size:10px;letter-spacing:1.5px}.viajes-landing .landing-hero .landing-button{padding:14px 20px;font-size:12px}.viajes-landing .landing-hero-note{margin-top:25px}.landing-package{min-height:460px}.landing-package h3{font-size:25px}.catalogo-cabecera{min-height:250px;padding:40px 0 60px}.catalogo-filtros{padding:18px}.landing-section{padding:50px 0}}
+@media(prefers-reduced-motion:reduce){.viajes-landing .landing-hero-note i{animation:none}}
+/* Additional photographs: full image, thumbnail strip and enlarged view. */
+.experiencia-contador{font-size:12px;color:#78869b;font-variant-numeric:tabular-nums;white-space:nowrap}.experiencia-escenario{position:relative;background:linear-gradient(135deg,#edf1ff,#f8fafc);border:1px solid #e8edf4;border-radius:22px;overflow:hidden}.experiencia-escenario>img{display:block;width:100%;height:480px;object-fit:contain;padding:18px}.experiencia-control{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:#ffffffed;color:#536fe8;border:1px solid #e8edf4;box-shadow:0 4px 18px #25324b16;display:grid;place-items:center}.experiencia-control.anterior{left:14px}.experiencia-control.siguiente{right:14px}.experiencia-ampliar{position:absolute;right:18px;bottom:18px;border:0;border-radius:12px;padding:11px 15px;background:#536fe8;color:#fff;font-size:12px;display:flex;align-items:center;gap:9px;box-shadow:0 5px 20px #25324b20}.experiencia-ampliar:hover{background:#405cd2}.experiencia-miniaturas{display:flex;gap:12px;overflow-x:auto;padding:14px 3px 8px;position:relative;scrollbar-width:thin;scrollbar-color:#cbd6ff transparent}.experiencia-miniatura{flex:0 0 100px;height:78px;padding:4px;background:#fff;border:2px solid transparent;border-radius:13px;opacity:.7;transition:opacity .2s,border-color .2s}.experiencia-miniatura.activa{opacity:1;border-color:#536fe8}.experiencia-miniatura:hover{opacity:1}.experiencia-miniatura img{width:100%;height:100%;object-fit:contain;border-radius:8px;background:#f8fafc}.experiencia-modal .modal-content{border:0;border-radius:20px;overflow:hidden;background:#f8fafc}.experiencia-modal .modal-header{padding:16px 22px;border-color:#e8edf4;background:#fff;gap:15px}.experiencia-modal .modal-title{font-size:16px;font-weight:650;color:#25324b}.experiencia-cerrar{flex-shrink:0;width:36px;height:36px;border:0;border-radius:10px;color:#64748b;background:#edf1ff}.experiencia-modal .modal-body{padding:12px}.experiencia-modal .modal-body img{display:block;width:100%;height:65svh;object-fit:contain}.experiencia-modal .modal-footer{justify-content:space-between;border-color:#e8edf4;background:#fff;font-size:12px;color:#78869b}@media(max-width:575px){.experiencia-escenario>img{height:350px;padding:10px}.experiencia-miniatura{flex-basis:80px;height:65px}.experiencia-control{width:35px;height:35px}.experiencia-control.anterior{left:8px}.experiencia-control.siguiente{right:8px}.experiencia-ampliar{bottom:12px;right:12px;padding:10px 12px}.experiencia-modal .modal-body img{height:60svh}}
+.experiencia-cerrar{margin-left:auto}
+.experiencia-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0;overflow:visible}.experiencia-grid .experiencia-miniatura{position:relative;height:150px;width:100%;padding:0;border:0;border-radius:14px;overflow:hidden;opacity:1;background:#edf1ff}.experiencia-grid .experiencia-miniatura img{object-fit:cover;border-radius:14px}.experiencia-grid-ampliar{position:absolute;right:10px;bottom:10px;width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#ffffffed;color:#536fe8;font-size:12px;box-shadow:0 2px 10px #25324b15}@media(max-width:575px){.experiencia-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.experiencia-grid .experiencia-miniatura{height:125px}}
+/* Compact landing cover: text alongside the configured carousel. */
+.viajes-landing .landing-nav{position:sticky;top:0;background:#fffffff5;backdrop-filter:blur(14px);padding:12px 0;border-bottom:1px solid #e8edf4}.viajes-landing .landing-brand,.viajes-landing .landing-nav .nav-link{color:#25324b;text-shadow:none}.viajes-landing .landing-nav .landing-button{background:#536fe8;border-color:#536fe8;color:#fff}.viajes-landing .landing-nav .landing-button:hover{background:#405cd2}.viajes-landing .landing-hero{height:auto;min-height:0;max-height:none;padding:55px 0 65px;background:linear-gradient(125deg,#f8faff,#edf1ff);color:#25324b;display:block}.viajes-landing .landing-hero .row{--bs-gutter-x:3rem;--bs-gutter-y:2rem;margin-top:calc(-1 * var(--bs-gutter-y));margin-right:calc(-.5 * var(--bs-gutter-x));margin-left:calc(-.5 * var(--bs-gutter-x))}.viajes-landing .landing-hero .row>.col-lg-6:first-child,.viajes-landing .landing-hero .row>.col-lg-6:last-child{position:static;inset:auto;width:50%;max-width:none;z-index:auto;padding-right:calc(.5 * var(--bs-gutter-x));padding-left:calc(.5 * var(--bs-gutter-x))}.viajes-landing .landing-hero-visual{position:relative;inset:auto;transform:none;padding:0;margin:0;border:0;border-radius:24px;overflow:hidden;box-shadow:0 15px 35px #25324b14}.viajes-landing .landing-hero-visual:after{display:none}.viajes-landing .landing-hero-visual>img,.viajes-landing .landing-hero-visual .carousel-item img{height:360px;object-fit:cover;border-radius:0}.viajes-landing .landing-hero-visual .carousel,.viajes-landing .landing-hero-visual .carousel-inner,.viajes-landing .landing-hero-visual .carousel-item{height:auto}.viajes-landing .landing-hero h1{font-size:clamp(36px,4.2vw,56px);letter-spacing:-2px;text-shadow:none;line-height:1.12;margin-bottom:20px}.viajes-landing .landing-hero p{font-size:14px;color:#78869b;line-height:1.8;margin-bottom:25px}.viajes-landing .landing-hero .landing-eyebrow{color:#536fe8;font-size:11px;letter-spacing:1.5px;margin-bottom:18px}.viajes-landing .landing-hero .landing-button{padding:15px 20px}.viajes-landing .landing-hero .landing-button.secondary{background:#fff;border-color:#e0e6ef;color:#25324b}.viajes-landing .landing-hero-note{color:#64748b;margin-top:25px;letter-spacing:1px;font-size:10px}.viajes-landing .landing-hero-note i{color:#536fe8}.viajes-landing .landing-hero-visual .carousel-indicators{justify-content:center;margin:0 15% 15px}.viajes-landing .landing-hero-visual .carousel-control-prev,.viajes-landing .landing-hero-visual .carousel-control-next{top:50%;bottom:auto;transform:translateY(-50%);height:36px;width:36px;background:#25324b55;border-color:#ffffff60}.viajes-landing .landing-hero-visual .carousel-control-prev{left:12px;right:auto}.viajes-landing .landing-hero-visual .carousel-control-next{right:12px}.viajes-landing .landing-carousel-pause{top:14px;bottom:auto;right:14px;width:32px;height:32px;background:#ffffffe0;color:#536fe8}.viajes-landing .landing-nav .navbar-collapse{background:transparent}
+@media(max-width:991px){.viajes-landing .landing-hero{padding:35px 0 45px}.viajes-landing .landing-hero .row>.col-lg-6:first-child,.viajes-landing .landing-hero .row>.col-lg-6:last-child{width:100%}.viajes-landing .landing-hero-visual>img,.viajes-landing .landing-hero-visual .carousel-item img{height:300px}.viajes-landing .landing-nav .navbar-collapse{padding:18px 0 0;margin:0}.viajes-landing .landing-hero h1{max-width:620px}}
+@media(max-width:575px){.viajes-landing .landing-hero-visual>img,.viajes-landing .landing-hero-visual .carousel-item img{height:240px}.viajes-landing .landing-hero h1{font-size:36px;letter-spacing:-1px}.viajes-landing .landing-hero p{max-width:none}.viajes-landing .landing-hero .landing-button{padding:13px 16px}}

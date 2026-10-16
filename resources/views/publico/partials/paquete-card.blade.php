@@ -3,7 +3,7 @@
         @if($paquete->cImagenPrincipal)
             <img src="{{ asset(str_replace('public/', 'storage/', $paquete->cImagenPrincipal)) }}" alt="{{ $paquete->cNombre }}" loading="lazy">
         @else
-            <div class="landing-package-placeholder"><i class="fas fa-plane-departure" aria-hidden="true"></i><span>{{ $paquete->destino?->cNombre ?? 'Tu próxima aventura' }}</span></div>
+            <div class="landing-package-placeholder"><span class="viajes-placeholder-label">EXPLORA · DESCUBRE · VIAJA</span><i class="fas fa-plane-departure" aria-hidden="true"></i><span>{{ $paquete->destino?->cNombre ?? 'Tu próxima aventura' }}</span></div>
         @endif
         @if($paquete->l_promocion_vigente)
             <span class="landing-promo"><i class="fas fa-tag me-1" aria-hidden="true"></i>{{ $paquete->cNombrePromocion ?: 'Promoción' }}</span>

@@ -12,6 +12,7 @@
     @include('partials.select2-styles')
     <link href="{{ asset('css/landing-module.css') }}?v={{ filemtime(public_path('css/landing-module.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/catalogo-publico.css') }}?v={{ filemtime(public_path('css/catalogo-publico.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/viajes-inmersivo.css') }}?v={{ filemtime(public_path('css/viajes-inmersivo.css')) }}" rel="stylesheet">
 </head>
 <body class="catalogo-publico">
     <nav class="navbar navbar-expand-lg landing-nav"><div class="container">
@@ -32,5 +33,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('agencia.partials.avisos')
     @stack('scripts')
+    <script src="{{ asset('js/viajes-publico.js') }}?v={{ filemtime(public_path('js/viajes-publico.js')) }}" defer></script>
 </body>
 </html>

@@ -322,7 +322,9 @@
                                     <div class="col-md-6">
                                         <label for="cGaleriaFiles" class="form-label fw-semibold">Galería de Imágenes Adicionales</label>
                                         <input type="file" class="form-control" id="cGaleriaFiles" name="cGaleriaFiles[]" multiple accept="image/jpeg,image/png,image/webp">
-                                        <div class="form-text">Puedes seleccionar múltiples archivos para la galería.</div>
+                                        <div class="form-text">Selecciona solo imágenes nuevas. Las existentes se conservan; las eliminaciones se aplican al guardar.</div>
+                                        <div id="galeriaExistenteContainer" class="d-flex flex-wrap gap-2 mt-2"></div>
+                                        <div id="galeriaEliminaciones"></div>
                                         <div id="galeriaPreviewContainer" class="d-flex flex-wrap gap-2 mt-2"></div>
                                     </div>
                                 </div>

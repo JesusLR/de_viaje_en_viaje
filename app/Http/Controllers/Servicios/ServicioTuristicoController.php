@@ -219,6 +219,10 @@ class ServicioTuristicoController extends Controller
                 'dFechaInicioVigencia' => 'exclude_if:lUsaVigencia,false|required|date',
                 'dFechaFinVigencia'    => 'exclude_if:lUsaVigencia,false|required|date|after_or_equal:dFechaInicioVigencia',
                 'cImagenFile'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'cGaleriaFiles' => 'nullable|array',
+                'cGaleriaFiles.*' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'imagenesEliminar' => 'nullable|array',
+                'imagenesEliminar.*' => ['integer', 'distinct', \Illuminate\Validation\Rule::exists('servicio_imagenes', 'iID')->where('iIDServicio', $iID)],
             ], [
                 'cNombre.required'                  => 'El nombre del servicio es obligatorio.',
                 'iIDCategoria.required'             => 'Debe seleccionar una categoría turística.',
@@ -313,14 +317,21 @@ class ServicioTuristicoController extends Controller
                 $cMensaje = "Servicio turístico {$oServ->cCodigo} actualizado correctamente.";
             }
 
-            // Carga de Galería Adicional de Imágenes si existen
+            // Solo elimina imágenes que pertenecen al servicio editado.
+            foreach ($oServ->imagenes()->whereIn('iID', $request->input('imagenesEliminar', []))->get() as $imagen) {
+                $imagen->delete();
+                $this->service->eliminarImagen($imagen->cRutaImagen);
+            }
+
+            // Las imágenes existentes no se vuelven a enviar como archivos.
             if ($request->hasFile('cGaleriaFiles')) {
+                $orden = (int) $oServ->imagenes()->max('iOrden') + 1;
                 foreach ($request->file('cGaleriaFiles') as $key => $fileImg) {
                     $cRutaGaleria = $this->service->guardarImagen($fileImg, 'servicios/galeria');
                     ServicioImagen::create([
                         'iIDServicio' => $oServ->iID,
                         'cRutaImagen' => $cRutaGaleria,
-                        'iOrden'      => $key,
+                        'iOrden'      => $orden + $key,
                     ]);
                 }
             }

@@ -304,6 +304,18 @@ $(document).ready(function () {
     });
 
     // Previsualización de Galería de Imágenes
+    $('#galeriaExistenteContainer').on('click', '.eliminar-imagen-galeria', function () {
+        const card = $(this).closest('[data-imagen-id]');
+        Swal.fire({
+            icon: 'warning', title: '¿Eliminar esta imagen?',
+            text: 'Se eliminará de la galería al guardar el servicio.',
+            showCancelButton: true, confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            $('<input>', { type: 'hidden', name: 'imagenesEliminar[]', value: card.attr('data-imagen-id') }).appendTo('#galeriaEliminaciones');
+            card.remove();
+        });
+    });
     $('#cGaleriaFiles').on('change', function (e) {
         let files = e.target.files;
         let $container = $('#galeriaPreviewContainer').empty();
@@ -357,6 +369,7 @@ $(document).ready(function () {
         $('#lPromocionActiva').prop('checked', true);
         $('#previewPrincipalContainer').addClass('d-none');
         $('#galeriaPreviewContainer').empty();
+        $('#galeriaExistenteContainer, #galeriaEliminaciones').empty();
         $('#modalServicioTitle').html('<i class="fas fa-umbrella-beach me-2"></i> Nuevo Servicio / Paquete Turístico');
         
         // Activar primera pestaña
@@ -410,6 +423,8 @@ $(document).ready(function () {
                     $('#lActivo').prop('checked', oData.lActivo == 1);
 
                     // Imágenes
+                    $('#cImagenFile, #cGaleriaFiles').val('');
+                    $('#galeriaPreviewContainer, #galeriaEliminaciones').empty();
                     if (oData.cImagenPrincipal) {
                         $('#imgPreviewPrincipal').attr('src', oData.cImagenPrincipal);
                         $('#previewPrincipalContainer').removeClass('d-none');
@@ -418,12 +433,13 @@ $(document).ready(function () {
                     }
 
                     // Galería existente
-                    let $container = $('#galeriaPreviewContainer').empty();
+                    let $container = $('#galeriaExistenteContainer').empty();
                     if (oData.aGaleria && oData.aGaleria.length > 0) {
                         oData.aGaleria.forEach(img => {
-                            $container.append(`
-                                <img src="${img.cRuta}" class="img-thumbnail rounded shadow-sm" style="width: 70px; height: 60px; object-fit: cover;">
-                            `);
+                            const card = $('<div>', { class: 'position-relative', 'data-imagen-id': img.iID });
+                            $('<img>', { src: img.cRuta, alt: 'Imagen guardada', class: 'img-thumbnail rounded', css: { width: '90px', height: '75px', objectFit: 'cover' } }).appendTo(card);
+                            $('<button>', { type: 'button', class: 'apartado-icono accion-cancelar eliminar-imagen-galeria position-absolute top-0 end-0', title: 'Eliminar imagen', 'aria-label': 'Eliminar imagen' }).html('<i class="fas fa-trash" aria-hidden="true"></i>').appendTo(card);
+                            $container.append(card);
                         });
                     }
 
@@ -457,6 +473,7 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (response.lSuccess) {
+                    $('#cImagenFile, #cGaleriaFiles').val('');
                     modalServicio.hide();
                     tablaServicios.ajax.reload(null, false);
                     Swal.fire({ icon: 'success', title: '¡Operación Exitosa!', text: response.cMensaje });

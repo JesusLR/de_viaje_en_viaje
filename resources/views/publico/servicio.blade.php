@@ -19,7 +19,21 @@
                 @if($paquete->cDescripcionCompleta)<div class="catalogo-texto">{{ strip_tags($paquete->cDescripcionCompleta) }}</div>@endif
             </div>
             @if($paquete->imagenes->isNotEmpty())
-            <section class="mt-4"><h2 class="catalogo-subtitulo">Conoce la experiencia</h2><div class="row g-3">@foreach($paquete->imagenes as $imagen)<div class="col-6 col-md-4"><a href="{{ asset(str_replace('public/', 'storage/', $imagen->cRutaImagen)) }}" target="_blank" rel="noopener"><img class="catalogo-galeria" src="{{ asset(str_replace('public/', 'storage/', $imagen->cRutaImagen)) }}" alt="Imagen de {{ $paquete->cNombre }}" loading="lazy"></a></div>@endforeach</div></section>
+            <section class="mt-5 experiencia-galeria" data-galeria>
+                <h2 class="catalogo-subtitulo">Conoce la experiencia</h2>
+                <div class="experiencia-miniaturas experiencia-grid" aria-label="Seleccionar imagen">
+                    @foreach($paquete->imagenes as $imagen)
+                    <button type="button" class="experiencia-miniatura" data-galeria-miniatura data-bs-toggle="modal" data-bs-target="#galeriaAmpliada" data-imagen="{{ asset(str_replace('public/', 'storage/', $imagen->cRutaImagen)) }}" data-descripcion="Imagen {{ $loop->iteration }} de {{ $paquete->cNombre }}" aria-label="Ampliar imagen {{ $loop->iteration }}"><img src="{{ asset(str_replace('public/', 'storage/', $imagen->cRutaImagen)) }}" alt="" loading="lazy"><span class="experiencia-grid-ampliar"><i class="fas fa-expand" aria-hidden="true"></i></span></button>
+                    @endforeach
+                </div>
+                <div class="modal fade experiencia-modal" id="galeriaAmpliada" tabindex="-1" aria-labelledby="galeriaAmpliadaTitulo" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content">
+                        <div class="modal-header"><h2 class="modal-title" id="galeriaAmpliadaTitulo">{{ $paquete->cNombre }}</h2><button type="button" class="experiencia-cerrar" data-bs-dismiss="modal" aria-label="Cerrar galería"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>
+                        <div class="modal-body"><img data-galeria-ampliada src="{{ asset(str_replace('public/', 'storage/', $paquete->imagenes->first()->cRutaImagen)) }}" alt="Imagen 1 de {{ $paquete->cNombre }}"></div>
+                        @if($paquete->imagenes->count() > 1)<div class="modal-footer"><button type="button" class="catalogo-aplicar" data-galeria-anterior><i class="fas fa-arrow-left me-2" aria-hidden="true"></i>Anterior</button><span data-galeria-contador aria-live="polite">1 / {{ $paquete->imagenes->count() }}</span><button type="button" class="catalogo-aplicar" data-galeria-siguiente>Siguiente<i class="fas fa-arrow-right ms-2" aria-hidden="true"></i></button></div>@endif
+                    </div></div>
+                </div>
+            </section>
             @endif
         </div>
         <div class="col-lg-4"><aside class="catalogo-consulta">

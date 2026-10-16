@@ -1,15 +1,20 @@
 @extends('layouts.publico')
 @section('titulo', 'Catálogo de servicios y paquetes')
 @section('contenido')
-<header class="catalogo-cabecera"><div class="container"><span class="landing-eyebrow">ENCUENTRA TU PRÓXIMA EXPERIENCIA</span><h1>Catálogo de servicios y paquetes</h1><p>Explora nuestros viajes, compara opciones y consulta con la agencia.</p></div></header>
+<header class="catalogo-cabecera">
+    <img class="catalogo-portada" src="{{ count($settings->slides()) ? route('landing.image', ['image' => 'slide-0', 'v' => $settings->updated_at?->timestamp]) : 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1800&q=85' }}" alt="" fetchpriority="high">
+    <div class="container"><span class="landing-eyebrow"><i class="fas fa-compass me-2" aria-hidden="true"></i>ENCUENTRA TU PRÓXIMA EXPERIENCIA</span><h1>El viaje que imaginas,<br>empieza aquí.</h1><p>Explora nuestros viajes, compara opciones y consulta con la agencia.</p><div class="catalogo-portada-nota"><i class="fas fa-map-location-dot" aria-hidden="true"></i>Catálogo de servicios y paquetes</div></div>
+</header>
 <section class="container catalogo-contenido">
     <form method="GET" action="{{ route('catalogo.publico.index') }}" class="catalogo-filtros mb-4">
         <div class="row g-3 align-items-end">
-            <div class="col-lg-5"><label for="buscar" class="form-label">¿Qué viaje tienes en mente?</label><div class="catalogo-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input id="buscar" name="buscar" type="search" maxlength="150" value="{{ old('buscar', request('buscar')) }}" class="form-control" placeholder="Nombre, destino o experiencia"></div></div>
+            <div class="col-lg-6"><label for="buscar" class="form-label">¿Qué viaje tienes en mente?</label><div class="catalogo-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input id="buscar" name="buscar" type="search" maxlength="150" value="{{ old('buscar', request('buscar')) }}" class="form-control" placeholder="Nombre, destino o experiencia"></div></div>
             <div class="col-md-6 col-lg-3"><label for="destino" class="form-label">Destino</label><select id="destino" name="destino" class="form-select"><option value="">Todos los destinos</option>@foreach($destinos as $destino)<option value="{{ $destino->iID }}" @selected(request('destino') == $destino->iID)>{{ $destino->cNombre }}</option>@endforeach</select></div>
             <div class="col-md-6 col-lg-3"><label for="categoria" class="form-label">Categoría</label><select id="categoria" name="categoria" class="form-select"><option value="">Todas las categorías</option>@foreach($categorias as $categoria)<option value="{{ $categoria->iID }}" @selected(request('categoria') == $categoria->iID)>{{ $categoria->cNombre }}</option>@endforeach</select></div>
-            <div class="col-lg-1"><button type="submit" class="landing-button catalogo-filtrar w-100" title="Buscar servicios" aria-label="Buscar servicios"><i class="fas fa-search" aria-hidden="true"></i></button></div>
+
         </div>
+        <details class="catalogo-mas-filtros" @if(request()->filled('desde') || request()->filled('hasta') || request()->filled('moneda') || request()->filled('minimo') || request()->filled('maximo') || request()->boolean('promocion')) open @endif>
+        <summary><i class="fas fa-sliders" aria-hidden="true"></i>Fechas, precios y promociones <i class="fas fa-chevron-down" aria-hidden="true"></i></summary>
         <div class="row g-3 pt-3 mt-3 border-top">
             <div class="col-md-6 col-xl-2"><label for="desde" class="form-label">Salida desde</label><input id="desde" name="desde" type="date" value="{{ request('desde') }}" class="form-control" data-fecha-opcional></div>
             <div class="col-md-6 col-xl-2"><label for="hasta" class="form-label">Salida hasta</label><input id="hasta" name="hasta" type="date" value="{{ request('hasta') }}" class="form-control" data-fecha-opcional></div>
@@ -22,9 +27,10 @@
             <small class="text-muted">Los filtros de precio utilizan el precio final con la promoción vigente. Selecciona una moneda para comparar importes.</small>
             <a class="catalogo-limpiar" href="{{ route('catalogo.publico.index') }}"><i class="fas fa-rotate-left me-1" aria-hidden="true"></i>Limpiar filtros</a>
         </div>
+        </details>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4 pt-3 border-top">
             <span class="catalogo-total">{{ number_format($paquetes->total()) }} {{ $paquetes->total() === 1 ? 'opción disponible' : 'opciones disponibles' }}</span>
-            <div class="catalogo-orden"><label for="orden" class="form-label mb-0">Ordenar por</label><select id="orden" name="orden" class="form-select"><option value="proximos" @selected(request('orden', 'proximos') === 'proximos')>Próximas salidas</option><option value="recientes" @selected(request('orden') === 'recientes')>Más recientes</option><option value="precio_asc" @selected(request('orden') === 'precio_asc')>Menor precio</option><option value="precio_desc" @selected(request('orden') === 'precio_desc')>Mayor precio</option></select><button class="catalogo-aplicar" type="submit">Aplicar</button></div>
+            <div class="catalogo-orden"><label for="orden" class="form-label mb-0">Ordenar por</label><select id="orden" name="orden" class="form-select"><option value="proximos" @selected(request('orden', 'proximos') === 'proximos')>Próximas salidas</option><option value="recientes" @selected(request('orden') === 'recientes')>Más recientes</option><option value="precio_asc" @selected(request('orden') === 'precio_asc')>Menor precio</option><option value="precio_desc" @selected(request('orden') === 'precio_desc')>Mayor precio</option></select><button class="landing-button catalogo-filtrar" type="submit"><i class="fas fa-search" aria-hidden="true"></i>Buscar</button></div>
         </div>
     </form>
     <div class="row g-4">
