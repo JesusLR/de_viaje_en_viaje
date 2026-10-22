@@ -17,7 +17,7 @@ modalApartado.addEventListener('show.bs.modal', function (evento) {
     contenidoApartado.title = boton.dataset.titulo;
     document.getElementById('accionApartadoIcono').className = boton.querySelector('i')?.className || 'fas fa-receipt';
     const seccion = new URL(boton.dataset.url, window.location.origin).searchParams.get('seccion');
-    modalApartado.querySelector('.modal-dialog').classList.toggle('modal-xl', ['detalle', 'historial'].includes(seccion));
+    modalApartado.querySelector('.modal-dialog').classList.toggle('modal-xl', ['detalle', 'historial', 'itinerario'].includes(seccion));
     modalApartado.querySelector('.modal-dialog').classList.toggle('modal-lg', ['abono', 'paquetes'].includes(seccion));
     observadorApartado?.disconnect();
     cargaApartado.classList.remove('d-none');

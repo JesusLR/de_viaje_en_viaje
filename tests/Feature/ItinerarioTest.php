@@ -94,6 +94,21 @@ class ItinerarioTest extends TestCase
         $this->put(route('itinerarios.update', $itinerary), ['nombre' => 'Nuevo nombre', 'dias_json' => json_encode($this->days('Nuevo recorrido'))])->assertSessionHasNoErrors();
         $this->assertSame('Llegada', $detail->fresh()->itinerario[0]['titulo']);
         $this->get(route('agencia.ventas.show', $sale))->assertOk()->assertSee('Itinerario contratado')->assertSee('Llegada')->assertDontSee('Nuevo recorrido');
+        $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()->assertSee('Llegada')->assertDontSee('Nuevo recorrido');
+        $this->get(route('agencia.apartados.index', ['buscar' => $sale->folio]))->assertOk()->assertSee('Ver itinerario');
+        $sale->update(['finalizada_at' => now()]);
+        $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertOk()->assertSee('Ver itinerario');
+        $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()->assertSee('Itinerario contratado');
+        $detail->update(['itinerario' => null]);
+        $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()
+            ->assertSee('Itinerario actual del servicio')->assertSee('Nuevo recorrido')->assertDontSee('Itinerario contratado');
+        $user = auth()->user();
+        $user->roles()->detach();
+        $role = Role::create(['name' => 'Ventas sin itinerarios', 'slug' => uniqid('sin-iti'), 'permissions' => ['ventas.ver']]);
+        $user->roles()->attach($role);
+        $user->unsetRelation('roles');
+        $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertForbidden();
+        $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertOk()->assertDontSee('Ver itinerario');
     }
 
     public function test_permissions_separate_view_edit_assignment_and_publication(): void

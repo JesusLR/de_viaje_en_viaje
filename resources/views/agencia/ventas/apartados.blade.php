@@ -53,7 +53,13 @@
                 <td><span class="apartado-cliente">{{ $venta->cTipoOperacion === 'APARTADO' ? 'Apartado' : 'Venta directa' }}</span></td>
 @endif
                 <td><span class="apartado-estado {{ $estadoClase }}"><span class="estado-punto" aria-hidden="true"></span>{{ $apartados ? $venta->estado_apartado : 'Liquidada' }}</span></td>
-                <td><div class="apartado-acciones">
+                <td>@if($apartados)
+                    @include('agencia.ventas.acciones-apartado')
+                @else
+                <div class="apartado-acciones">
+                    @if(auth()->user()->hasPermission('itinerarios.ver') && $venta->detalles->contains(fn ($detalle) => !empty($detalle->itinerario) || $detalle->servicio?->iIDItinerario))
+                    <button type="button" class="apartado-icono" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'itinerario']) }}" data-titulo="Itinerario · {{ $venta->folio }}" title="Ver itinerario" aria-label="Ver itinerario de {{ $venta->folio }}"><i class="fas fa-route" aria-hidden="true"></i></button>
+                    @endif
                     @if(!$apartados && $venta->saldo_centavos === 0)
                     <a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF de {{ $venta->folio }}"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>
                     @endif
@@ -71,7 +77,8 @@
                         @endif
                         <form data-permission="apartados.cancelar" method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" data-confirm="¿Cancelar este apartado?" data-confirm-text="Los abonos recibidos se conservarán en finanzas.">@csrf<button class="apartado-icono accion-cancelar" title="Cancelar apartado" aria-label="Cancelar {{ $venta->folio }}"><i class="fas fa-ban" aria-hidden="true"></i></button></form>
                     @endif
-                </div></td>
+                </div>
+                @endif</td>
             </tr>
         @empty
             <tr><td colspan="7"><div class="apartados-vacio"><i class="fas fa-suitcase-rolling mb-3" aria-hidden="true"></i><h5>{{ $apartados ? 'No hay apartados para mostrar' : 'No hay ventas para mostrar' }}</h5><p class="text-muted mb-0">Prueba otro periodo o cambia los filtros de búsqueda.</p></div></td></tr>
@@ -84,4 +91,8 @@
 @endsection
 @push('styles')
 <link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">
+@if($apartados)<link href="{{ asset('css/apartados-acciones.css') }}?v={{ filemtime(public_path('css/apartados-acciones.css')) }}" rel="stylesheet">@endif
+@endpush
+@push('scripts')
+@if($apartados)<script src="{{ asset('js/apartados-acciones.js') }}?v={{ filemtime(public_path('js/apartados-acciones.js')) }}"></script>@endif
 @endpush

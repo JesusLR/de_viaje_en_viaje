@@ -16,7 +16,7 @@
         <tr><td colspan="4" class="text-center text-muted py-5">No se encontraron itinerarios. Crea uno para asignarlo a tus servicios.</td></tr>
         @endforelse
         </tbody></table></div>
-        <div class="p-3">{{ $itinerarios->links() }}</div>
+        <div class="p-3">{{ $itinerarios->links('pagination::bootstrap-5') }}</div>
     </div>
 </div>
 @endsection

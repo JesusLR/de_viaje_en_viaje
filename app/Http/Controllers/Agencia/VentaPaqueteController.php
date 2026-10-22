@@ -44,8 +44,8 @@ class VentaPaqueteController extends Controller
     private function listado(Request $request, bool $apartados)
     {
         $request->merge([
-            'desde' => $request->input('desde') ?: ($apartados ? today()->toDateString() : today()->startOfMonth()->toDateString()),
-            'hasta' => $request->input('hasta') ?: ($apartados ? today()->toDateString() : today()->endOfMonth()->toDateString()),
+            'desde' => $request->input('desde') ?: today()->startOfMonth()->toDateString(),
+            'hasta' => $request->input('hasta') ?: today()->endOfMonth()->toDateString(),
         ]);
         $request->validate([
             'estado' => ['nullable', Rule::in(['Abierto', 'Liquidado', 'Cancelado'])],
@@ -53,14 +53,17 @@ class VentaPaqueteController extends Controller
             'desde' => 'nullable|date_format:Y-m-d', 'hasta' => 'nullable|date_format:Y-m-d|after_or_equal:desde',
             'buscar' => 'nullable|string|max:150',
         ]);
-        $query = VentaPaquete::with(['cliente', 'pagos', 'usuario', 'detalles'])->orderByDesc('iID');
+        $query = VentaPaquete::with(['cliente', 'pagos', 'usuario', 'detalles.servicio'])->orderByDesc('iID');
         if (!$request->user()->hasPermission(($apartados ? 'apartados' : 'ventas').'.todos')) $query->where('iIDUsuario', $request->user()->id);
         if ($apartados) {
             $query->where('cTipoOperacion', 'APARTADO')->whereNull('finalizada_at');
             if ($request->estado === 'Cancelado') {
                 $query->whereNotNull('cancelada_at');
-            } elseif (in_array($request->estado, ['Abierto', 'Liquidado'])) {
-                $query->whereNull('cancelada_at')->whereRaw('dTotal '.($request->estado === 'Liquidado' ? '=' : '>').' (select coalesce(sum(dImporte), 0) from pagos_ventas where pagos_ventas.iIDVenta = ventas_paquetes.iID and anulado_at is null)');
+            } else {
+                $query->whereNull('cancelada_at');
+                if (in_array($request->estado, ['Abierto', 'Liquidado'])) {
+                    $query->whereRaw('dTotal '.($request->estado === 'Liquidado' ? '=' : '>').' (select coalesce(sum(dImporte), 0) from pagos_ventas where pagos_ventas.iIDVenta = ventas_paquetes.iID and anulado_at is null)');
+                }
             }
         } else {
             $query->whereNull('cancelada_at')->whereNotNull('finalizada_at');
@@ -151,9 +154,10 @@ class VentaPaqueteController extends Controller
 
     public function show(Request $request, VentaPaquete $venta)
     {
-        $request->validate(['seccion' => ['nullable', Rule::in(['detalle', 'historial', 'abono', 'paquetes', 'nombre'])]]);
+        $request->validate(['seccion' => ['nullable', Rule::in(['detalle', 'historial', 'abono', 'paquetes', 'nombre', 'itinerario'])]]);
         $seccion = $request->input('seccion');
-        $venta->load(['cliente', 'pagos.usuario', 'detalles', 'usuario']);
+        abort_if($request->seccion === 'itinerario' && !$request->user()->hasPermission('itinerarios.ver'), 403);
+        $venta->load(['cliente', 'pagos.usuario', 'detalles.servicio', 'usuario']);
         $paquetes = $this->paquetesDisponibles()->where('cMoneda', $venta->cMoneda);
 
         return view('agencia.ventas.show', compact('venta', 'paquetes', 'seccion'));

@@ -35,6 +35,42 @@ class VentaPaqueteTest extends TestCase
         return [$paquete, ['iIDCliente' => $cliente->iID, 'iIDServicio' => $paquete->iID, 'iCantidad' => 2, 'dFechaViaje' => today()->addWeek()->toDateString()]];
     }
 
+    public function test_acciones_de_apartado_se_agrupan_y_respetan_estado_y_permisos(): void
+    {
+        [, $data] = $this->datos();
+        $this->post(route('agencia.ventas.store'), $data)->assertSessionHasNoErrors();
+        $venta = VentaPaquete::latest('iID')->firstOrFail();
+        $this->get(route('agencia.apartados.index', ['buscar' => $venta->folio]))->assertOk()
+            ->assertSee('Más opciones')->assertSee('>Abonar</span>', false)->assertSee('apartados-acciones.js');
+        $render = fn () => view('agencia.ventas.acciones-apartado', ['venta' => $venta->fresh()->load(['pagos', 'detalles.servicio'])])->render();
+        $html = $render();
+        $this->assertStringContainsString('dropdown-menu dropdown-menu-end apartado-menu', $html);
+        $this->assertStringContainsString('Historial de abonos', $html);
+        $this->assertStringContainsString('Agregar paquetes', $html);
+        $venta->pagos()->create(['dImporte' => $venta->dTotal, 'cMetodo' => 'Efectivo', 'dFechaPago' => today(), 'iIDUsuario' => auth()->id()]);
+        $html = $render();
+        $this->assertStringContainsString('>Finalizar</span>', $html);
+        $this->assertStringContainsString('data-confirm="¿Finalizar este apartado liquidado?"', $html);
+        $this->assertStringNotContainsString('>Abonar</span>', $html);
+        $venta->update(['cancelada_at' => now()]);
+        $html = $render();
+        foreach (['>Finalizar</span>', '>Abonar</span>', 'Agregar paquetes', 'Cambiar nombre', 'Cancelar apartado'] as $action) {
+            $this->assertStringNotContainsString($action, $html);
+        }
+        $this->assertStringContainsString('Descargar comprobante PDF', $html);
+        $venta->update(['cancelada_at' => null]);
+        $role = \App\Models\Role::create(['name' => 'Consulta de apartados', 'slug' => uniqid('consulta'), 'permissions' => ['apartados.ver']]);
+        $user = auth()->user();
+        $user->roles()->sync([$role->id]);
+        $user->unsetRelation('roles');
+        $html = $render();
+        foreach (['>Finalizar</span>', '>Abonar</span>', 'Agregar paquetes', 'Cambiar nombre', 'Cancelar apartado', 'Descargar comprobante PDF'] as $action) {
+            $this->assertStringNotContainsString($action, $html);
+        }
+        $this->assertStringContainsString('Ver detalle', $html);
+        $this->assertStringContainsString('Historial de abonos', $html);
+    }
+
     public function test_venta_conserva_precio_promocional_y_controla_abonos(): void
     {
         [$paquete, $data] = $this->datos();
@@ -204,6 +240,9 @@ class VentaPaqueteTest extends TestCase
         $this->post(route('agencia.ventas.pago', $venta), ['dImporte' => 500, 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
         $this->post(route('agencia.ventas.cancelar', $venta))->assertSessionHasNoErrors();
         $this->assertEquals('Cancelado', $venta->fresh()->estado_apartado);
+        $this->get(route('agencia.apartados.index', ['buscar' => $venta->folio]))->assertOk()->assertViewHas('ventas', fn ($ventas) => $ventas->total() === 0);
+        $this->get(route('agencia.apartados.index', ['estado' => 'Abierto', 'buscar' => $venta->folio]))->assertOk()->assertViewHas('ventas', fn ($ventas) => $ventas->total() === 0);
+        $this->get(route('agencia.apartados.index', ['estado' => 'Liquidado', 'buscar' => $venta->folio]))->assertOk()->assertViewHas('ventas', fn ($ventas) => $ventas->total() === 0);
         $this->assertEquals(220000, $venta->fresh()->saldo_centavos);
         $this->get(route('agencia.apartados.index', ['estado' => 'Cancelado', 'buscar' => 'Vacaciones familiares']))->assertSee($venta->folio);
     }
@@ -234,7 +273,7 @@ class VentaPaqueteTest extends TestCase
         $this->getJson(route('agencia.finanzas.index', ['desde' => '2000-02-01', 'hasta' => '2000-01-01']))->assertUnprocessable();
     }
 
-    public function test_fechas_y_promociones_se_toman_del_servicio_y_filtros_inician_hoy(): void
+    public function test_fechas_y_promociones_se_toman_del_servicio_y_filtros_abarcan_el_mes(): void
     {
         [$paquete, $data] = $this->datos();
         $paquete->update(['lTienePromocion' => false]);
@@ -248,9 +287,13 @@ class VentaPaqueteTest extends TestCase
         $this->get(route('agencia.ventas.show', $venta))->assertOk()->assertSee('Sin promoción')->assertSee($detalle->dFechaInicio->format('d/m/Y'))->assertSee($detalle->dFechaFin->format('d/m/Y'));
         $this->get(route('agencia.vender.index'))->assertOk()->assertSee('select2.min.js')->assertSee('Descuento total')->assertDontSee('name="dFechaViaje"', false);
         $this->get(route('agencia.finanzas.index'))->assertOk()->assertViewHas('desde', today()->startOfMonth()->toDateString())->assertViewHas('hasta', today()->endOfMonth()->toDateString());
-        $venta->update(['created_at' => now()->subDay()]);
+        $venta->update(['created_at' => today()->startOfMonth()]);
+        $this->get(route('agencia.apartados.index'))->assertOk()->assertSee($venta->folio)
+            ->assertSee('value="'.today()->startOfMonth()->toDateString().'"', false)
+            ->assertSee('value="'.today()->endOfMonth()->toDateString().'"', false);
+        $venta->update(['created_at' => today()->startOfMonth()->subDay()]);
         $this->get(route('agencia.apartados.index'))->assertOk()->assertDontSee($venta->folio);
-        $this->get(route('agencia.apartados.index', ['desde' => today()->subDay()->toDateString(), 'hasta' => today()->toDateString()]))->assertOk()->assertSee($venta->folio);
+        $this->get(route('agencia.apartados.index', ['desde' => today()->startOfMonth()->subDay()->toDateString(), 'hasta' => today()->toDateString()]))->assertOk()->assertSee($venta->folio);
     }
 
     public function test_finanzas_pagina_ingresos_y_egresos_de_forma_independiente(): void

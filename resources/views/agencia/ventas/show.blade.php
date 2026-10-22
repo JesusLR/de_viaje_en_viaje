@@ -13,6 +13,9 @@
 </div>
 @endif
 @include('agencia.partials.avisos')
+@if($seccion === 'itinerario')
+<div class="p-4">@include('agencia.ventas.itinerarios')</div>
+@endif
 @if($seccion && $seccion !== 'detalle')
 <div class="apartado-modal-context"><small>{{ $venta->folio }} · {{ $venta->estado_apartado }}</small><p>{{ $venta->cNombre ?: $venta->cliente->nombre_completo }}</p></div>
 <div class="apartado-modal-totals">
