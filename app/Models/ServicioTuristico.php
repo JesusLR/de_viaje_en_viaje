@@ -14,7 +14,7 @@ class ServicioTuristico extends Model
 
     protected $table = 'servicio_turisticos';
     protected $primaryKey = 'iID';
-    protected $attributes = ['lUsaVigencia' => true];
+    protected $attributes = ['lUsaVigencia' => true, 'lPrecioMenorActivo' => false, 'dPrecioMenor' => 0];
 
     protected $fillable = [
         'cCodigo',
@@ -27,6 +27,8 @@ class ServicioTuristico extends Model
         'cImagenPrincipal',
         'dPrecioCompra',
         'dPrecioVenta',
+        'lPrecioMenorActivo',
+        'dPrecioMenor',
         'cMoneda',
         'lTienePromocion',
         'cNombrePromocion',
@@ -46,6 +48,8 @@ class ServicioTuristico extends Model
     ];
 
     protected $casts = [
+        'lPrecioMenorActivo' => 'boolean',
+        'dPrecioMenor' => 'float',
         'lActivo'               => 'boolean',
         'lUsaVigencia'          => 'boolean',
         'lTienePromocion'       => 'boolean',

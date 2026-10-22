@@ -40,6 +40,7 @@
             <small class="text-muted">Precio por persona</small>
             @if($paquete->l_promocion_vigente)<del class="d-block text-muted">{{ number_format($paquete->dPrecioVenta, 2) }} {{ $paquete->cMoneda }}</del>@endif
             <strong class="catalogo-precio">{{ number_format($paquete->d_precio_final, 2) }} <small>{{ $paquete->cMoneda }}</small></strong>
+            @include('publico.partials.precio-menor')
             @if($paquete->l_promocion_vigente)<div class="catalogo-oferta"><i class="fas fa-tag me-1" aria-hidden="true"></i>{{ $paquete->cNombrePromocion ?: 'Promoción vigente' }}<small class="d-block mt-1">Descuento de {{ number_format($paquete->d_monto_descuento, 2) }} {{ $paquete->cMoneda }} por persona.</small>@if($paquete->cDescripcionPromocion)<small class="d-block mt-2">{{ strip_tags($paquete->cDescripcionPromocion) }}</small>@endif</div>@endif
             @if($paquete->dFechaInicioViaje && $paquete->dFechaFinViaje)<div class="catalogo-fechas"><div><small>Salida</small><strong>{{ $paquete->dFechaInicioViaje->format('d/m/Y') }}</strong></div><div><small>Regreso</small><strong>{{ $paquete->dFechaFinViaje->format('d/m/Y') }}</strong></div></div>@endif
             <p class="text-muted small mt-3">Consulta disponibilidad y condiciones con la agencia para planear tu viaje.</p>

@@ -18,6 +18,7 @@
         @if($paquete->dFechaInicioViaje && $paquete->dFechaFinViaje)
             <div class="landing-package-dates"><i class="far fa-calendar-alt me-2" aria-hidden="true"></i>{{ $paquete->dFechaInicioViaje->format('d/m/Y') }} — {{ $paquete->dFechaFinViaje->format('d/m/Y') }}</div>
         @endif
+        @include('publico.partials.precio-menor')
         <div class="landing-package-bottom">
             <div><small>Precio por persona</small>@if($paquete->l_promocion_vigente)<del>{{ number_format($paquete->dPrecioVenta, 2) }}</del>@endif<strong>{{ number_format($paquete->d_precio_final, 2) }} <small>{{ $paquete->cMoneda }}</small></strong></div>
             <a class="landing-package-link" aria-label="Ver detalles de {{ $paquete->cNombre }}" href="{{ route('catalogo.publico.show', $paquete->iID) }}"><i class="fas fa-arrow-right" aria-hidden="true"></i></a>

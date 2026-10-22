@@ -31,6 +31,7 @@
             });
             const editing = Number(document.getElementById('iID')?.value || 0) > 0;
             if (!can('servicios.precios')) root.querySelectorAll('#dPrecioVenta, #cMoneda').forEach(el => { el.disabled = editing; el.required = el.id === 'dPrecioVenta' && !editing; });
+            if (!can('servicios.precios')) root.querySelectorAll('[name="lPrecioMenorActivo"], #dPrecioMenor').forEach(el => { el.disabled = true; });
             if (!can('servicios.promociones')) root.querySelectorAll('[name]').forEach(el => {
                 if (/Promocion|Descuento/.test(el.name)) el.disabled = true;
             });

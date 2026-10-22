@@ -75,6 +75,10 @@
                                         </td>
                                         <td class="text-end pe-3 fw-bold text-dark" id="detPrecioFinal">$0.00</td>
                                     </tr>
+                                    <tr id="detPrecioMenorFila" class="d-none">
+                                        <td class="ps-3 text-secondary">Precio para menor</td>
+                                        <td class="text-end pe-3 fw-bold" id="detPrecioMenor">Gratis</td>
+                                    </tr>
                                     <tr class="table-success bg-opacity-10">
                                         <td class="ps-3 fw-bold text-success-emphasis">
                                             <i class="fas fa-chart-line text-success me-2"></i> Ganancia Efectiva Estimada

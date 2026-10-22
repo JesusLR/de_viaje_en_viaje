@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\CategoriaTuristica;
+use App\Models\Cliente;
 use App\Models\DestinoTuristico;
 use App\Models\Proveedor;
 use App\Models\ServicioTuristico;
@@ -13,7 +14,17 @@ class ServiciosPruebaSeeder extends Seeder
 {
     public function run(): void
     {
+        if (!app()->environment('local')) {
+            throw new \RuntimeException('Los datos de ejemplo solo se pueden cargar en el entorno local.');
+        }
+
         $creados = DB::transaction(function () {
+            foreach (['Ana' => 'López', 'Carlos' => 'Hernández', 'María' => 'García', 'Luis' => 'Martínez', 'Sofía' => 'Ramírez'] as $nombre => $apellido) {
+                Cliente::firstOrCreate(['cEmail' => strtolower(str_replace(['í', 'ó'], ['i', 'o'], $nombre)).'.demo@example.com'], [
+                    'cNombre' => $nombre.' (Prueba)', 'cPrimerApellido' => $apellido,
+                    'cDireccion' => 'Domicilio ficticio para demostración local.', 'lActivo' => true,
+                ]);
+            }
             $categorias = collect(['Playa', 'Cultura', 'Aventura', 'Escapadas'])->mapWithKeys(function ($nombre) {
                 return [$nombre => CategoriaTuristica::firstOrCreate(['cNombre' => $nombre.' (Prueba)'], [
                     'cDescripcion' => 'Categoría de demostración para servicios de prueba.', 'lActivo' => true,
@@ -46,6 +57,9 @@ class ServiciosPruebaSeeder extends Seeder
                 ['San Cristóbal mágico', 'Escapadas', 'San Cristóbal de las Casas'], ['Naturaleza y pueblos de Chiapas', 'Aventura', 'San Cristóbal de las Casas'],
                 ['Guanajuato de fin de semana', 'Escapadas', 'Guanajuato'], ['Historia y callejones de Guanajuato', 'Cultura', 'Guanajuato'],
                 ['Puebla y Cholula', 'Escapadas', 'Puebla'], ['Sabores y tradiciones de Puebla', 'Cultura', 'Puebla'],
+                ['Familiar con menores gratis', 'Playa', 'Cancún'],
+                ['Familiar con tarifa para menor', 'Aventura', 'Mérida'],
+                ['Paquete sin tarifa para menor', 'Escapadas', 'Puebla'],
             ];
             $cantidad = 0;
             foreach ($servicios as $indice => [$nombre, $categoria, $destino]) {
@@ -62,6 +76,8 @@ class ServiciosPruebaSeeder extends Seeder
                     'iIDCategoria' => $categorias[$categoria]->iID, 'iIDDestino' => $destinos[$destino]->iID,
                     'iIDProveedor' => $proveedores[$indice % 3]->iID,
                     'dPrecioCompra' => round($precio * 0.65, 2), 'dPrecioVenta' => $precio, 'cMoneda' => 'MXN',
+                    'lPrecioMenorActivo' => in_array($numero, [21, 22], true),
+                    'dPrecioMenor' => $numero === 22 ? 850 : 0,
                     'lTienePromocion' => $promocion, 'lPromocionActiva' => $promocion,
                     'cNombrePromocion' => $promocion ? ($porcentaje ? 'Descuento del 10% (Prueba)' : 'Descuento de $500 (Prueba)') : null,
                     'cDescripcionPromocion' => $promocion ? 'Promoción ficticia de demostración.' : null,

@@ -87,6 +87,13 @@ class CheckModulePermissions
         }
         if ($name === 'servicios.paquetes.saveData') {
             $service = ServicioTuristico::find((int) $request->iID);
+            if (!$request->user()->hasPermission('servicios.precios')) {
+                foreach (['lPrecioMenorActivo', 'dPrecioMenor'] as $field) {
+                    $original = $service?->$field ?? 0;
+                    abort_if($request->has($field) && (float) $request->input($field) !== (float) $original, 403);
+                    $request->merge([$field => $original]);
+                }
+            }
             if ($service && !$request->user()->hasPermission('servicios.precios')) $request->merge(['dPrecioVenta' => $request->input('dPrecioVenta', $service->dPrecioVenta), 'cMoneda' => $request->input('cMoneda', $service->cMoneda)]);
             foreach (['dPrecioCompra' => 'costos.editar', 'dPrecioVenta' => 'precios', 'cMoneda' => 'precios', 'lActivo' => 'activar'] as $field => $permission) {
                 if ($service && $request->has($field)) {

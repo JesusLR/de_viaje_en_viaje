@@ -146,6 +146,22 @@
                                         </select>
                                     </div>
 
+                                    <div class="col-12 mt-3">
+                                        <input type="hidden" name="lPrecioMenorActivo" value="0">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="lPrecioMenorActivo" name="lPrecioMenorActivo" value="1">
+                                            <label class="form-check-label fw-bold" for="lPrecioMenorActivo">Activar precio para menor</label>
+                                        </div>
+                                        <div id="precioMenorContainer" class="d-none">
+                                            <label for="dPrecioMenor" class="form-label">Precio para menor</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" step="0.01" min="0" max="9999999999.99" class="form-control" id="dPrecioMenor" name="dPrecioMenor" placeholder="0.00" disabled>
+                                            </div>
+                                            <div class="form-text">En blanco o en 0: gratis para menores. Se utiliza la moneda del paquete.</div>
+                                        </div>
+                                    </div>
+
                                     <!-- Simulación y Balance Financiero Formal -->
                                     <div class="col-12 mt-4">
                                         <div class="card border shadow-none rounded-3">

@@ -84,7 +84,8 @@ $(document).ready(function () {
                         if (type === 'sort' || type === 'type') return Number(String(data).replace(/,/g, ''));
                         if (type !== 'display') return data + ' ' + row.cMoneda;
                         const regular = row.lPromocionVigente ? '<div class="servicio-precio-anterior">' + escapar(row.dPrecioVenta) + '</div>' : '';
-                        return regular + '<strong>' + escapar(data) + '</strong><small>' + escapar(row.cMoneda || 'MXN') + '</small>';
+                        const menor = row.lPrecioMenorActivo ? '<div class="small mt-1">Menor: ' + (Number(row.dPrecioMenor) > 0 ? escapar(Number(row.dPrecioMenor).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})) + ' ' + escapar(row.cMoneda || 'MXN') : 'Gratis') + '</div>' : '';
+                        return regular + '<strong>' + escapar(data) + '</strong><small>' + escapar(row.cMoneda || 'MXN') + '</small>' + menor;
                     }
                 },
                 {
@@ -158,6 +159,8 @@ $(document).ready(function () {
                         $('#detPrecioCompra').text(`$${rowData.dPrecioCompra} ${oData.cMoneda || 'MXN'}`);
                         $('#detPrecioVenta').text(`$${rowData.dPrecioVenta} ${oData.cMoneda || 'MXN'}`);
                         $('#detPrecioFinal').text(`$${rowData.dPrecioFinal} ${oData.cMoneda || 'MXN'}`);
+                        $('#detPrecioMenorFila').toggleClass('d-none', !oData.lPrecioMenorActivo);
+                        $('#detPrecioMenor').text(Number(oData.dPrecioMenor) > 0 ? `$${Number(oData.dPrecioMenor).toFixed(2)} ${oData.cMoneda || 'MXN'}` : 'Gratis');
                         $('#detGananciaEfectiva').text(`+$${rowData.dGananciaEfectiva}`);
                         $('#detUtilidad').text(`${rowData.dPorcentajeUtilidad}% de utilidad sobre costo`);
 
@@ -333,6 +336,13 @@ $(document).ready(function () {
         }
     });
 
+    function actualizarPrecioMenor() {
+        const activo = $('#lPrecioMenorActivo').is(':checked');
+        $('#precioMenorContainer').toggleClass('d-none', !activo);
+        $('#dPrecioMenor').prop('disabled', !activo);
+    }
+    $('#lPrecioMenorActivo').on('change', actualizarPrecioMenor);
+
     function actualizarVigencia() {
         const activa = $('#lUsaVigencia').is(':checked');
         $('#dFechaInicioVigencia, #dFechaFinVigencia').prop('disabled', !activa).prop('required', activa);
@@ -350,6 +360,7 @@ $(document).ready(function () {
     // Abrir Modal para Nuevo Servicio
     $('#btnNuevo').on('click', function () {
         $('#formServicio')[0].reset();
+        actualizarPrecioMenor();
         $('#iID').val(0);
         $('#iIDProveedor').val('');
         $('#iIDCategoria, #iIDDestino').val('').trigger('change.select2');
@@ -401,6 +412,8 @@ $(document).ready(function () {
                     $('#iIDProveedor').val(oData.iIDProveedor || '');
                     $('#dPrecioCompra').val(oData.dPrecioCompra);
                     $('#dPrecioVenta').val(oData.dPrecioVenta);
+                    $('#dPrecioMenor').val(oData.dPrecioMenor);
+                    $('#lPrecioMenorActivo').prop('checked', !!oData.lPrecioMenorActivo).trigger('change');
                     $('#cMoneda').val(oData.cMoneda || 'MXN');
 
                     // Promociones
