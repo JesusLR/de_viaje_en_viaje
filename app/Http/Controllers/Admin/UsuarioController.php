@@ -35,6 +35,7 @@ class UsuarioController extends Controller
     {
         try {
             $cData = User::where('lActivo', 1)
+                ->where('lDev', false)
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($oUser) {

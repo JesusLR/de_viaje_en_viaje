@@ -39,12 +39,12 @@
                 <label for="email" class="form-label fw-semibold text-secondary small">Usuario</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                    <input type="email" 
+                    <input type="text" 
                            class="form-control @error('email') is-invalid @enderror" 
                            id="email" 
                            name="email" 
                            value="{{ old('email') }}" 
-                           placeholder="nombre@ejemplo.com" 
+                           placeholder="Usuario o correo electrónico" 
                            autocomplete="username"
                            required 
                            autofocus>

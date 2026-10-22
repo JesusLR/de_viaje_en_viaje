@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    protected $attributes = ['lActivo' => true];
+    protected $attributes = ['lActivo' => true, 'lDev' => false];
     public function roles()
     {
         return $this->belongsToMany(Role::class)->withTimestamps();
@@ -72,6 +72,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'lActivo' => 'boolean',
+            'lDev' => 'boolean',
             'lCambiarPassword' => 'boolean',
         ];
     }

@@ -84,7 +84,7 @@ class VentaPaqueteController extends Controller
         }
         $ventas = $query->paginate(10)->withQueryString();
         $clientes = Cliente::orderBy('cNombre')->get();
-        $usuarios = User::orderBy('name')->get();
+        $usuarios = User::where('lDev', false)->orderBy('name')->get();
 
         return view('agencia.ventas.apartados', compact('ventas', 'clientes', 'usuarios', 'apartados'));
     }
