@@ -41,9 +41,22 @@
                                 <i class="fas fa-calendar-alt me-1"></i> 5. Fechas y galería
                             </button>
                         </li>
+                        @if(auth()->user()->hasPermission('itinerarios.ver'))
+                        <li class="nav-item" role="presentation"><button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tab-itinerario" type="button" role="tab"><i class="fas fa-route me-1"></i>6. Itinerario</button></li>
+                        @endif
                     </ul>
 
                     <div class="tab-content" id="servicioTabsContent">
+                        @if(auth()->user()->hasPermission('itinerarios.ver'))
+                        <div class="tab-pane fade" id="tab-itinerario" role="tabpanel"><div class="card border-0 shadow-sm"><div class="card-body p-4">
+                            <h5 class="fw-bold">Itinerario del servicio</h5><p class="text-muted">Selecciona un recorrido del catálogo de itinerarios. Puedes usarlo en varios servicios.</p>
+                            <label for="iIDItinerario" class="form-label fw-semibold">Itinerario asignado</label>
+                            <select class="form-select" id="iIDItinerario" name="iIDItinerario" @disabled(!auth()->user()->hasPermission('itinerarios.asignar'))><option value="">Sin itinerario</option>@foreach($aItinerarios as $itinerario)<option value="{{ $itinerario->id }}">{{ $itinerario->nombre }}</option>@endforeach</select>
+                            @if(auth()->user()->hasPermission('itinerarios.publicar'))<input type="hidden" name="lPublicarItinerario" value="0">@endif
+                            <div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" id="lPublicarItinerario" name="lPublicarItinerario" value="1" @disabled(!auth()->user()->hasPermission('itinerarios.publicar'))><label class="form-check-label" for="lPublicarItinerario">Mostrar el itinerario en la página pública de este servicio</label></div>
+                            <div class="d-flex flex-wrap gap-2 mt-3"><a id="abrirItinerario" class="btn btn-outline-primary d-none">Consultar itinerario</a><a class="btn btn-outline-secondary" href="{{ route('itinerarios.index') }}">Catálogo de itinerarios</a></div>
+                        </div></div></div>
+                        @endif
                         
                         <!-- PESTAÑA 1: INFORMACIÓN GENERAL -->
                         <div class="tab-pane fade show active" id="tab-general" role="tabpanel">

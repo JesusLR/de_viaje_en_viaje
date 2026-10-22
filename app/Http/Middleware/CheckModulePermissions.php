@@ -29,6 +29,7 @@ class CheckModulePermissions
         $parts = explode('.', $name);
         $action = end($parts);
         $module = match (true) {
+            str_starts_with($name, 'itinerarios.') => 'itinerarios',
             str_starts_with($name, 'admin.permisos.') => 'permisos',
             str_starts_with($name, 'admin.usuarios.') => 'usuarios',
             str_starts_with($name, 'configuracion.') => 'configuracion',
@@ -61,7 +62,7 @@ class CheckModulePermissions
                 'fechaPago' => 'fecha', 'anularPago' => 'anular', 'cancelar' => 'cancelar', 'finalizar' => 'finalizar',
                 'comprobante', 'comprobanteCompra' => 'pdf',
                 'exportar' => 'exportar', 'anular' => 'anular',
-                'store' => $module === 'permisos' ? 'gestionar' : 'crear',
+                'store' => $module === 'permisos' ? 'gestionar' : ($module === 'itinerarios' ? 'editar' : 'crear'),
                 'update' => $module === 'permisos' ? 'gestionar' : 'editar',
                 'destroy' => 'eliminar', 'assign' => 'asignar',
                 default => null,
@@ -72,6 +73,10 @@ class CheckModulePermissions
             if ($specific) $this->require($request, $module.'.'.$specific);
         }
 
+        if ($name === 'servicios.paquetes.itinerarioPdf') {
+            $this->require($request, 'itinerarios.ver');
+            $this->require($request, 'itinerarios.pdf');
+        }
         if ($name === 'admin.usuarios.saveData' && (int) $request->iID > 0 && $request->filled('cPassword')) $this->require($request, 'usuarios.password');
         if ($name === 'admin.usuarios.saveData' && (int) $request->iID > 0 && User::find($request->iID)?->roles()->where('slug', 'administrador')->exists()) $this->require($request, 'permisos.asignar');
         if ($name === 'admin.usuarios.deleteData') {
@@ -87,6 +92,11 @@ class CheckModulePermissions
         }
         if ($name === 'servicios.paquetes.saveData') {
             $service = ServicioTuristico::find((int) $request->iID);
+            foreach (['iIDItinerario' => 'itinerarios.asignar', 'lPublicarItinerario' => 'itinerarios.publicar'] as $field => $permission) {
+                $original = $service?->$field;
+                if ($request->has($field) && (int) $request->input($field) !== (int) $original) $this->require($request, $permission);
+                if (!$request->has($field)) $request->merge([$field => $original ?? ($field === 'lPublicarItinerario' ? 0 : null)]);
+            }
             if (!$request->user()->hasPermission('servicios.precios')) {
                 foreach (['lPrecioMenorActivo', 'dPrecioMenor'] as $field) {
                     $original = $service?->$field ?? 0;

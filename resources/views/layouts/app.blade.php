@@ -270,7 +270,7 @@
                 @endif --}}
             </ul>
 
-            @canany(['usuarios.ver', 'permisos.ver', 'servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
+            @canany(['usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
             <!-- Módulo Administración y Catálogos -->
             <div class="sidebar-section">Módulos</div>
             <ul class="sidebar-nav">
@@ -302,14 +302,14 @@
 
                 <!-- Módulo Agencia -->
                 <li class="nav-item mt-1">
-                    <a href="#menuAgencia" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('servicios.*', 'agencia.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('servicios.*', 'agencia.*') ? 'true' : 'false' }}" aria-controls="menuAgencia">
+                    <a href="#menuAgencia" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('servicios.*', 'agencia.*', 'itinerarios.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('servicios.*', 'agencia.*', 'itinerarios.*') ? 'true' : 'false' }}" aria-controls="menuAgencia">
                         <div>
                             <i class="fas fa-plane me-1"></i>
                             <span>Agencia</span>
                         </div>
                         <i class="fas fa-chevron-down small"></i>
                     </a>
-                    <div class="collapse {{ request()->routeIs('servicios.*', 'agencia.*') ? 'show' : '' }}" id="menuAgencia">
+                    <div class="collapse {{ request()->routeIs('servicios.*', 'agencia.*', 'itinerarios.*') ? 'show' : '' }}" id="menuAgencia">
                         <ul class="sidebar-subnav mt-1">
                             @can('servicios.ver')
 <li class="nav-item">
@@ -319,6 +319,9 @@
                                 </a>
                             </li>
 @endcan
+                            @can('itinerarios.ver')
+                            <li class="nav-item"><a href="{{ route('itinerarios.index') }}" class="nav-link {{ request()->routeIs('itinerarios.*') ? 'active' : '' }}"><i class="fas fa-route me-1" aria-hidden="true"></i><span>Itinerarios</span></a></li>
+                            @endcan
                             @can('vender.ver')
 <li class="nav-item">
                                 <a href="{{ route('agencia.vender.index') }}" class="nav-link {{ request()->routeIs('agencia.vender.*') ? 'active' : '' }}">

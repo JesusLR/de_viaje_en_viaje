@@ -21,13 +21,30 @@ class ServicioTuristicoController extends Controller
         $this->service = $service;
     }
 
+    public function itinerarioPdf(ServicioTuristico $servicio)
+    {
+        $dias = $servicio->itinerarioSnapshot();
+        abort_if(empty($dias), 422, 'Este servicio no tiene un itinerario asignado con días registrados.');
+        $servicio->loadMissing(['itinerario', 'destino']);
+        $settings = \App\Models\LandingSetting::current();
+        $marca = $settings->values()['brand'];
+        $rutaLogo = $settings->logoFilePath();
+        $logo = is_file($rutaLogo) ? 'data:'.mime_content_type($rutaLogo).';base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('servicios.itinerario.pdf', compact('servicio', 'dias', 'marca', 'logo'))
+            ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
+        $pdf->render();
+        $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
+        return $pdf->download('itinerario-'.(\Illuminate\Support\Str::slug($servicio->cCodigo) ?: $servicio->iID).'.pdf');
+    }
+
     public function index()
     {
         $aCategorias = CategoriaTuristica::where('lActivo', 1)->orderBy('cNombre')->get();
         $aDestinos = DestinoTuristico::where('lActivo', 1)->orderBy('cNombre')->get();
         $aProveedores = Proveedor::where('lActivo', 1)->orderBy('cNombre')->get();
 
-        return view('servicios.paquete.index', compact('aCategorias', 'aDestinos', 'aProveedores'));
+        $aItinerarios = \App\Models\Itinerario::orderBy('nombre')->get(['id', 'nombre']);
+        return view('servicios.paquete.index', compact('aCategorias', 'aDestinos', 'aProveedores', 'aItinerarios'));
     }
 
     public function gridData(Request $request)
@@ -38,7 +55,7 @@ class ServicioTuristicoController extends Controller
             'search.value' => 'nullable|string|max:150',
         ]);
         try {
-            $query = ServicioTuristico::with(['categoria', 'destino', 'proveedor']);
+            $query = ServicioTuristico::with(['categoria', 'destino', 'proveedor'])->withCount('itinerarioDias');
             $totalRegistros = ServicioTuristico::count();
 
             // Filtros dinámicos por solicitud AJAX
@@ -87,11 +104,13 @@ class ServicioTuristicoController extends Controller
                 });
             }
             $totalFiltrados = (clone $query)->count();
-            $cData = $query->orderBy('iID', 'desc')->offset((int) $request->input('start', 0))->limit(10)->get()->map(function ($oServ) {
+            $cData = $query->orderBy('iID', 'desc')->offset((int) $request->input('start', 0))->limit(10)->get()->map(function ($oServ) use ($request) {
                 return [
                     'iID'                    => $oServ->iID,
                     'cCodigo'                => $oServ->cCodigo,
                     'cNombre'                => $oServ->cNombre,
+                    'iDiasItinerario'         => $request->user()->hasPermission('itinerarios.ver') ? $oServ->itinerario_dias_count : null,
+                    'iIDItinerario'           => $request->user()->hasPermission('itinerarios.ver') ? $oServ->iIDItinerario : null,
                     'cCategoria'             => $oServ->categoria ? $oServ->categoria->cNombre : 'N/A',
                     'cDestino'               => $oServ->destino ? $oServ->destino->ubicacion_completa : 'N/A',
                     'cProveedor'             => $oServ->proveedor ? $oServ->proveedor->cNombre : 'Sin Proveedor',
@@ -161,6 +180,8 @@ class ServicioTuristicoController extends Controller
                 'iIDCategoria'          => $oServ->iIDCategoria,
                 'iIDDestino'            => $oServ->iIDDestino,
                 'iIDProveedor'          => $oServ->iIDProveedor,
+                'iIDItinerario'         => $oServ->iIDItinerario,
+                'lPublicarItinerario'   => $oServ->lPublicarItinerario,
                 'cImagenPrincipal'      => $oServ->cImagenPrincipal ? asset(str_replace('public/', 'storage/', $oServ->cImagenPrincipal)) : null,
                 'dPrecioCompra'         => $oServ->dPrecioCompra,
                 'dPrecioVenta'          => $oServ->dPrecioVenta,
@@ -214,6 +235,8 @@ class ServicioTuristicoController extends Controller
                 'iIDCategoria'         => 'nullable|exists:categoria_turisticas,iID',
                 'iIDDestino'           => 'nullable|exists:destino_turisticos,iID',
                 'iIDProveedor'         => 'nullable|exists:proveedores,iID',
+                'iIDItinerario'        => 'nullable|integer|exists:itinerarios,id',
+                'lPublicarItinerario'  => 'sometimes|boolean',
                 'dPrecioCompra'        => 'required|numeric|min:0',
                 'dPrecioVenta'         => 'required|numeric|min:0',
                 'lPrecioMenorActivo'   => 'sometimes|boolean',
@@ -245,6 +268,9 @@ class ServicioTuristicoController extends Controller
             ]);
 
             $dPrecioCompra = (float) $request->input('dPrecioCompra', 0);
+            if ($request->boolean('lPublicarItinerario') && !$request->filled('iIDItinerario')) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['iIDItinerario' => 'Selecciona un itinerario antes de publicarlo.']);
+            }
             $dPrecioVenta = (float) $request->input('dPrecioVenta', 0);
             $lTienePromocion = $request->boolean('lTienePromocion');
             $dValorDescuento = (float) $request->input('dValorDescuento', 0);
@@ -275,6 +301,8 @@ class ServicioTuristicoController extends Controller
                 'iIDCategoria'          => $request->filled('iIDCategoria') ? (int) $request->input('iIDCategoria') : null,
                 'iIDDestino'            => $request->filled('iIDDestino') ? (int) $request->input('iIDDestino') : null,
                 'iIDProveedor'          => $request->input('iIDProveedor') ? (int) $request->input('iIDProveedor') : null,
+                'iIDItinerario'         => $request->filled('iIDItinerario') ? (int) $request->input('iIDItinerario') : null,
+                'lPublicarItinerario'   => $request->boolean('lPublicarItinerario'),
                 'dPrecioCompra'         => $dPrecioCompra,
                 'dPrecioVenta'          => $dPrecioVenta,
                 'lPrecioMenorActivo'    => $request->boolean('lPrecioMenorActivo'),

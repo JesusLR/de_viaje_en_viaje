@@ -19,6 +19,9 @@ class VentaPaqueteDetalle extends Model
     }
 
     protected $casts = [
+        'iCantidadMenores' => 'integer',
+        'dPrecioMenor' => 'decimal:2',
+        'itinerario' => 'array',
         'lUsaVigencia' => 'boolean',
         'dPrecioUnitario' => 'decimal:2', 'dSubtotal' => 'decimal:2',
         'dPrecioRegular' => 'decimal:2', 'dDescuentoUnitario' => 'decimal:2',

@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'itinerarios' => ['label' => 'Itinerarios', 'actions' => [
+        'itinerarios.ver' => 'Consultar itinerarios',
+        'itinerarios.editar' => 'Crear, editar y duplicar itinerarios',
+        'itinerarios.asignar' => 'Asignar o retirar itinerarios en servicios',
+        'itinerarios.publicar' => 'Publicar u ocultar itinerarios en catálogo',
+        'itinerarios.pdf' => 'Descargar e imprimir itinerarios en PDF',
+    ]],
     'dashboard' => ['label' => 'Dashboard', 'actions' => [
         'dashboard.finanzas' => 'Ver finanzas del mes',
         'dashboard.ingresos' => 'Ver ingresos del mes',

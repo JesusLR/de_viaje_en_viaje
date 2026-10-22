@@ -12,11 +12,28 @@ class ServicioTuristico extends Model
 {
     use HasFactory;
 
+    public function itinerario()
+    {
+        return $this->belongsTo(Itinerario::class, 'iIDItinerario');
+    }
+
+    public function itinerarioDias()
+    {
+        return $this->hasMany(ItinerarioDia::class, 'itinerario_id', 'iIDItinerario')->orderBy('numero');
+    }
+
+    public function itinerarioSnapshot(): array
+    {
+        return $this->itinerario?->snapshot() ?? [];
+    }
+
     protected $table = 'servicio_turisticos';
     protected $primaryKey = 'iID';
     protected $attributes = ['lUsaVigencia' => true, 'lPrecioMenorActivo' => false, 'dPrecioMenor' => 0];
 
     protected $fillable = [
+        'iIDItinerario',
+        'lPublicarItinerario',
         'cCodigo',
         'cNombre',
         'cDescripcionCorta',
@@ -48,6 +65,7 @@ class ServicioTuristico extends Model
     ];
 
     protected $casts = [
+        'lPublicarItinerario' => 'boolean',
         'lPrecioMenorActivo' => 'boolean',
         'dPrecioMenor' => 'float',
         'lActivo'               => 'boolean',

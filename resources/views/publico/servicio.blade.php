@@ -18,6 +18,11 @@
                 <p class="mt-3">{{ strip_tags($paquete->cDescripcionCorta ?? '') }}</p>
                 @if($paquete->cDescripcionCompleta)<div class="catalogo-texto">{{ strip_tags($paquete->cDescripcionCompleta) }}</div>@endif
             </div>
+            @if($paquete->lPublicarItinerario && $paquete->itinerarioDias()->exists())
+            <section class="mt-4"><h2 class="catalogo-subtitulo">Itinerario del viaje</h2>
+                @include('servicios.itinerario.recorrido', ['dias' => $paquete->itinerarioSnapshot(), 'fechaInicio' => $paquete->dFechaInicioViaje, 'interno' => false])
+            </section>
+            @endif
             @if($paquete->imagenes->isNotEmpty())
             <section class="mt-5 experiencia-galeria" data-galeria>
                 <h2 class="catalogo-subtitulo">Conoce la experiencia</h2>

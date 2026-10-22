@@ -58,7 +58,8 @@ $(document).ready(function () {
                     render: function (data, type, row) {
                         if (type !== 'display') return row.cCodigo + ' ' + data + ' ' + row.cCategoria;
                         const promocion = row.lPromocionVigente ? '<span class="servicio-promocion"><i class="fas fa-tag" aria-hidden="true"></i>Promoción vigente</span>' : '';
-                        return '<span class="apartado-folio">' + escapar(row.cCodigo) + '</span><div class="apartado-nombre" title="' + escapar(data) + '">' + escapar(data) + '</div><small class="servicio-meta">' + escapar(row.cCategoria) + '</small>' + promocion;
+                        const itinerario = row.iDiasItinerario > 0 ? '<small class="servicio-meta">Itinerario: ' + Number(row.iDiasItinerario) + ' días</small>' : '';
+                        return '<span class="apartado-folio">' + escapar(row.cCodigo) + '</span><div class="apartado-nombre" title="' + escapar(data) + '">' + escapar(data) + '</div><small class="servicio-meta">' + escapar(row.cCategoria) + '</small>' + itinerario + promocion;
                     }
                 },
                 {
@@ -104,6 +105,8 @@ $(document).ready(function () {
                     className: 'text-end',
                     render: function (data, type, row) {
                         return '<div class="apartado-acciones">' +
+                            (row.iIDItinerario ? '<a class="apartado-icono" data-permission="itinerarios.ver" href="/servicios/itinerarios/' + Number(row.iIDItinerario) + '" title="Itinerario asignado" aria-label="Itinerario asignado"><i class="fas fa-route" aria-hidden="true"></i></a>' : '') +
+                            (row.iIDItinerario ? '<a class="apartado-icono" data-permission="itinerarios.pdf" href="/servicios/paquetes/' + Number(row.iID) + '/itinerario.pdf" title="Descargar itinerario PDF para imprimir" aria-label="Descargar itinerario PDF para imprimir"><i class="fas fa-print" aria-hidden="true"></i></a>' : '') +
                             '<button type="button" class="apartado-icono btn-detalle" data-id="' + Number(row.iID) + '" title="Ver detalle" aria-label="Ver detalle"><i class="fas fa-eye" aria-hidden="true"></i></button>' +
                             '<button type="button" class="apartado-icono btn-editar" data-permission="servicios.editar" data-id="' + Number(row.iID) + '" title="Editar servicio" aria-label="Editar servicio"><i class="fas fa-pen" aria-hidden="true"></i></button>' +
                             '<button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-permission="servicios.activar" data-id="' + Number(row.iID) + '" title="Desactivar servicio" aria-label="Desactivar servicio"><i class="fas fa-ban" aria-hidden="true"></i></button></div>';
@@ -336,6 +339,10 @@ $(document).ready(function () {
         }
     });
 
+    $('#iIDItinerario').on('change', function () {
+        $('#abrirItinerario').toggleClass('d-none', !this.value).attr('href', this.value ? '/servicios/itinerarios/' + Number(this.value) : '#');
+    });
+
     function actualizarPrecioMenor() {
         const activo = $('#lPrecioMenorActivo').is(':checked');
         $('#precioMenorContainer').toggleClass('d-none', !activo);
@@ -362,6 +369,9 @@ $(document).ready(function () {
         $('#formServicio')[0].reset();
         actualizarPrecioMenor();
         $('#iID').val(0);
+        $('#abrirItinerario').addClass('d-none').removeAttr('href');
+        $('#iIDItinerario').val('').trigger('change');
+        $('#lPublicarItinerario').prop('checked', false);
         $('#iIDProveedor').val('');
         $('#iIDCategoria, #iIDDestino').val('').trigger('change.select2');
         $('#lUsaVigencia').prop('checked', true).trigger('change');
@@ -412,6 +422,8 @@ $(document).ready(function () {
                     $('#iIDProveedor').val(oData.iIDProveedor || '');
                     $('#dPrecioCompra').val(oData.dPrecioCompra);
                     $('#dPrecioVenta').val(oData.dPrecioVenta);
+                    $('#iIDItinerario').val(oData.iIDItinerario || '').trigger('change');
+                    $('#lPublicarItinerario').prop('checked', !!oData.lPublicarItinerario);
                     $('#dPrecioMenor').val(oData.dPrecioMenor);
                     $('#lPrecioMenorActivo').prop('checked', !!oData.lPrecioMenorActivo).trigger('change');
                     $('#cMoneda').val(oData.cMoneda || 'MXN');

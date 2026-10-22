@@ -33,6 +33,11 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
     Route::get('/perfil/foto', [\App\Http\Controllers\ProfileController::class, 'photo'])->name('perfil.photo');
 
     // Dashboard
+    Route::get('/servicios/itinerarios', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'index'])->name('itinerarios.index');
+    Route::get('/servicios/itinerarios/nuevo', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'create'])->name('itinerarios.create');
+    Route::post('/servicios/itinerarios', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'store'])->name('itinerarios.store');
+    Route::get('/servicios/itinerarios/{itinerario}', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'edit'])->name('itinerarios.edit');
+    Route::put('/servicios/itinerarios/{itinerario}', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'update'])->name('itinerarios.update');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/configuracion/pagina-inicio', [\App\Http\Controllers\Configuracion\LandingSettingsController::class, 'edit'])->name('configuracion.landing.edit');
     Route::put('/configuracion/pagina-inicio', [\App\Http\Controllers\Configuracion\LandingSettingsController::class, 'update'])->name('configuracion.landing.update');
@@ -151,6 +156,7 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
         Route::prefix('paquetes')->name('paquetes.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'index'])->name('index');
             Route::get('/gridData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'gridData'])->name('gridData');
+            Route::get('/{servicio}/itinerario.pdf', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'itinerarioPdf'])->name('itinerarioPdf');
             Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'getData'])->name('getData');
             Route::post('/saveData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'saveData'])->name('saveData');
             Route::post('/deleteData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'deleteData'])->name('deleteData');

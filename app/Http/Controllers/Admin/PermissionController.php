@@ -34,6 +34,7 @@ class PermissionController extends Controller
         if (in_array('dashboard.origen', $permissions, true)) $permissions[] = 'dashboard.ingresos';
         if (array_intersect(['dashboard.ingresos', 'dashboard.egresos', 'dashboard.origen'], $permissions)) $permissions[] = 'dashboard.finanzas';
         $permissions = array_values(array_unique($permissions));
+        if (in_array('itinerarios.asignar', $permissions, true) && !in_array('servicios.ver', $permissions, true)) $permissions[] = 'servicios.ver';
         if (in_array('servicios.costos.editar', $permissions, true) && !in_array('servicios.costos.ver', $permissions, true)) $permissions[] = 'servicios.costos.ver';
         return ['name' => $data['name'], 'permissions' => $permissions];
     }

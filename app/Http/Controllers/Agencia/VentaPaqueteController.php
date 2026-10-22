@@ -93,13 +93,14 @@ class VentaPaqueteController extends Controller
     {
         // Compatibilidad con el formulario anterior, que registraba un solo paquete.
         if (! $request->has('items') && $request->filled('iIDServicio')) {
-            $request->merge(['items' => [['iIDServicio' => $request->iIDServicio, 'iCantidad' => $request->iCantidad]]]);
+            $request->merge(['items' => [['iIDServicio' => $request->iIDServicio, 'iCantidad' => $request->iCantidad, 'iCantidadMenores' => $request->input('iCantidadMenores', 0)]]]);
         }
         $data = $request->validate([
             'iIDCliente' => ['required', Rule::exists('clientes', 'iID')->where('lActivo', 1)],
             'items' => 'required|array|min:1|max:30',
             'items.*.iIDServicio' => 'required|integer|distinct|exists:servicio_turisticos,iID',
             'items.*.iCantidad' => 'required|integer|min:1|max:1000',
+            'items.*.iCantidadMenores' => 'sometimes|integer|min:0|max:1000',
             'accion' => ['nullable', Rule::in(['vender', 'apartar'])],
             'cNombre' => 'nullable|string|max:150',
             'cMetodo' => ['required_if:accion,vender', 'nullable', Rule::in(['Efectivo', 'Transferencia', 'Tarjeta'])],
@@ -121,7 +122,7 @@ class VentaPaqueteController extends Controller
                     throw ValidationException::withMessages(['items' => 'Los paquetes de una operación deben tener la misma moneda.']);
                 }
                 $moneda = $paquete->cMoneda;
-                $detalle = $this->detalleServicio($paquete, $item['iCantidad']);
+                $detalle = $this->detalleServicio($paquete, $item['iCantidad'], $item['iCantidadMenores'] ?? 0);
                 $total += (int) round($detalle['dSubtotal'] * 100);
                 $detalles[] = $detalle;
             }
@@ -132,7 +133,7 @@ class VentaPaqueteController extends Controller
             $venta = VentaPaquete::create([
                 'iIDCliente' => $data['iIDCliente'], 'iIDUsuario' => $request->user()->id,
                 'iIDServicio' => $detalles[0]['iIDServicio'], 'cPaquete' => $detalles[0]['cPaquete'],
-                'iCantidad' => array_sum(array_column($detalles, 'iCantidad')), 'dPrecioUnitario' => $detalles[0]['dPrecioUnitario'],
+                'iCantidad' => array_sum(array_column($detalles, 'iCantidad')) + array_sum(array_column($detalles, 'iCantidadMenores')), 'dPrecioUnitario' => $detalles[0]['dPrecioUnitario'],
                 'cNombre' => $data['cNombre'] ?? null, 'dFechaViaje' => $detalles[0]['dFechaInicio'],
                 'cObservaciones' => $data['cObservaciones'] ?? null, 'cMoneda' => $moneda, 'dTotal' => $total / 100,
                 'cTipoOperacion' => $directa ? 'VENTA' : 'APARTADO', 'finalizada_at' => $directa ? now() : null,
@@ -273,7 +274,7 @@ class VentaPaqueteController extends Controller
 
     public function agregarPaquete(Request $request, VentaPaquete $venta)
     {
-        $data = $request->validate(['iIDServicio' => 'required|integer|exists:servicio_turisticos,iID', 'iCantidad' => 'required|integer|min:1|max:1000']);
+        $data = $request->validate(['iIDServicio' => 'required|integer|exists:servicio_turisticos,iID', 'iCantidad' => 'required|integer|min:1|max:1000', 'iCantidadMenores' => 'sometimes|integer|min:0|max:1000']);
         DB::transaction(function () use ($venta, $data) {
             $locked = VentaPaquete::lockForUpdate()->findOrFail($venta->iID);
             if ($locked->cancelada_at || $locked->finalizada_at) {
@@ -283,28 +284,34 @@ class VentaPaqueteController extends Controller
             if ($paquete->c_estatus_disponibilidad !== 'ACTIVO' || $paquete->cMoneda !== $locked->cMoneda) {
                 throw ValidationException::withMessages(['iIDServicio' => 'Selecciona un paquete vigente de la misma moneda.']);
             }
-            $detalle = $this->detalleServicio($paquete, $data['iCantidad']);
+            $detalle = $this->detalleServicio($paquete, $data['iCantidad'], $data['iCantidadMenores'] ?? 0);
             $subtotal = (int) round($detalle['dSubtotal'] * 100);
             $total = (int) round((float) $locked->dTotal * 100) + $subtotal;
             if ($total > 999999999999) {
                 throw ValidationException::withMessages(['iCantidad' => 'El total excede el importe permitido.']);
             }
             $locked->detalles()->create($detalle);
-            $locked->update(['dTotal' => $total / 100, 'iCantidad' => $locked->iCantidad + $data['iCantidad']]);
+            $locked->update(['dTotal' => $total / 100, 'iCantidad' => $locked->iCantidad + $data['iCantidad'] + ($data['iCantidadMenores'] ?? 0)]);
         });
 
         return back()->with('success', 'Paquete agregado al apartado.');
     }
 
-    private function detalleServicio(ServicioTuristico $paquete, int $cantidad): array
+    private function detalleServicio(ServicioTuristico $paquete, int $cantidad, int $menores = 0): array
     {
+        if ($menores > 0 && !$paquete->lPrecioMenorActivo) {
+            throw ValidationException::withMessages(['iCantidadMenores' => 'El paquete '.$paquete->cNombre.' no tiene activa la tarifa para menores.']);
+        }
         $regular = (int) round($paquete->dPrecioVenta * 100);
         $final = (int) round($paquete->d_precio_final * 100);
+        $precioMenor = $paquete->lPrecioMenorActivo ? (int) round($paquete->dPrecioMenor * 100) : null;
         $promocion = $paquete->l_promocion_vigente;
 
         return [
             'iIDServicio' => $paquete->iID, 'cPaquete' => $paquete->cNombre, 'iCantidad' => $cantidad,
-            'dPrecioUnitario' => $final / 100, 'dSubtotal' => $final * $cantidad / 100,
+            'itinerario' => $paquete->itinerarioSnapshot(),
+            'iCantidadMenores' => $menores, 'dPrecioMenor' => $precioMenor === null ? null : $precioMenor / 100,
+            'dPrecioUnitario' => $final / 100, 'dSubtotal' => ($final * $cantidad + ($precioMenor ?? 0) * $menores) / 100,
             'lUsaVigencia' => (bool) ($paquete->dFechaInicioViaje && $paquete->dFechaFinViaje),
             'dFechaInicio' => $paquete->dFechaInicioViaje?->toDateString(),
             'dFechaFin' => $paquete->dFechaFinViaje?->toDateString(),

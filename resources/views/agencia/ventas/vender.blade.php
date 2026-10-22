@@ -28,7 +28,7 @@
     </div><div class="vender-confirmacion mt-4 pt-3 border-top"><p class="text-muted mb-0 small" id="explicacion"></p><button id="guardarVenta" class="vender-guardar" @disabled($clientes->isEmpty() || $paquetes->isEmpty())><i class="fas fa-check" aria-hidden="true"></i><span id="guardarVentaTexto">Registrar venta liquidada</span></button></div></div>
     @if($clientes->isEmpty() || $paquetes->isEmpty())<div class="alert alert-warning mt-3">Necesitas clientes activos y paquetes vigentes para registrar una operación.</div>@endif
 </form>
-<template id="filaPaquete"><tr><td><select class="form-select paquete" required>@include('agencia.ventas.opciones-paquetes')</select><small class="promocion d-block mt-2"></small></td><td class="fechas text-nowrap">Selecciona un paquete</td><td><input class="form-control cantidad" type="number" min="1" max="1000" value="1" required></td><td class="regular text-nowrap">0.00</td><td class="descuento text-success text-nowrap">0.00</td><td class="subtotal text-nowrap text-end">0.00</td><td><button type="button" class="apartado-icono accion-cancelar quitar" title="Quitar paquete" aria-label="Quitar paquete"><i class="fas fa-xmark" aria-hidden="true"></i></button></td></tr></template>
+<template id="filaPaquete"><tr><td><select class="form-select paquete" required>@include('agencia.ventas.opciones-paquetes')</select><small class="promocion d-block mt-2"></small></td><td class="fechas text-nowrap">Selecciona un paquete</td><td><label class="small d-block">Adultos<input class="form-control cantidad" type="number" min="1" max="1000" value="1" required></label><div class="menores-container d-none mt-2"><label class="small d-block">Menores<input class="form-control menores" type="number" min="0" max="1000" value="0" disabled></label><small class="tarifa-menor text-muted"></small></div></td><td class="regular text-nowrap">0.00</td><td class="descuento text-success text-nowrap">0.00</td><td class="subtotal text-nowrap text-end">0.00</td><td><button type="button" class="apartado-icono accion-cancelar quitar" title="Quitar paquete" aria-label="Quitar paquete"><i class="fas fa-xmark" aria-hidden="true"></i></button></td></tr></template>
 </div>
 @endsection
 @push('styles')
@@ -47,7 +47,15 @@ function calcular() {
         const opcion = fila.querySelector('.paquete').selectedOptions[0];
         const cantidad = Number(fila.querySelector('.cantidad').value);
         const moneda = opcion.dataset.moneda;
-        const centavos = Math.round(Number(opcion.dataset.precio || 0) * 100) * cantidad;
+        const admiteMenores = opcion.dataset.menoresActivo === '1';
+        const menoresInput = fila.querySelector('.menores');
+        fila.querySelector('.menores-container').classList.toggle('d-none', !admiteMenores);
+        menoresInput.disabled = !admiteMenores;
+        if (!admiteMenores) menoresInput.value = 0;
+        const menores = admiteMenores ? Number(menoresInput.value) : 0;
+        const precioMenor = Math.round(Number(opcion.dataset.precioMenor || 0) * 100);
+        fila.querySelector('.tarifa-menor').textContent = admiteMenores ? (precioMenor === 0 ? 'Gratis para menores' : formato(precioMenor / 100) + ' ' + moneda + ' por menor') : '';
+        const centavos = Math.round(Number(opcion.dataset.precio || 0) * 100) * cantidad + precioMenor * menores;
         const regular = Math.round(Number(opcion.dataset.regular || 0) * 100);
         const descuento = Math.max(0, regular - Math.round(Number(opcion.dataset.precio || 0) * 100));
         const sufijo = moneda ? ' ' + moneda : '';
@@ -67,8 +75,10 @@ function agregar(item = {}) {
     const fila = document.getElementById('filaPaquete').content.cloneNode(true);
     fila.querySelector('.paquete').name = `items[${siguienteFila}][iIDServicio]`;
     fila.querySelector('.cantidad').name = `items[${siguienteFila}][iCantidad]`;
+    fila.querySelector('.menores').name = `items[${siguienteFila}][iCantidadMenores]`;
     fila.querySelector('.paquete').value = item.iIDServicio || '';
     fila.querySelector('.cantidad').value = item.iCantidad || 1;
+    fila.querySelector('.menores').value = item.iCantidadMenores || 0;
     siguienteFila++;
     lineas.appendChild(fila);
     window.inicializarControles(lineas);

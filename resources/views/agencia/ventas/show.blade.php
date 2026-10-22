@@ -60,7 +60,7 @@
     <div class="alert alert-success no-print d-flex justify-content-between align-items-center"><span>El apartado está liquidado. Puedes finalizarlo para que aparezca en Ventas.</span><form data-permission="apartados.finalizar" method="POST" action="{{ route('agencia.ventas.finalizar', $venta) }}" data-confirm="¿Finalizar este apartado liquidado?">@csrf<button class="btn btn-success"><i class="fas fa-check me-2" aria-hidden="true"></i>Finalizar apartado</button></form></div>
     @endif
     @if(!$seccion || $seccion === 'paquetes')
-    <form data-permission="apartados.paquetes" method="POST" action="{{ route('agencia.ventas.agregarPaquete', $venta) }}" class="card card-body mb-3">@csrf<h5>Agregar paquete al apartado</h5><div class="row g-3"><div class="col-md-7"><label for="paquete" class="form-label">Paquete vigente ({{ $venta->cMoneda }})</label><select id="paquete" name="iIDServicio" required class="form-select">@include('agencia.ventas.opciones-paquetes')</select></div><div class="col-md-2"><label for="cantidad" class="form-label">Cantidad</label><input id="cantidad" name="iCantidad" type="number" min="1" max="1000" value="1" required class="form-control"></div><div class="col-md-3 d-flex align-items-end"><button class="btn btn-outline-primary"><i class="fas fa-box-open me-2" aria-hidden="true"></i>Agregar paquete</button></div></div><p id="resumenPaquete" class="text-muted mt-3 mb-0" aria-live="polite">Selecciona un paquete para ver sus fechas y promoción.</p></form>
+    <form data-permission="apartados.paquetes" method="POST" action="{{ route('agencia.ventas.agregarPaquete', $venta) }}" class="card card-body mb-3">@csrf<h5>Agregar paquete al apartado</h5><div class="row g-3"><div class="col-md-7"><label for="paquete" class="form-label">Paquete vigente ({{ $venta->cMoneda }})</label><select id="paquete" name="iIDServicio" required class="form-select">@include('agencia.ventas.opciones-paquetes')</select></div><div class="col-md-2"><label for="cantidad" class="form-label">Adultos</label><input id="cantidad" name="iCantidad" type="number" min="1" max="1000" value="1" required class="form-control"></div><div class="col-md-3 d-flex align-items-end"><button class="btn btn-outline-primary"><i class="fas fa-box-open me-2" aria-hidden="true"></i>Agregar paquete</button></div></div><div id="menoresApartadoContainer" class="d-none mt-3"><label for="cantidadMenores" class="form-label">Menores</label><input id="cantidadMenores" name="iCantidadMenores" type="number" min="0" max="1000" value="0" class="form-control" disabled><small id="tarifaMenorApartado" class="text-muted"></small></div><p id="resumenPaquete" class="text-muted mt-3 mb-0" aria-live="polite">Selecciona un paquete para ver sus fechas y promoción.</p></form>
     @endif
     @if(!$seccion)
     <form data-permission="apartados.cancelar" method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" data-confirm="¿Cancelar este apartado? Los abonos recibidos se conservarán en finanzas." class="mb-3">@csrf<button class="btn btn-outline-danger"><i class="fas fa-ban me-2" aria-hidden="true"></i>Cancelar apartado</button></form>
@@ -87,13 +87,20 @@
 @endpush
 @push('scripts')
 <script>
-$('#paquete, #cantidad').on('change input', function () {
+$('#paquete, #cantidad, #cantidadMenores').on('change input', function () {
     const opcion = document.getElementById('paquete').selectedOptions[0];
+    const permiteMenores = opcion.dataset.menoresActivo === '1';
+    $('#menoresApartadoContainer').toggleClass('d-none', !permiteMenores);
+    $('#cantidadMenores').prop('disabled', !permiteMenores);
+    if (!permiteMenores) $('#cantidadMenores').val(0);
+    const precioMenor = Math.round(Number(opcion.dataset.precioMenor || 0) * 100);
+    const menores = permiteMenores ? Number($('#cantidadMenores').val()) : 0;
+    $('#tarifaMenorApartado').text(precioMenor === 0 ? 'Gratis para menores' : (precioMenor / 100).toFixed(2) + ' ' + opcion.dataset.moneda + ' por menor');
     if (!opcion.value) { $('#resumenPaquete').text('Selecciona un paquete para ver sus fechas y promoción.'); return; }
     const datos = opcion.dataset;
     const descuento = Math.max(0, Math.round(Number(datos.regular) * 100) - Math.round(Number(datos.precio) * 100));
     const cantidad = Number(document.getElementById('cantidad').value);
-    $('#resumenPaquete').text('Inicio: ' + datos.inicio + ' · Fin: ' + datos.fin + ' · ' + (datos.promocion || 'Sin promoción vigente') + ' · Precio regular: ' + Number(datos.regular).toFixed(2) + ' ' + datos.moneda + ' · Descuento por unidad: ' + (descuento / 100).toFixed(2) + ' ' + datos.moneda + ' · Descuento total: ' + (descuento * cantidad / 100).toFixed(2) + ' ' + datos.moneda + ' · Subtotal: ' + (Math.round(Number(datos.precio) * 100) * cantidad / 100).toFixed(2) + ' ' + datos.moneda);
+    $('#resumenPaquete').text('Inicio: ' + datos.inicio + ' · Fin: ' + datos.fin + ' · ' + (datos.promocion || 'Sin promoción vigente') + ' · Precio regular: ' + Number(datos.regular).toFixed(2) + ' ' + datos.moneda + ' · Descuento por unidad: ' + (descuento / 100).toFixed(2) + ' ' + datos.moneda + ' · Descuento total: ' + (descuento * cantidad / 100).toFixed(2) + ' ' + datos.moneda + ' · Subtotal: ' + ((Math.round(Number(datos.precio) * 100) * cantidad + precioMenor * menores) / 100).toFixed(2) + ' ' + datos.moneda);
 });
 </script>
 @endpush
