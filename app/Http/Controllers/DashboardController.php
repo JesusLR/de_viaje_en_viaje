@@ -23,8 +23,7 @@ class DashboardController extends Controller
         $desde = today()->startOfMonth();
         $hasta = $desde->copy()->addMonth();
         $mes = $desde->locale('es')->translatedFormat('F Y');
-        $serviciosMes = ServicioTuristico::where('created_at', '>=', $desde)->where('created_at', '<', $hasta)->count();
-        $serviciosActivosMes = ServicioTuristico::where('created_at', '>=', $desde)->where('created_at', '<', $hasta)->where('lActivo', true)->count();
+        $serviciosActivos = ServicioTuristico::publicados()->count();
         $apartadosAbiertos = VentaPaquete::where('cTipoOperacion', 'APARTADO')->whereNull('cancelada_at')->whereNull('finalizada_at')
             ->whereRaw('dTotal > (select coalesce(sum(dImporte), 0) from pagos_ventas where pagos_ventas.iIDVenta = ventas_paquetes.iID and anulado_at is null)')->count();
         $cobros = DB::table('pagos_ventas as p')->join('ventas_paquetes as v', 'v.iID', '=', 'p.iIDVenta')
@@ -57,8 +56,8 @@ class DashboardController extends Controller
         });
         if (!$user->hasPermission('dashboard.apartados')) $apartadosAbiertos = 0;
         elseif (!$user->hasPermission('apartados.todos')) $apartadosAbiertos = VentaPaquete::where('iIDUsuario', $user->id)->where('cTipoOperacion', 'APARTADO')->whereNull('cancelada_at')->whereNull('finalizada_at')->whereRaw('dTotal > (select coalesce(sum(dImporte), 0) from pagos_ventas where pagos_ventas.iIDVenta = ventas_paquetes.iID and anulado_at is null)')->count();
-        if (!$user->hasPermission('dashboard.servicios')) $serviciosMes = $serviciosActivosMes = 0;
+        if (!$user->hasPermission('dashboard.servicios')) $serviciosActivos = 0;
         if (!$user->hasPermission('dashboard.viajes')) $proximosViajes = collect();
-        return view('dashboard.index', compact('user', 'mes', 'serviciosMes', 'serviciosActivosMes', 'apartadosAbiertos', 'finanzas', 'fechaDesde', 'fechaHasta', 'desdeApartados', 'proximosViajes'));
+        return view('dashboard.index', compact('user', 'mes', 'serviciosActivos', 'apartadosAbiertos', 'finanzas', 'fechaDesde', 'fechaHasta', 'desdeApartados', 'proximosViajes'));
     }
 }

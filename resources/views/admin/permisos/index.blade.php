@@ -32,8 +32,8 @@
         </section></div>
         @endforeach
     </div>
-    <form class="apartados-filtros mb-4" method="GET"><label for="buscarPermisoUsuario" class="form-label">Buscar usuario</label><div class="d-flex gap-2"><div class="apartados-busqueda flex-grow-1"><i class="fas fa-search" aria-hidden="true"></i><input id="buscarPermisoUsuario" type="search" name="buscar" value="{{ request('buscar') }}" class="form-control" placeholder="Nombre o correo"></div><button class="apartado-icono accion-principal" aria-label="Buscar"><i class="fas fa-search"></i></button></div></form>
-    <div class="apartados-grid mb-4"><div class="px-4 py-3 border-bottom fw-semibold">Roles por usuario</div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Usuario</th><th>Estado</th><th>Roles</th><th class="text-end">Acciones</th></tr></thead><tbody>
+    <form class="apartados-filtros mb-4" method="GET" data-grid-filter="permisos"><label for="buscarPermisoUsuario" class="form-label">Buscar usuario</label><div class="d-flex gap-2"><div class="apartados-busqueda flex-grow-1"><i class="fas fa-search" aria-hidden="true"></i><input id="buscarPermisoUsuario" type="search" name="buscar" value="{{ request('buscar') }}" class="form-control" placeholder="Nombre o correo"></div><button class="apartado-icono accion-principal" aria-label="Buscar"><i class="fas fa-search"></i></button></div></form>
+    <div class="apartados-grid mb-4" data-grid-results="permisos"><div class="px-4 py-3 border-bottom fw-semibold">Roles por usuario</div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Usuario</th><th>Estado</th><th>Roles</th><th class="text-end">Acciones</th></tr></thead><tbody>
         @foreach($users as $usuario)
         <tr><td><strong>{{ $usuario->nombre_completo }}</strong><small class="d-block text-muted">{{ $usuario->email }}</small></td><td><span class="apartado-estado {{ $usuario->lActivo ? 'liquidado' : 'cancelado' }}">{{ $usuario->lActivo ? 'Activo' : 'Inactivo' }}</span></td><td>@forelse($usuario->roles as $role)<span class="apartados-contador me-1">{{ $role->name }}</span>@empty<span class="text-muted small">Sin roles asignados</span>@endforelse</td><td class="text-end">
         @can('permisos.asignar')
@@ -50,6 +50,7 @@
         @include('admin.permisos.rol-modal', ['role' => $role])
     @endforeach
 @endcan
+<div data-grid-results="permisos">
 @can('permisos.asignar')
 @foreach($users as $usuario)
 <div class="modal fade apartado-modal-shell" id="usuarioRoles{{ $usuario->id }}" tabindex="-1" aria-labelledby="usuarioRolesTitulo{{ $usuario->id }}" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
@@ -61,6 +62,7 @@
 </div></div></div>
 @endforeach
 @endcan
+</div>
 @endsection
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/agencia-grid.css') }}">

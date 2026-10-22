@@ -14,7 +14,7 @@ return [
         'dashboard.egresos' => 'Ver egresos del mes',
         'dashboard.origen' => 'Ver origen de los ingresos',
         'dashboard.apartados' => 'Ver apartados abiertos',
-        'dashboard.servicios' => 'Ver servicios del mes',
+        'dashboard.servicios' => 'Ver servicios activos',
         'dashboard.viajes' => 'Ver próximos viajes',
         'dashboard.accesos' => 'Ver accesos rápidos',
     ]],

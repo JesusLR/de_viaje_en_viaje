@@ -32,6 +32,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('agencia.partials.avisos')
+    <script src="{{ asset('js/grid-filtros.js') }}?v={{ filemtime(public_path('js/grid-filtros.js')) }}"></script>
     @stack('scripts')
     <script src="{{ asset('js/viajes-publico.js') }}?v={{ filemtime(public_path('js/viajes-publico.js')) }}" defer></script>
 </body>

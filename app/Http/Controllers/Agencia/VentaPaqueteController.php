@@ -163,9 +163,32 @@ class VentaPaqueteController extends Controller
         return view('agencia.ventas.show', compact('venta', 'paquetes', 'seccion'));
     }
 
+    public function itinerarioPdf(VentaPaquete $venta)
+    {
+        $venta->load('detalles.servicio');
+        $recorridos = $venta->detalles->map(function ($detalle) {
+            $contratado = !empty($detalle->itinerario);
+            $dias = $contratado ? $detalle->itinerario : ($detalle->servicio?->itinerarioSnapshot() ?? []);
+            return [
+                'nombre' => $detalle->cPaquete, 'dias' => $dias, 'contratado' => $contratado,
+                'inicio' => $detalle->dFechaInicio, 'fin' => $detalle->dFechaFin,
+            ];
+        })->filter(fn ($recorrido) => !empty($recorrido['dias']))->values();
+        abort_if($recorridos->isEmpty(), 422, 'Esta operación no tiene itinerarios disponibles para descargar.');
+        $settings = \App\Models\LandingSetting::current();
+        $marca = $settings->values()['brand'];
+        $rutaLogo = $settings->logoFilePath();
+        $logo = is_file($rutaLogo) ? 'data:'.mime_content_type($rutaLogo).';base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
+        $pdf = Pdf::loadView('agencia.ventas.itinerario-pdf', compact('venta', 'recorridos', 'marca', 'logo'))
+            ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
+        $pdf->render();
+        $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
+        return $pdf->download('itinerario-'.$venta->folio.'.pdf');
+    }
+
     public function comprobante(VentaPaquete $venta)
     {
-        abort_if($venta->cTipoOperacion !== 'APARTADO', 422, 'El PDF de historial de abonos solo está disponible para operaciones provenientes de apartados.');
+        abort_if($venta->cTipoOperacion !== 'APARTADO' && !$venta->pagos()->whereNull('anulado_at')->exists(), 422, 'Esta venta no tiene abonos registrados para descargar su historial.');
         return $this->generarComprobante($venta, false);
     }
 

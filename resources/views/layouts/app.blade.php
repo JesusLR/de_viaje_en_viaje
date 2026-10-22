@@ -528,6 +528,7 @@
     </script>
     <script>window.userPermissions = @json(auth()->user()?->permissionKeys() ?? []);</script>
     <script src="{{ asset('js/permissions-ui.js') }}?v={{ filemtime(public_path('js/permissions-ui.js')) }}"></script>
+    <script src="{{ asset('js/grid-filtros.js') }}?v={{ filemtime(public_path('js/grid-filtros.js')) }}"></script>
     @stack('scripts')
 </body>
 </html>

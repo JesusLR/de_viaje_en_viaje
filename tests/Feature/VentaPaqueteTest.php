@@ -57,14 +57,14 @@ class VentaPaqueteTest extends TestCase
         foreach (['>Finalizar</span>', '>Abonar</span>', 'Agregar paquetes', 'Cambiar nombre', 'Cancelar apartado'] as $action) {
             $this->assertStringNotContainsString($action, $html);
         }
-        $this->assertStringContainsString('Descargar comprobante PDF', $html);
+        $this->assertStringContainsString('Descargar historial de abonos PDF', $html);
         $venta->update(['cancelada_at' => null]);
         $role = \App\Models\Role::create(['name' => 'Consulta de apartados', 'slug' => uniqid('consulta'), 'permissions' => ['apartados.ver']]);
         $user = auth()->user();
         $user->roles()->sync([$role->id]);
         $user->unsetRelation('roles');
         $html = $render();
-        foreach (['>Finalizar</span>', '>Abonar</span>', 'Agregar paquetes', 'Cambiar nombre', 'Cancelar apartado', 'Descargar comprobante PDF'] as $action) {
+        foreach (['>Finalizar</span>', '>Abonar</span>', 'Agregar paquetes', 'Cambiar nombre', 'Cancelar apartado', 'Descargar historial de abonos PDF'] as $action) {
             $this->assertStringNotContainsString($action, $html);
         }
         $this->assertStringContainsString('Ver detalle', $html);
@@ -210,7 +210,8 @@ class VentaPaqueteTest extends TestCase
         $this->assertEquals(0, $venta->saldo_centavos);
         $this->assertNotNull($venta->finalizada_at);
         $this->assertEquals('Tarjeta', $venta->pagos->first()->cMetodo);
-        $this->getJson(route('agencia.ventas.comprobante', $venta))->assertUnprocessable();
+        $this->get(route('agencia.ventas.comprobante', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio]))->assertOk()->assertSee('Descargar historial de abonos PDF');
         $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->get(route('agencia.ventas.index', ['cliente' => $data['iIDCliente']]))->assertSee($venta->folio);
         $this->postJson(route('agencia.ventas.agregarPaquete', $venta), ['iIDServicio' => $otro->iID, 'iCantidad' => 1])->assertUnprocessable();

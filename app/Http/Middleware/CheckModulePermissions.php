@@ -61,6 +61,7 @@ class CheckModulePermissions
                 'pago' => 'abonos', 'agregarPaquete' => 'paquetes', 'nombre' => 'nombre',
                 'fechaPago' => 'fecha', 'anularPago' => 'anular', 'cancelar' => 'cancelar', 'finalizar' => 'finalizar',
                 'comprobante', 'comprobanteCompra' => 'pdf',
+                'itinerarioPdf' => $module === 'servicios' ? null : 'pdf',
                 'exportar' => 'exportar', 'anular' => 'anular',
                 'store' => $module === 'permisos' ? 'gestionar' : ($module === 'itinerarios' ? 'editar' : 'crear'),
                 'update' => $module === 'permisos' ? 'gestionar' : 'editar',
@@ -73,7 +74,7 @@ class CheckModulePermissions
             if ($specific) $this->require($request, $module.'.'.$specific);
         }
 
-        if ($name === 'servicios.paquetes.itinerarioPdf') {
+        if (in_array($name, ['servicios.paquetes.itinerarioPdf', 'agencia.ventas.itinerarioPdf'], true)) {
             $this->require($request, 'itinerarios.ver');
             $this->require($request, 'itinerarios.pdf');
         }

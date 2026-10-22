@@ -90,7 +90,7 @@
 <div class="col-md-6">
             <a data-permission="dashboard.servicios" class="dashboard-indicador" href="{{ $user->hasPermission('servicios.ver') ? route('servicios.paquetes.index') : '#' }}">
                 <span class="dashboard-icono servicios"><i class="fas fa-box-open" aria-hidden="true"></i></span>
-                <div class="flex-grow-1"><span class="dashboard-label">Servicios del mes</span><strong class="dashboard-cantidad">{{ number_format($serviciosMes) }}</strong><small>{{ $serviciosActivosMes }} habilitados · Registrados en {{ $mes }}</small></div>
+                <div class="flex-grow-1"><span class="dashboard-label">Servicios activos</span><strong class="dashboard-cantidad">{{ number_format($serviciosActivos) }}</strong><small>Todos los servicios abiertos y vigentes</small></div>
                 <i class="fas fa-chevron-right dashboard-flecha" aria-hidden="true"></i>
             </a>
         </div>

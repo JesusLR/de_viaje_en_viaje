@@ -1,4 +1,7 @@
+function inicializarAccionesApartados() {
 document.querySelectorAll('.apartado-mas').forEach(wrapper => {
+    if (wrapper.dataset.accionesInicializadas) return;
+    wrapper.dataset.accionesInicializadas = '1';
     const toggle = wrapper.querySelector('[data-bs-toggle="dropdown"]');
     const menu = wrapper.querySelector('.dropdown-menu');
     // Keep the menu outside the scrollable grid so the last rows are not clipped.
@@ -27,3 +30,13 @@ document.querySelectorAll('.apartado-mas').forEach(wrapper => {
         items[next].focus();
     });
 });
+}
+inicializarAccionesApartados();
+document.addEventListener('grid:beforeupdate', () => {
+    document.querySelectorAll('.apartado-mas [data-bs-toggle="dropdown"]').forEach(toggle => {
+        const dropdown = bootstrap.Dropdown.getInstance(toggle);
+        dropdown?.hide();
+        dropdown?.dispose();
+    });
+});
+document.addEventListener('grid:updated', inicializarAccionesApartados);

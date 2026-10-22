@@ -16,11 +16,14 @@
     @endif
     @if(auth()->user()->hasPermission('itinerarios.ver') && $venta->detalles->contains(fn ($detalle) => !empty($detalle->itinerario) || $detalle->servicio?->iIDItinerario))
     <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'itinerario']) }}" data-titulo="Itinerario · {{ $venta->folio }}" title="Ver itinerario" aria-label="Ver itinerario de {{ $venta->folio }}"><i class="fas fa-route" aria-hidden="true"></i><span>Ver itinerario</span></button></li>
+    @if(auth()->user()->hasPermission('itinerarios.pdf') && auth()->user()->hasPermission('apartados.pdf'))
+    <li><a class="dropdown-item" href="{{ route('agencia.ventas.itinerarioPdf', $venta) }}"><i class="fas fa-file-pdf" aria-hidden="true"></i>Descargar itinerario PDF</a></li>
+    @endif
     @endif
 
             <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'historial']) }}" data-titulo="Historial de abonos · {{ $venta->folio }}"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i>Historial de abonos</button></li>
             @can('apartados.pdf')
-            <li><a class="dropdown-item" href="{{ route('agencia.ventas.comprobante', $venta) }}"><i class="fas fa-file-pdf" aria-hidden="true"></i>Descargar comprobante PDF</a></li>
+            <li><a class="dropdown-item" href="{{ route('agencia.ventas.comprobante', $venta) }}"><i class="fas fa-file-pdf" aria-hidden="true"></i>Descargar historial de abonos PDF</a></li>
             @endcan
             @if(!$venta->cancelada_at && !$venta->finalizada_at)
                 @can('apartados.paquetes')

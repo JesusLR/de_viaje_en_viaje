@@ -99,12 +99,12 @@ class PermissionTest extends TestCase
         $user = $this->userWith(['finanzas.ver', 'finanzas.ingresos', 'servicios.ver']);
         $this->actingAs($user)->get(route('dashboard'))->assertOk()->assertSee('¡Bienvenido,')
             ->assertSee('Módulos')->assertDontSee('Resumen de la agencia')
-            ->assertDontSee('Finanzas del mes')->assertDontSee('Servicios del mes')->assertDontSee('Próximos viajes')->assertDontSee('Accesos rápidos');
+            ->assertDontSee('Finanzas del mes')->assertDontSee('Servicios activos')->assertDontSee('Próximos viajes')->assertDontSee('Accesos rápidos');
         $role = Role::create(['name' => 'Resumen', 'slug' => uniqid('resumen'), 'permissions' => ['dashboard.servicios', 'dashboard.finanzas', 'dashboard.ingresos']]);
         $user->roles()->sync([$role->id]);
         $this->actingAs($user->fresh())->get(route('dashboard'))->assertOk()->assertSee('¡Bienvenido,')
             ->assertDontSee('Módulos')->assertSee('Resumen de la agencia')
-            ->assertSee('Servicios del mes')->assertSee('Finanzas del mes')->assertSee('Ingresos')
+            ->assertSee('Servicios activos')->assertSee('Finanzas del mes')->assertSee('Ingresos')
             ->assertDontSee('Origen de los ingresos')->assertDontSee('Próximos viajes')->assertDontSee('Apartados abiertos');
         $this->get(route('servicios.paquetes.index'))->assertForbidden();
         $this->get(route('agencia.finanzas.index'))->assertForbidden();

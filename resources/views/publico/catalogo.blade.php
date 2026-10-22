@@ -6,7 +6,7 @@
     <div class="container"><span class="landing-eyebrow"><i class="fas fa-compass me-2" aria-hidden="true"></i>ENCUENTRA TU PRÓXIMA EXPERIENCIA</span><h1>El viaje que imaginas,<br>empieza aquí.</h1><p>Explora nuestros viajes, compara opciones y consulta con la agencia.</p><div class="catalogo-portada-nota"><i class="fas fa-map-location-dot" aria-hidden="true"></i>Catálogo de servicios y paquetes</div></div>
 </header>
 <section class="container catalogo-contenido">
-    <form method="GET" action="{{ route('catalogo.publico.index') }}" class="catalogo-filtros mb-4">
+    <form data-grid-filter="catalogo" method="GET" action="{{ route('catalogo.publico.index') }}" class="catalogo-filtros mb-4">
         <div class="row g-3 align-items-end">
             <div class="col-lg-6"><label for="buscar" class="form-label">¿Qué viaje tienes en mente?</label><div class="catalogo-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input id="buscar" name="buscar" type="search" maxlength="150" value="{{ old('buscar', request('buscar')) }}" class="form-control" placeholder="Nombre, destino o experiencia"></div></div>
             <div class="col-md-6 col-lg-3"><label for="destino" class="form-label">Destino</label><select id="destino" name="destino" class="form-select"><option value="">Todos los destinos</option>@foreach($destinos as $destino)<option value="{{ $destino->iID }}" @selected(request('destino') == $destino->iID)>{{ $destino->cNombre }}</option>@endforeach</select></div>
@@ -25,21 +25,21 @@
         </div>
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3">
             <small class="text-muted">Los filtros de precio utilizan el precio final con la promoción vigente. Selecciona una moneda para comparar importes.</small>
-            <a class="catalogo-limpiar" href="{{ route('catalogo.publico.index') }}"><i class="fas fa-rotate-left me-1" aria-hidden="true"></i>Limpiar filtros</a>
+            <a class="catalogo-limpiar" data-grid-clear href="{{ route('catalogo.publico.index') }}"><i class="fas fa-rotate-left me-1" aria-hidden="true"></i>Limpiar filtros</a>
         </div>
         </details>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4 pt-3 border-top">
-            <span class="catalogo-total">{{ number_format($paquetes->total()) }} {{ $paquetes->total() === 1 ? 'opción disponible' : 'opciones disponibles' }}</span>
+            <span class="catalogo-total" data-grid-results="catalogo">{{ number_format($paquetes->total()) }} {{ $paquetes->total() === 1 ? 'opción disponible' : 'opciones disponibles' }}</span>
             <div class="catalogo-orden"><label for="orden" class="form-label mb-0">Ordenar por</label><select id="orden" name="orden" class="form-select"><option value="proximos" @selected(request('orden', 'proximos') === 'proximos')>Próximas salidas</option><option value="recientes" @selected(request('orden') === 'recientes')>Más recientes</option><option value="precio_asc" @selected(request('orden') === 'precio_asc')>Menor precio</option><option value="precio_desc" @selected(request('orden') === 'precio_desc')>Mayor precio</option></select><button class="landing-button catalogo-filtrar" type="submit"><i class="fas fa-search" aria-hidden="true"></i>Buscar</button></div>
         </div>
     </form>
-    <div class="row g-4">
+    <div data-grid-results="catalogo"><div class="row g-4">
         @forelse($paquetes as $paquete)
             <div class="col-md-6 col-xl-4">@include('publico.partials.paquete-card')</div>
         @empty
-            <div class="col-12"><div class="landing-empty"><i class="fas fa-search mb-3" aria-hidden="true"></i><h3>No encontramos opciones con estos filtros</h3><p>Prueba otro destino, amplía las fechas o consulta con nuestro equipo.</p><a class="landing-button" href="{{ route('catalogo.publico.index') }}">Ver todo el catálogo</a></div></div>
+            <div class="col-12"><div class="landing-empty"><i class="fas fa-search mb-3" aria-hidden="true"></i><h3>No encontramos opciones con estos filtros</h3><p>Prueba otro destino, amplía las fechas o consulta con nuestro equipo.</p><a class="landing-button" data-grid-clear href="{{ route('catalogo.publico.index') }}">Ver todo el catálogo</a></div></div>
         @endforelse
     </div>
     <div class="catalogo-paginacion mt-4">@include('agencia.partials.paginacion', ['paginador' => $paquetes, 'etiqueta' => 'servicios'])</div>
-</section>
+</div></section>
 @endsection

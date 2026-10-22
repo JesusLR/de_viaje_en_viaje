@@ -8,7 +8,7 @@
     <div class="apartado-acciones">
         <a href="{{ route($venta->finalizada_at ? 'agencia.ventas.index' : 'agencia.apartados.index') }}" class="apartado-icono" title="{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}" aria-label="{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
         @if($venta->finalizada_at && !$venta->cancelada_at && $venta->saldo_centavos === 0)<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>@endif
-        @if($venta->cTipoOperacion === 'APARTADO')<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>@endif
+        @if(!$venta->finalizada_at || $venta->pagos->whereNull('anulado_at')->isNotEmpty())<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>@endif
     </div>
 </div>
 @endif

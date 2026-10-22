@@ -7,7 +7,7 @@
         <a data-permission="vender.ver" href="{{ route('agencia.vender.index') }}" class="apartado-icono nuevo-apartado" title="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}" aria-label="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}"><i class="fas fa-plus" aria-hidden="true"></i><span>{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}</span></a>
     </div>
     @include('agencia.partials.avisos')
-    <form method="GET" class="apartados-filtros mb-4">
+    <form method="GET" class="apartados-filtros mb-4" data-grid-filter="operaciones">
         <div class="row g-3 align-items-end">
             <div class="col-lg-5"><label for="buscar" class="form-label">{{ $apartados ? 'Buscar apartado' : 'Buscar venta' }}</label><div class="apartados-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input id="buscar" name="buscar" maxlength="150" value="{{ request('buscar') }}" class="form-control" placeholder="Nombre, paquete o folio…"></div></div>
             <div class="col-6 col-lg-2"><label for="desde" class="form-label">Desde</label><input id="desde" name="desde" type="date" value="{{ request('desde') }}" class="form-control"></div>
@@ -15,7 +15,7 @@
             <div class="col-lg-3"><div class="d-flex gap-2">
                 <button class="apartado-icono accion-principal" title="Consultar" aria-label="{{ $apartados ? 'Consultar apartados' : 'Consultar ventas' }}"><i class="fas fa-search" aria-hidden="true"></i></button>
                 <button type="button" class="apartado-icono" data-bs-toggle="collapse" data-bs-target="#filtrosApartados" aria-controls="filtrosApartados" aria-expanded="{{ request()->filled('cliente') || request()->filled('usuario') || request()->filled('estado') ? 'true' : 'false' }}" title="Más filtros" aria-label="Más filtros"><i class="fas fa-sliders" aria-hidden="true"></i></button>
-                <a href="{{ route($apartados ? 'agencia.apartados.index' : 'agencia.ventas.index') }}" class="apartado-icono" title="Limpiar filtros" aria-label="Limpiar filtros"><i class="fas fa-rotate-left" aria-hidden="true"></i></a>
+                <a href="{{ route($apartados ? 'agencia.apartados.index' : 'agencia.ventas.index') }}" class="apartado-icono" data-grid-clear title="Limpiar filtros" aria-label="Limpiar filtros"><i class="fas fa-rotate-left" aria-hidden="true"></i></a>
             </div></div>
         </div>
         <div class="collapse {{ request()->filled('cliente') || request()->filled('usuario') || request()->filled('estado') ? 'show' : '' }}" id="filtrosApartados"><div class="row g-3 pt-3 mt-3 border-top">
@@ -26,7 +26,7 @@
 @endif
         </div></div>
     </form>
-    <div class="apartados-grid">
+    <div class="apartados-grid" data-grid-results="operaciones">
         <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom"><span class="fw-semibold">{{ $apartados ? 'Tus apartados' : 'Tus ventas' }} <span class="apartados-contador ms-2">{{ $ventas->total() }}</span></span></div>
         <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>{{ $apartados ? 'Apartado' : 'Venta' }}</th><th>Cliente</th><th class="text-end">Total</th><th class="text-end">Abonado</th><th class="text-end">{{ $apartados ? 'Por abonar' : 'Origen' }}</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead><tbody>
         @forelse($ventas as $venta)
@@ -56,28 +56,7 @@
                 <td>@if($apartados)
                     @include('agencia.ventas.acciones-apartado')
                 @else
-                <div class="apartado-acciones">
-                    @if(auth()->user()->hasPermission('itinerarios.ver') && $venta->detalles->contains(fn ($detalle) => !empty($detalle->itinerario) || $detalle->servicio?->iIDItinerario))
-                    <button type="button" class="apartado-icono" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'itinerario']) }}" data-titulo="Itinerario · {{ $venta->folio }}" title="Ver itinerario" aria-label="Ver itinerario de {{ $venta->folio }}"><i class="fas fa-route" aria-hidden="true"></i></button>
-                    @endif
-                    @if(!$apartados && $venta->saldo_centavos === 0)
-                    <a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF de {{ $venta->folio }}"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>
-                    @endif
-                    @if($apartados || $venta->cTipoOperacion === 'APARTADO')
-                    <a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF de {{ $venta->folio }}"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>
-                    @endif
-                    @foreach(['detalle' => ['fa-receipt', 'Ver compra'], 'historial' => ['fa-clock-rotate-left', 'Historial de abonos'], 'abono' => ['fa-money-bill-wave', 'Registrar abono'], 'paquetes' => ['fa-box-open', 'Agregar paquetes'], 'nombre' => ['fa-pen', 'Cambiar nombre']] as $accion => [$icono, $titulo])
-                        @if(!in_array($accion, ['abono', 'paquetes']) || (!$venta->cancelada_at && !$venta->finalizada_at && ($accion !== 'abono' || $venta->saldo_centavos > 0)))
-                            <button type="button" class="apartado-icono {{ $accion === 'abono' ? 'accion-abono' : '' }}" data-bs-toggle="modal" data-bs-target="#accionApartado" data-operation-module="{{ $venta->finalizada_at ? 'ventas' : 'apartados' }}" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => $accion]) }}" data-titulo="{{ $titulo }} · {{ $venta->folio }}" title="{{ $titulo }}" aria-label="{{ $titulo }} de {{ $venta->folio }}"><i class="fas {{ $icono }}" aria-hidden="true"></i></button>
-                        @endif
-                    @endforeach
-                    @if(!$venta->cancelada_at && !$venta->finalizada_at)
-                        @if($venta->saldo_centavos === 0)
-                            <form data-permission="apartados.finalizar" method="POST" action="{{ route('agencia.ventas.finalizar', $venta) }}" data-confirm="¿Finalizar este apartado liquidado?">@csrf<button class="apartado-icono accion-abono" title="Finalizar apartado" aria-label="Finalizar {{ $venta->folio }}"><i class="fas fa-check" aria-hidden="true"></i></button></form>
-                        @endif
-                        <form data-permission="apartados.cancelar" method="POST" action="{{ route('agencia.ventas.cancelar', $venta) }}" data-confirm="¿Cancelar este apartado?" data-confirm-text="Los abonos recibidos se conservarán en finanzas.">@csrf<button class="apartado-icono accion-cancelar" title="Cancelar apartado" aria-label="Cancelar {{ $venta->folio }}"><i class="fas fa-ban" aria-hidden="true"></i></button></form>
-                    @endif
-                </div>
+                    @include('agencia.ventas.acciones-venta')
                 @endif</td>
             </tr>
         @empty
@@ -91,8 +70,8 @@
 @endsection
 @push('styles')
 <link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">
-@if($apartados)<link href="{{ asset('css/apartados-acciones.css') }}?v={{ filemtime(public_path('css/apartados-acciones.css')) }}" rel="stylesheet">@endif
+<link href="{{ asset('css/apartados-acciones.css') }}?v={{ filemtime(public_path('css/apartados-acciones.css')) }}" rel="stylesheet">
 @endpush
 @push('scripts')
-@if($apartados)<script src="{{ asset('js/apartados-acciones.js') }}?v={{ filemtime(public_path('js/apartados-acciones.js')) }}"></script>@endif
+<script src="{{ asset('js/apartados-acciones.js') }}?v={{ filemtime(public_path('js/apartados-acciones.js')) }}"></script>
 @endpush

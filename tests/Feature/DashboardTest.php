@@ -15,8 +15,12 @@ class DashboardTest extends TestCase
         $this->actingAs(User::factory()->create(['lCambiarPassword' => false]));
         $antes = $this->get(route('dashboard'))->assertOk();
         $abiertosAntes = $antes->viewData('apartadosAbiertos');
-        $serviciosAntes = $antes->viewData('serviciosMes');
+        $serviciosAntes = $antes->viewData('serviciosActivos');
         $servicio = ServicioTuristico::create(['cCodigo' => uniqid('DASH'), 'cNombre' => 'Servicio dashboard', 'dPrecioVenta' => 1000, 'lUsaVigencia' => false, 'lActivo' => true]);
+        $servicio->update(['created_at' => today()->subMonths(3)]);
+        ServicioTuristico::create(['cCodigo' => uniqid('OFF'), 'cNombre' => 'Inactivo', 'lUsaVigencia' => false, 'lActivo' => false]);
+        ServicioTuristico::create(['cCodigo' => uniqid('EXP'), 'cNombre' => 'Vencido', 'lUsaVigencia' => true, 'lActivo' => true, 'dFechaInicioVigencia' => today()->subDays(3), 'dFechaFinVigencia' => today()->subDay()]);
+        ServicioTuristico::create(['cCodigo' => uniqid('NEXT'), 'cNombre' => 'Programado', 'lUsaVigencia' => true, 'lActivo' => true, 'dFechaInicioVigencia' => today()->addDay(), 'dFechaFinVigencia' => today()->addWeek()]);
         $cliente = Cliente::create(['cNombre' => 'Cliente', 'cPrimerApellido' => 'Dashboard']);
         $datos = ['iIDCliente' => $cliente->iID, 'iIDServicio' => $servicio->iID, 'cPaquete' => $servicio->cNombre, 'cMoneda' => 'TST', 'iCantidad' => 1, 'dPrecioUnitario' => 1000, 'dTotal' => 1000, 'cTipoOperacion' => 'APARTADO'];
         $abierto = VentaPaquete::create($datos);
@@ -31,8 +35,8 @@ class DashboardTest extends TestCase
             MovimientoFinanciero::create(['cTipo' => $tipo, 'cConcepto' => 'Prueba dashboard', 'dImporte' => $importe, 'cMoneda' => 'TST', 'cMetodo' => 'Efectivo', 'dFecha' => today(), 'anulado_at' => $anulado]);
         }
         MovimientoFinanciero::create(['cTipo' => 'INGRESO', 'cConcepto' => 'Otra moneda', 'dImporte' => 25, 'cMoneda' => 'TSU', 'cMetodo' => 'Efectivo', 'dFecha' => today()]);
-        $this->get(route('dashboard'))->assertOk()->assertSee('Finanzas del mes')->assertSee('Apartados abiertos')->assertSee('Servicios del mes')
-            ->assertViewHas('apartadosAbiertos', $abiertosAntes + 1)->assertViewHas('serviciosMes', $serviciosAntes + 1)
+        $this->get(route('dashboard'))->assertOk()->assertSee('Finanzas del mes')->assertSee('Apartados abiertos')->assertSee('Servicios activos')
+            ->assertViewHas('apartadosAbiertos', $abiertosAntes + 1)->assertViewHas('serviciosActivos', $serviciosAntes + 1)
             ->assertViewHas('finanzas', fn ($finanzas) => $finanzas['TST']['ingresos'] == 1500 && $finanzas['TST']['egresos'] == 400 && $finanzas['TST']['balance'] == 1100 && $finanzas['TST']['abonos'] == 1200 && $finanzas['TST']['ventas'] == 0 && $finanzas['TST']['manuales'] == 300 && $finanzas['TSU']['ingresos'] == 25);
         $pagado->update(['finalizada_at' => now()]);
         $this->get(route('dashboard'))->assertOk()

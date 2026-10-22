@@ -96,8 +96,12 @@ class ItinerarioTest extends TestCase
         $this->get(route('agencia.ventas.show', $sale))->assertOk()->assertSee('Itinerario contratado')->assertSee('Llegada')->assertDontSee('Nuevo recorrido');
         $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()->assertSee('Llegada')->assertDontSee('Nuevo recorrido');
         $this->get(route('agencia.apartados.index', ['buscar' => $sale->folio]))->assertOk()->assertSee('Ver itinerario');
+        $this->get(route('agencia.apartados.index', ['buscar' => $sale->folio]))->assertSee('Descargar itinerario PDF');
+        $this->get(route('agencia.ventas.itinerarioPdf', $sale))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('itinerario-'.$sale->folio.'.pdf');
         $sale->update(['finalizada_at' => now()]);
         $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertOk()->assertSee('Ver itinerario');
+        $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertSee('Descargar itinerario PDF');
+        $this->get(route('agencia.ventas.itinerarioPdf', $sale))->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()->assertSee('Itinerario contratado');
         $detail->update(['itinerario' => null]);
         $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()
@@ -108,6 +112,7 @@ class ItinerarioTest extends TestCase
         $user->roles()->attach($role);
         $user->unsetRelation('roles');
         $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertForbidden();
+        $this->get(route('agencia.ventas.itinerarioPdf', $sale))->assertForbidden();
         $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertOk()->assertDontSee('Ver itinerario');
     }
 
