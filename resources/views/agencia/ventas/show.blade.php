@@ -7,12 +7,13 @@
     <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas fa-receipt" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">{{ $venta->finalizada_at ? 'Detalle de venta' : 'Detalle de apartado' }}</h3><p class="text-muted small mb-0">{{ $venta->folio }} · {{ $venta->cliente->nombre_completo }}</p></div></div>
     <div class="apartado-acciones">
         <a href="{{ route($venta->finalizada_at ? 'agencia.ventas.index' : 'agencia.apartados.index') }}" class="apartado-icono" title="{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}" aria-label="{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
-        @if($venta->finalizada_at && !$venta->cancelada_at && $venta->saldo_centavos === 0)<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>@endif
+        @if(!$venta->eliminada_at && $venta->finalizada_at && !$venta->cancelada_at && $venta->saldo_centavos === 0)<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>@endif
         @if(!$venta->finalizada_at || $venta->pagos->whereNull('anulado_at')->isNotEmpty())<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>@endif
     </div>
 </div>
 @endif
 @include('agencia.partials.avisos')
+@if($venta->eliminada_at)<div class="alert alert-secondary">Venta eliminada el {{ $venta->eliminada_at->format('d/m/Y H:i') }}. Sus pagos se conservan como historial y no suman en finanzas.</div>@endif
 @if($seccion === 'itinerario')
 <div class="p-4">@include('agencia.ventas.itinerarios')</div>
 @endif

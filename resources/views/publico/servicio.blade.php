@@ -18,7 +18,10 @@
                 <p class="mt-3">{{ strip_tags($paquete->cDescripcionCorta ?? '') }}</p>
                 @if($paquete->cDescripcionCompleta)<div class="catalogo-texto">{{ strip_tags($paquete->cDescripcionCompleta) }}</div>@endif
             </div>
-            @if($paquete->lPublicarItinerario && $paquete->itinerarioDias()->exists())
+            @if($paquete->lPublicarItinerario && $paquete->cTipoItinerario === 'PDF' && $paquete->cItinerarioPdf)
+            <section class="mt-4"><h2 class="catalogo-subtitulo">Itinerario del viaje</h2><a class="landing-button" href="{{ route('catalogo.publico.itinerario', $paquete->iID) }}" target="_blank" rel="noopener">Ver itinerario PDF</a></section>
+            @endif
+            @if($paquete->lPublicarItinerario && $paquete->cTipoItinerario !== 'PDF' && $paquete->itinerarioDias()->exists())
             <section class="mt-4"><h2 class="catalogo-subtitulo">Itinerario del viaje</h2>
                 @include('servicios.itinerario.recorrido', ['dias' => $paquete->itinerarioSnapshot(), 'fechaInicio' => $paquete->dFechaInicioViaje, 'interno' => false])
             </section>

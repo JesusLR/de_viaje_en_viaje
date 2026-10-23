@@ -49,9 +49,19 @@
                     <div class="tab-content" id="servicioTabsContent">
                         @if(auth()->user()->hasPermission('itinerarios.ver'))
                         <div class="tab-pane fade" id="tab-itinerario" role="tabpanel"><div class="card border-0 shadow-sm"><div class="card-body p-4">
-                            <h5 class="fw-bold">Itinerario del servicio</h5><p class="text-muted">Selecciona un recorrido del catálogo de itinerarios. Puedes usarlo en varios servicios.</p>
+                            <h5 class="fw-bold">Itinerario del servicio</h5><p class="text-muted">Selecciona un recorrido del catálogo o sube un PDF que ya tengas preparado.</p>
+                            <label for="cTipoItinerario" class="form-label fw-semibold">Origen del itinerario</label>
+                            <select class="form-select mb-3" id="cTipoItinerario" name="cTipoItinerario" @disabled(!auth()->user()->hasPermission('itinerarios.asignar'))><option value="CATALOGO">Seleccionar del módulo de itinerarios</option><option value="PDF">Subir un itinerario en PDF</option></select>
+                            <div id="itinerarioCatalogoCampos">
                             <label for="iIDItinerario" class="form-label fw-semibold">Itinerario asignado</label>
                             <select class="form-select" id="iIDItinerario" name="iIDItinerario" @disabled(!auth()->user()->hasPermission('itinerarios.asignar'))><option value="">Sin itinerario</option>@foreach($aItinerarios as $itinerario)<option value="{{ $itinerario->id }}">{{ $itinerario->nombre }}</option>@endforeach</select>
+                            </div>
+                            <div id="itinerarioPdfCampos" class="d-none">
+                                <label for="itinerarioPdfFile" class="form-label fw-semibold">Archivo PDF del itinerario</label>
+                                <input class="form-control" type="file" id="itinerarioPdfFile" name="itinerarioPdfFile" accept=".pdf,application/pdf" disabled>
+                                <div class="form-text">Solo PDF, máximo 10 MB. Al editar, deja el archivo vacío para conservar el PDF guardado.</div>
+                                <p id="itinerarioPdfEstado" class="small text-muted mt-2 mb-0"></p>
+                            </div>
                             @if(auth()->user()->hasPermission('itinerarios.publicar'))<input type="hidden" name="lPublicarItinerario" value="0">@endif
                             <div class="form-check form-switch mt-3"><input class="form-check-input" type="checkbox" id="lPublicarItinerario" name="lPublicarItinerario" value="1" @disabled(!auth()->user()->hasPermission('itinerarios.publicar'))><label class="form-check-label" for="lPublicarItinerario">Mostrar el itinerario en la página pública de este servicio</label></div>
                             <div class="d-flex flex-wrap gap-2 mt-3"><a id="abrirItinerario" class="btn btn-outline-primary d-none">Consultar itinerario</a><a class="btn btn-outline-secondary" href="{{ route('itinerarios.index') }}">Catálogo de itinerarios</a></div>

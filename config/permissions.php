@@ -48,9 +48,10 @@ return [
     ]],
     'ventas' => ['label' => 'Ventas', 'actions' => [
         'ventas.ver' => 'Consultar propias',
-        'ventas.todos' => 'Consultar todas las ventas',
+        'ventas.todos' => 'Consultar todas las ventas y filtrar por vendedor',
         'ventas.pdf' => 'Descargar PDF',
         'ventas.nombre' => 'Cambiar nombre de operación',
+        'ventas.eliminar' => 'Eliminar ventas',
     ]],
     'finanzas' => ['label' => 'Finanzas', 'actions' => [
         'finanzas.ver' => 'Acceder a finanzas',

@@ -12,7 +12,7 @@ class VentaPaquete extends Model
 
     protected $guarded = ['iID'];
 
-    protected $casts = ['dFechaViaje' => 'date', 'cancelada_at' => 'datetime', 'finalizada_at' => 'datetime', 'dPrecioUnitario' => 'decimal:2', 'dTotal' => 'decimal:2'];
+    protected $casts = ['dFechaViaje' => 'date', 'eliminada_at' => 'datetime', 'cancelada_at' => 'datetime', 'finalizada_at' => 'datetime', 'dPrecioUnitario' => 'decimal:2', 'dTotal' => 'decimal:2'];
 
     public function cliente()
     {
@@ -46,11 +46,11 @@ class VentaPaquete extends Model
 
     public function getEstadoAttribute(): string
     {
-        return $this->cancelada_at ? 'Cancelada' : ($this->saldo_centavos === 0 ? 'Pagada' : 'Pendiente');
+        return $this->eliminada_at ? 'Eliminada' : ($this->cancelada_at ? 'Cancelada' : ($this->saldo_centavos === 0 ? 'Pagada' : 'Pendiente'));
     }
 
     public function getEstadoApartadoAttribute(): string
     {
-        return $this->cancelada_at ? 'Cancelado' : ($this->finalizada_at ? 'Finalizado' : ($this->saldo_centavos === 0 ? 'Liquidado' : 'Abierto'));
+        return $this->eliminada_at ? 'Eliminada' : ($this->cancelada_at ? 'Cancelado' : ($this->finalizada_at ? 'Finalizado' : ($this->saldo_centavos === 0 ? 'Liquidado' : 'Abierto')));
     }
 }

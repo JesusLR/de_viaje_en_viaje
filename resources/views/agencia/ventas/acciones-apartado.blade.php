@@ -14,8 +14,8 @@
             @endcan
         @endif
     @endif
-    @if(auth()->user()->hasPermission('itinerarios.ver') && $venta->detalles->contains(fn ($detalle) => !empty($detalle->itinerario) || $detalle->servicio?->iIDItinerario))
-    <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'itinerario']) }}" data-titulo="Itinerario · {{ $venta->folio }}" title="Ver itinerario" aria-label="Ver itinerario de {{ $venta->folio }}"><i class="fas fa-route" aria-hidden="true"></i><span>Ver itinerario</span></button></li>
+    @if(auth()->user()->hasPermission('itinerarios.ver') && $venta->detalles->contains(fn ($detalle) => $detalle->tiene_itinerario))
+    @include('agencia.ventas.acciones-itinerario')
     @if(auth()->user()->hasPermission('itinerarios.pdf') && auth()->user()->hasPermission('apartados.pdf'))
     <li><a class="dropdown-item" href="{{ route('agencia.ventas.itinerarioPdf', $venta) }}"><i class="fas fa-file-pdf" aria-hidden="true"></i>Descargar itinerario PDF</a></li>
     @endif

@@ -12,8 +12,9 @@
         <button type="button" class="apartado-icono nuevo-apartado" id="btnNuevo"><i class="fas fa-user-plus" aria-hidden="true"></i> Nuevo Usuario</button>
     </div>
     <div class="apartados-filtros mb-4">
+        <div class="row g-3"><div class="col-md-8">
         <label for="buscarUsuarios" class="form-label">Buscar usuarios</label>
-        <div class="apartados-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="buscarUsuarios" class="form-control" placeholder="Escribe para buscar…" autocomplete="off"></div>
+        <div class="apartados-busqueda"><i class="fas fa-search" aria-hidden="true"></i><input type="search" id="buscarUsuarios" class="form-control" placeholder="Escribe para buscar…" autocomplete="off"></div></div><div class="col-md-4"><label for="estadoUsuarios" class="form-label">Estado</label><select id="estadoUsuarios" class="form-select"><option value="todos">Todos los usuarios</option><option value="activos" selected>Usuarios activos</option><option value="inactivos">Usuarios inactivos</option></select></div></div>
     </div>
     <div class="apartados-grid mb-4">
         <table class="table align-middle w-100 mb-0" id="tablaUsuarios">

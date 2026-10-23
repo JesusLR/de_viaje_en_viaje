@@ -16,6 +16,18 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class VentaPaqueteController extends Controller
 {
+    public function destroy(Request $request, VentaPaquete $venta)
+    {
+        DB::transaction(function () use ($request, $venta) {
+            $locked = VentaPaquete::lockForUpdate()->findOrFail($venta->iID);
+            abort_unless($locked->finalizada_at && !$locked->cancelada_at, 422, 'Solo se pueden eliminar ventas finalizadas.');
+            if (!$locked->eliminada_at) {
+                $locked->update(['eliminada_at' => now(), 'iIDUsuarioElimina' => $request->user()->id]);
+            }
+        });
+        return redirect()->route('agencia.ventas.index')->with('success', 'Venta eliminada. Sus pagos ya no se incluyen en finanzas.');
+    }
+
     public function vender()
     {
         $clientes = Cliente::where('lActivo', 1)->orderBy('cNombre')->get();
@@ -43,12 +55,14 @@ class VentaPaqueteController extends Controller
 
     private function listado(Request $request, bool $apartados)
     {
+        $puedeFiltrarVendedor = $request->user()->hasPermission(($apartados ? 'apartados' : 'ventas').'.todos');
+        if (!$puedeFiltrarVendedor) $request->merge(['usuario' => $request->user()->id]);
         $request->merge([
             'desde' => $request->input('desde') ?: today()->startOfMonth()->toDateString(),
             'hasta' => $request->input('hasta') ?: today()->endOfMonth()->toDateString(),
         ]);
         $request->validate([
-            'estado' => ['nullable', Rule::in(['Abierto', 'Liquidado', 'Cancelado'])],
+            'estado' => ['nullable', Rule::in($apartados ? ['Abierto', 'Liquidado', 'Cancelado'] : ['Todas', 'Liquidadas', 'Eliminadas'])],
             'cliente' => 'nullable|integer|exists:clientes,iID', 'usuario' => 'nullable|integer|exists:users,id',
             'desde' => 'nullable|date_format:Y-m-d', 'hasta' => 'nullable|date_format:Y-m-d|after_or_equal:desde',
             'buscar' => 'nullable|string|max:150',
@@ -67,6 +81,9 @@ class VentaPaqueteController extends Controller
             }
         } else {
             $query->whereNull('cancelada_at')->whereNotNull('finalizada_at');
+            $estado = $request->input('estado') ?: 'Liquidadas';
+            if ($estado === 'Eliminadas') $query->whereNotNull('eliminada_at');
+            elseif ($estado !== 'Todas') $query->whereNull('eliminada_at');
         }
         if ($request->filled('cliente')) {
             $query->where('iIDCliente', $request->cliente);
@@ -87,9 +104,9 @@ class VentaPaqueteController extends Controller
         }
         $ventas = $query->paginate(10)->withQueryString();
         $clientes = Cliente::orderBy('cNombre')->get();
-        $usuarios = User::where('lDev', false)->orderBy('name')->get();
+        $usuarios = $puedeFiltrarVendedor ? User::where('lDev', false)->orderBy('name')->get() : collect([$request->user()]);
 
-        return view('agencia.ventas.apartados', compact('ventas', 'clientes', 'usuarios', 'apartados'));
+        return view('agencia.ventas.apartados', compact('ventas', 'clientes', 'usuarios', 'apartados', 'puedeFiltrarVendedor'));
     }
 
     public function store(Request $request)
@@ -166,15 +183,22 @@ class VentaPaqueteController extends Controller
     public function itinerarioPdf(VentaPaquete $venta)
     {
         $venta->load('detalles.servicio');
+        $pdfs = $venta->detalles->map(fn ($detalle) => $detalle->ruta_itinerario_pdf)->filter()->values();
+        $pdfService = app(\App\Services\ItinerarioPdfService::class);
         $recorridos = $venta->detalles->map(function ($detalle) {
             $contratado = !empty($detalle->itinerario);
-            $dias = $contratado ? $detalle->itinerario : ($detalle->servicio?->itinerarioSnapshot() ?? []);
+            $dias = $detalle->ruta_itinerario_pdf ? [] : ($contratado ? $detalle->itinerario : ($detalle->servicio?->itinerarioSnapshot() ?? []));
             return [
                 'nombre' => $detalle->cPaquete, 'dias' => $dias, 'contratado' => $contratado,
                 'inicio' => $detalle->dFechaInicio, 'fin' => $detalle->dFechaFin,
             ];
         })->filter(fn ($recorrido) => !empty($recorrido['dias']))->values();
-        abort_if($recorridos->isEmpty(), 422, 'Esta operación no tiene itinerarios disponibles para descargar.');
+        abort_if($recorridos->isEmpty() && $pdfs->isEmpty(), 422, 'Esta operación no tiene itinerarios disponibles para descargar.');
+        if ($recorridos->isEmpty()) {
+            $documentos = $pdfs->map(fn ($path) => $pdfService->contenido($path))->all();
+            $contenido = count($documentos) === 1 ? $documentos[0] : $pdfService->combinar($documentos);
+            return response($contenido)->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="itinerario-'.$venta->folio.'.pdf"']);
+        }
         $settings = \App\Models\LandingSetting::current();
         $marca = $settings->values()['brand'];
         $rutaLogo = $settings->logoFilePath();
@@ -183,7 +207,19 @@ class VentaPaqueteController extends Controller
             ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
         $pdf->render();
         $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
+        if ($pdfs->isNotEmpty()) {
+            $contenido = $pdfService->combinar(array_merge([$pdf->output()], $pdfs->map(fn ($path) => $pdfService->contenido($path))->all()));
+            return response($contenido)->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="itinerario-'.$venta->folio.'.pdf"']);
+        }
         return $pdf->download('itinerario-'.$venta->folio.'.pdf');
+    }
+
+    public function itinerarioArchivo(VentaPaquete $venta, int $detalle)
+    {
+        $registro = $venta->detalles()->with('servicio')->findOrFail($detalle);
+        abort_unless($registro->ruta_itinerario_pdf, 404);
+        return response(app(\App\Services\ItinerarioPdfService::class)->contenido($registro->ruta_itinerario_pdf))
+            ->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="itinerario.pdf"', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
     public function comprobante(VentaPaquete $venta)
@@ -337,6 +373,7 @@ class VentaPaqueteController extends Controller
         return [
             'iIDServicio' => $paquete->iID, 'cPaquete' => $paquete->cNombre, 'iCantidad' => $cantidad,
             'itinerario' => $paquete->itinerarioSnapshot(),
+            'cItinerarioPdf' => $paquete->cTipoItinerario === 'PDF' ? $paquete->cItinerarioPdf : null,
             'iCantidadMenores' => $menores, 'dPrecioMenor' => $precioMenor === null ? null : $precioMenor / 100,
             'dPrecioUnitario' => $final / 100, 'dSubtotal' => ($final * $cantidad + ($precioMenor ?? 0) * $menores) / 100,
             'lUsaVigencia' => (bool) ($paquete->dFechaInicioViaje && $paquete->dFechaFinViaje),

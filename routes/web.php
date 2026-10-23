@@ -15,6 +15,7 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/pagina/imagen/{image}', [LandingController::class, 'image'])->name('landing.image');
 Route::get('/catalogo', [\App\Http\Controllers\PublicCatalogController::class, 'index'])->name('catalogo.publico.index');
 Route::get('/catalogo/{servicio}', [\App\Http\Controllers\PublicCatalogController::class, 'show'])->whereNumber('servicio')->name('catalogo.publico.show');
+Route::get('/catalogo/{servicio}/itinerario.pdf', [\App\Http\Controllers\PublicCatalogController::class, 'itinerario'])->whereNumber('servicio')->name('catalogo.publico.itinerario');
 
 // Rutas Públicas de Autenticación (Middleware 'guest' evita que usuarios logueados accedan al login)
 Route::middleware('guest')->group(function () {
@@ -62,6 +63,7 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
         });
         // Submódulo Usuarios
         Route::prefix('usuarios')->name('usuarios.')->group(function () {
+            Route::post('/activar', [UsuarioController::class, 'activar'])->name('activar');
             Route::get('/{user}/foto', [UsuarioController::class, 'foto'])->name('foto');
             Route::get('/', [UsuarioController::class, 'index'])->name('index');
             Route::get('/gridData', [UsuarioController::class, 'gridData'])->name('gridData');
@@ -119,11 +121,13 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
         Route::post('/{movimiento}/anular', 'anular')->name('anular');
     });
     Route::prefix('agencia/ventas')->name('agencia.ventas.')->controller(\App\Http\Controllers\Agencia\VentaPaqueteController::class)->group(function () {
+        Route::delete('/{venta}', 'destroy')->name('destroy');
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/{venta}', 'show')->name('show');
         Route::get('/{venta}/comprobante', 'comprobante')->name('comprobante');
         Route::get('/{venta}/itinerario.pdf', 'itinerarioPdf')->name('itinerarioPdf');
+        Route::get('/{venta}/paquetes/{detalle}/itinerario.pdf', 'itinerarioArchivo')->name('itinerarioArchivo');
         Route::get('/{venta}/compra-saldada', 'comprobanteCompra')->name('comprobanteCompra');
         Route::post('/{venta}/pagos', 'pago')->name('pago');
         Route::post('/{venta}/cancelar', 'cancelar')->name('cancelar');
@@ -158,6 +162,7 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
             Route::get('/', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'index'])->name('index');
             Route::get('/gridData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'gridData'])->name('gridData');
             Route::get('/{servicio}/itinerario.pdf', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'itinerarioPdf'])->name('itinerarioPdf');
+            Route::get('/{servicio}/itinerario-archivo', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'itinerarioArchivo'])->name('itinerarioArchivo');
             Route::get('/getData/{id}', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'getData'])->name('getData');
             Route::post('/saveData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'saveData'])->name('saveData');
             Route::post('/deleteData', [\App\Http\Controllers\Servicios\ServicioTuristicoController::class, 'deleteData'])->name('deleteData');

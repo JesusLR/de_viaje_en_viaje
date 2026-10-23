@@ -16,6 +16,69 @@ class VentaPaqueteTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_eliminar_venta_conserva_historial_y_excluye_finanzas_y_dashboard(): void
+    {
+        [$paquete, $data] = $this->datos();
+        $paquete->update(['cMoneda' => 'DEL']);
+        $this->post(route('agencia.ventas.store'), $data + ['accion' => 'vender', 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
+        $venta = VentaPaquete::latest('iID')->firstOrFail();
+        $this->get(route('agencia.finanzas.index', ['moneda' => 'DEL']))->assertViewHas('totales', fn ($total) => (float) $total->ingresos === 1800.0);
+        $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio]))->assertSee('Eliminar venta');
+        $this->delete(route('agencia.ventas.destroy', $venta))->assertRedirect(route('agencia.ventas.index'));
+        $this->assertNotNull($venta->fresh()->eliminada_at);
+        $this->assertEquals(auth()->id(), $venta->fresh()->iIDUsuarioElimina);
+        $this->assertEquals(1, $venta->pagos()->count());
+        $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio]))->assertViewHas('ventas', fn ($ventas) => !$ventas->contains('iID', $venta->iID));
+        foreach (['Todas', 'Eliminadas'] as $estado) {
+            $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio, 'estado' => $estado]))->assertOk()->assertSee($venta->folio)->assertSee('Eliminada')->assertDontSee('Eliminar venta');
+        }
+        $this->get(route('agencia.finanzas.index', ['moneda' => 'DEL']))->assertViewHas('totales', fn ($total) => (float) $total->ingresos === 0.0);
+        $csv = $this->get(route('agencia.finanzas.exportar', ['moneda' => 'DEL']))->assertOk()->streamedContent();
+        $this->assertStringNotContainsString($venta->folio, $csv);
+        $this->get(route('dashboard'))->assertViewHas('finanzas', fn ($finanzas) => ($finanzas['DEL']['ingresos'] ?? 0) == 0);
+        $this->postJson(route('agencia.ventas.nombre', $venta), ['cNombre' => 'Cambio'])->assertUnprocessable();
+        $this->get(route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'historial']))->assertOk()->assertSee('Venta eliminada');
+    }
+
+    public function test_eliminar_venta_requiere_permiso_y_no_admite_apartados(): void
+    {
+        [, $data] = $this->datos();
+        $this->post(route('agencia.ventas.store'), $data)->assertSessionHasNoErrors();
+        $venta = VentaPaquete::latest('iID')->firstOrFail();
+        $this->deleteJson(route('agencia.ventas.destroy', $venta))->assertUnprocessable();
+        $this->assertNull($venta->fresh()->eliminada_at);
+        $venta->update(['finalizada_at' => now()]);
+        auth()->user()->roles()->detach();
+        auth()->user()->unsetRelation('roles');
+        $this->deleteJson(route('agencia.ventas.destroy', $venta))->assertForbidden();
+        $this->assertNull($venta->fresh()->eliminada_at);
+    }
+
+    public function test_filtro_vendedor_se_bloquea_sin_permiso_y_no_permite_ver_ventas_ajenas(): void
+    {
+        [, $data] = $this->datos();
+        $this->post(route('agencia.ventas.store'), $data + ['accion' => 'vender', 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
+        $propia = VentaPaquete::latest('iID')->firstOrFail();
+        $this->post(route('agencia.ventas.store'), $data + ['accion' => 'vender', 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
+        $ajena = VentaPaquete::latest('iID')->firstOrFail();
+        $otro = User::factory()->create();
+        $ajena->update(['iIDUsuario' => $otro->id]);
+        $user = auth()->user();
+        $role = \App\Models\Role::create(['name' => 'Vendedor prueba', 'slug' => uniqid('vendedor'), 'permissions' => ['ventas.ver']]);
+        $user->roles()->sync([$role->id]);
+        $user->unsetRelation('roles');
+        $this->get(route('agencia.ventas.index', ['usuario' => $otro->id]))->assertOk()
+            ->assertViewHas('puedeFiltrarVendedor', false)
+            ->assertViewHas('usuarios', fn ($usuarios) => $usuarios->count() === 1 && $usuarios->first()->id === $user->id)
+            ->assertViewHas('ventas', fn ($ventas) => $ventas->contains('iID', $propia->iID) && !$ventas->contains('iID', $ajena->iID))
+            ->assertSee('id="usuario" name="usuario" class="form-select" disabled', false);
+        $role->update(['permissions' => ['ventas.ver', 'ventas.todos']]);
+        $user->unsetRelation('roles');
+        $this->get(route('agencia.ventas.index', ['usuario' => $otro->id]))->assertOk()
+            ->assertViewHas('puedeFiltrarVendedor', true)
+            ->assertViewHas('ventas', fn ($ventas) => !$ventas->contains('iID', $propia->iID) && $ventas->contains('iID', $ajena->iID));
+    }
+
     private function datos(): array
     {
         $this->actingAs(User::factory()->create(['lCambiarPassword' => 0]));

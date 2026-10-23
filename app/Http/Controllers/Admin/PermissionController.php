@@ -16,7 +16,7 @@ class PermissionController extends Controller
     {
         $request->validate(['buscar' => 'nullable|string|max:100']);
         $roles = Role::withCount('users')->orderBy('id')->get();
-        $users = User::with('roles')->where('lDev', false)->when($request->filled('buscar'), fn ($q) => $q->where(fn ($query) => $query->where('name', 'like', '%'.$request->buscar.'%')->orWhere('email', 'like', '%'.$request->buscar.'%')))->orderBy('name')->paginate(10)->withQueryString();
+        $users = User::with('roles')->where('lActivo', true)->where('lDev', false)->when($request->filled('buscar'), fn ($q) => $q->where(fn ($query) => $query->where('name', 'like', '%'.$request->buscar.'%')->orWhere('email', 'like', '%'.$request->buscar.'%')))->orderBy('name')->paginate(10)->withQueryString();
         $audits = DB::table('permission_audits')->leftJoin('users', 'users.id', '=', 'permission_audits.actor_id')->select('permission_audits.*', 'users.name as actor')->orderByDesc('permission_audits.id')->limit(10)->get();
         return view('admin.permisos.index', compact('roles', 'users', 'audits'));
     }
@@ -79,6 +79,7 @@ class PermissionController extends Controller
 
     public function assign(Request $request, User $user)
     {
+        abort_unless($user->lActivo, 422, 'No se pueden asignar roles a usuarios inactivos.');
         $data = $request->validate(['roles' => 'nullable|array', 'roles.*' => 'integer|distinct|exists:roles,id']);
         DB::transaction(function () use ($data, $user) {
             $admin = Role::where('slug', 'administrador')->lockForUpdate()->firstOrFail();

@@ -24,7 +24,13 @@ class ServicioTuristico extends Model
 
     public function itinerarioSnapshot(): array
     {
+        if ($this->cTipoItinerario === 'PDF') return [];
         return $this->itinerario?->snapshot() ?? [];
+    }
+
+    public function getTieneItinerarioAttribute(): bool
+    {
+        return $this->cTipoItinerario === 'PDF' ? !empty($this->cItinerarioPdf) : !empty($this->iIDItinerario);
     }
 
     protected $table = 'servicio_turisticos';
@@ -32,6 +38,8 @@ class ServicioTuristico extends Model
     protected $attributes = ['lUsaVigencia' => true, 'lPrecioMenorActivo' => false, 'dPrecioMenor' => 0];
 
     protected $fillable = [
+        'cTipoItinerario',
+        'cItinerarioPdf',
         'iIDItinerario',
         'lPublicarItinerario',
         'cCodigo',

@@ -7,6 +7,7 @@ $(document).ready(function () {
     });
 
     let tablaUsuarios = null;
+    $('#estadoUsuarios').on('change', function () { if (tablaUsuarios) tablaUsuarios.ajax.reload(); });
     let modalUsuario = new bootstrap.Modal(document.getElementById('modalUsuario'));
     let emailEditadoManualmente = false;
 
@@ -76,6 +77,7 @@ $(document).ready(function () {
             },
             ajax: {
                 url: '/admin/usuarios/gridData',
+                data: function (data) { data.estado = $('#estadoUsuarios').val(); },
                 type: 'GET',
                 dataSrc: function (json) {
                     if (json.lSuccess) {
@@ -101,7 +103,7 @@ $(document).ready(function () {
                         const imagen = fotoUrl
                             ? `<img src="${fotoUrl}" alt="Foto de perfil" loading="lazy">`
                             : '<i class="fas fa-user" aria-hidden="true"></i>';
-                        return `<div class="usuario-identidad"><span class="usuario-foto">${imagen}</span><strong>${nombre}</strong></div>`;
+                        return `<div class="usuario-identidad"><span class="usuario-foto">${imagen}</span><strong>${nombre}${Number(row.lActivo) ? '' : ' <small class="text-muted">(Inactivo)</small>'}</strong></div>`;
                     }
                 },
                 { 
@@ -123,13 +125,13 @@ $(document).ready(function () {
                     className: 'text-end catalogo-acciones',
                     render: function (data, type, row) {
                         return `
-                            <a class="apartado-icono" data-permission="permisos.asignar" href="/admin/permisos?buscar=${encodeURIComponent(row.cEmail)}" title="Asignar roles" aria-label="Asignar roles"><i class="fas fa-user-tag" aria-hidden="true"></i></a>
+                            ${Number(row.lActivo) ? `<a class="apartado-icono" data-permission="permisos.asignar" href="/admin/permisos?buscar=${encodeURIComponent(row.cEmail)}" title="Asignar roles" aria-label="Asignar roles"><i class="fas fa-user-tag" aria-hidden="true"></i></a>` : ''}
                             <button type="button" class="apartado-icono btn-editar" data-permission="usuarios.editar" data-id="${row.iID}" title="Editar" aria-label="Editar usuario">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-permission="usuarios.activar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar usuario">
+                            ${Number(row.lActivo) ? `<button type="button" class="apartado-icono accion-cancelar btn-eliminar" data-permission="usuarios.activar" data-id="${row.iID}" title="Desactivar" aria-label="Desactivar usuario">
                                 <i class="fas fa-trash-alt"></i>
-                            </button>
+                            </button>` : `<button type="button" class="apartado-icono text-success btn-activar" data-permission="usuarios.activar" data-id="${row.iID}" title="Activar" aria-label="Activar usuario"><i class="fas fa-user-check" aria-hidden="true"></i></button>`}
                         `;
                     }
                 }
@@ -244,6 +246,22 @@ $(document).ready(function () {
             complete: function () {
                 $('#btnGuardar').prop('disabled', false).html('<i class="fas fa-save me-1"></i> Guardar Usuario');
             }
+        });
+    });
+
+    $('#tablaUsuarios').on('click', '.btn-activar', function () {
+        const boton = $(this);
+        boton.prop('disabled', true);
+        $.ajax({
+            url: '/admin/usuarios/activar', type: 'POST', data: { iID: boton.data('id') }, dataType: 'json',
+            success: function (response) {
+                tablaUsuarios.ajax.reload(null, false);
+                Swal.fire({ icon: 'success', title: 'Usuario activado', text: response.cMensaje });
+            },
+            error: function (xhr) {
+                Swal.fire({ icon: 'error', title: 'No se pudo activar', text: xhr.responseJSON?.cMensaje || xhr.responseJSON?.message || 'Ocurrió un error al activar el usuario.' });
+            },
+            complete: function () { boton.prop('disabled', false); }
         });
     });
 

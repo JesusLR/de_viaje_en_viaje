@@ -1,9 +1,9 @@
 @extends('layouts.app')
-@section('titulo', $apartados ? 'Apartados' : 'Ventas liquidadas')
+@section('titulo', $apartados ? 'Apartados' : 'Ventas')
 @section('contenido')
 <div class="apartados-panel">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas {{ $apartados ? 'fa-plane-departure' : 'fa-receipt' }}" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">{{ $apartados ? 'Apartados' : 'Ventas liquidadas' }}</h3><p class="text-muted mb-0 small">{{ $apartados ? 'Gestiona tus reservas y sigue el avance de sus pagos.' : 'Consulta tus ventas directas y apartados finalizados.' }}</p></div></div>
+        <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas {{ $apartados ? 'fa-plane-departure' : 'fa-receipt' }}" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">{{ $apartados ? 'Apartados' : 'Ventas' }}</h3><p class="text-muted mb-0 small">{{ $apartados ? 'Gestiona tus reservas y sigue el avance de sus pagos.' : 'Consulta tus ventas directas y apartados finalizados.' }}</p></div></div>
         <a data-permission="vender.ver" href="{{ route('agencia.vender.index') }}" class="apartado-icono nuevo-apartado" title="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}" aria-label="{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}"><i class="fas fa-plus" aria-hidden="true"></i><span>{{ $apartados ? 'Nuevo apartado' : 'Nueva venta' }}</span></a>
     </div>
     @include('agencia.partials.avisos')
@@ -20,9 +20,12 @@
         </div>
         <div class="collapse {{ request()->filled('cliente') || request()->filled('usuario') || request()->filled('estado') ? 'show' : '' }}" id="filtrosApartados"><div class="row g-3 pt-3 mt-3 border-top">
             <div class="col-md-4"><label for="cliente" class="form-label">Cliente</label><select id="cliente" name="cliente" class="form-select"><option value="">Todos los clientes</option>@foreach($clientes as $cliente)<option value="{{ $cliente->iID }}" @selected(request('cliente') == $cliente->iID)>{{ $cliente->nombre_completo }}</option>@endforeach</select></div>
-            <div class="col-md-4"><label for="usuario" class="form-label">Vendedor</label><select id="usuario" name="usuario" class="form-select"><option value="">Todos los vendedores</option>@foreach($usuarios as $usuario)<option value="{{ $usuario->id }}" @selected(request('usuario') == $usuario->id)>{{ $usuario->nombre_completo }}</option>@endforeach</select></div>
+            <div class="col-md-4"><label for="usuario" class="form-label">Vendedor</label><select id="usuario" name="usuario" class="form-select" @disabled(!$puedeFiltrarVendedor)>@if($puedeFiltrarVendedor)<option value="">Todos los vendedores</option>@endif
+            @foreach($usuarios as $usuario)<option value="{{ $usuario->id }}" @selected(request('usuario') == $usuario->id)>{{ $usuario->nombre_completo }}</option>@endforeach</select></div>
 @if($apartados)
             <div class="col-md-4"><label for="estado" class="form-label">Estado</label><select id="estado" name="estado" class="form-select"><option value="">Todos los estados</option>@foreach(['Abierto', 'Liquidado', 'Cancelado'] as $estado)<option @selected(request('estado') === $estado)>{{ $estado }}</option>@endforeach</select></div>
+@else
+            <div class="col-md-4"><label for="estado" class="form-label">Estado</label><select id="estado" name="estado" class="form-select">@foreach(['Todas' => 'Todas las ventas', 'Liquidadas' => 'Liquidadas', 'Eliminadas' => 'Eliminadas'] as $valor => $etiqueta)<option value="{{ $valor }}" @selected((request('estado') ?: 'Liquidadas') === $valor)>{{ $etiqueta }}</option>@endforeach</select></div>
 @endif
         </div></div>
     </form>
@@ -32,7 +35,7 @@
         @forelse($ventas as $venta)
             @php
                 $totalCentavos = (int) round((float) $venta->dTotal * 100);
-                $estadoClase = $venta->cancelada_at ? 'cancelado' : ($venta->saldo_centavos === 0 ? 'liquidado' : 'abierto');
+                $estadoClase = ($venta->cancelada_at || $venta->eliminada_at) ? 'cancelado' : ($venta->saldo_centavos === 0 ? 'liquidado' : 'abierto');
             @endphp
             <tr>
                 <td><span class="apartado-folio">{{ $venta->folio }}</span><div class="apartado-nombre" title="{{ $venta->cNombre ?: $venta->cPaquete }}">{{ $venta->cNombre ?: $venta->cPaquete }}</div><small class="text-muted">{{ ($apartados ? $venta->created_at : $venta->finalizada_at)->format('d/m/Y') }} <span class="mx-1">·</span> {{ $venta->detalles->count() }} {{ $venta->detalles->count() === 1 ? 'paquete' : 'paquetes' }}</small>
@@ -52,7 +55,7 @@
 @else
                 <td><span class="apartado-cliente">{{ $venta->cTipoOperacion === 'APARTADO' ? 'Apartado' : 'Venta directa' }}</span></td>
 @endif
-                <td><span class="apartado-estado {{ $estadoClase }}"><span class="estado-punto" aria-hidden="true"></span>{{ $apartados ? $venta->estado_apartado : 'Liquidada' }}</span></td>
+                <td><span class="apartado-estado {{ $estadoClase }}"><span class="estado-punto" aria-hidden="true"></span>{{ $apartados ? $venta->estado_apartado : ($venta->eliminada_at ? 'Eliminada' : 'Liquidada') }}</span></td>
                 <td>@if($apartados)
                     @include('agencia.ventas.acciones-apartado')
                 @else

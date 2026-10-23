@@ -31,7 +31,7 @@ class FinanzasController extends Controller
     {
         $pagos = DB::table('pagos_ventas as p')->join('ventas_paquetes as v', 'v.iID', '=', 'p.iIDVenta')
             ->join('clientes as c', 'c.iID', '=', 'v.iIDCliente')
-            ->whereNull('p.anulado_at')->where('v.cMoneda', $moneda)
+            ->whereNull('v.eliminada_at')->whereNull('p.anulado_at')->where('v.cMoneda', $moneda)
             ->whereBetween('p.dFechaPago', [$desde, $hasta])
             ->selectRaw("p.iID as id, v.iID as venta_id, p.dFechaPago as fecha, 'INGRESO' as tipo, case when (v.cTipoOperacion = 'VENTA' or v.finalizada_at is not null) then 'Venta' else 'Abono' end as origen, v.cPaquete as concepto, c.cNombre as detalle, p.cMetodo as metodo, p.dImporte as importe, v.cMoneda as moneda, 0 as manual");
         $manuales = DB::table('movimientos_financieros as m')->leftJoin('users as u', 'u.id', '=', 'm.iIDUsuario')

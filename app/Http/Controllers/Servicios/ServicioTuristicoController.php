@@ -23,6 +23,11 @@ class ServicioTuristicoController extends Controller
 
     public function itinerarioPdf(ServicioTuristico $servicio)
     {
+        if ($servicio->cTipoItinerario === 'PDF') {
+            abort_unless($servicio->cItinerarioPdf, 404);
+            return response(app(\App\Services\ItinerarioPdfService::class)->contenido($servicio->cItinerarioPdf))
+                ->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="itinerario.pdf"', 'X-Content-Type-Options' => 'nosniff']);
+        }
         $dias = $servicio->itinerarioSnapshot();
         abort_if(empty($dias), 422, 'Este servicio no tiene un itinerario asignado con días registrados.');
         $servicio->loadMissing(['itinerario', 'destino']);
@@ -35,6 +40,13 @@ class ServicioTuristicoController extends Controller
         $pdf->render();
         $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
         return $pdf->download('itinerario-'.(\Illuminate\Support\Str::slug($servicio->cCodigo) ?: $servicio->iID).'.pdf');
+    }
+
+    public function itinerarioArchivo(ServicioTuristico $servicio)
+    {
+        abort_unless($servicio->cTipoItinerario === 'PDF' && $servicio->cItinerarioPdf, 404);
+        return response(app(\App\Services\ItinerarioPdfService::class)->contenido($servicio->cItinerarioPdf))
+            ->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="itinerario.pdf"', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }
 
     public function index()
@@ -111,6 +123,8 @@ class ServicioTuristicoController extends Controller
                     'cNombre'                => $oServ->cNombre,
                     'iDiasItinerario'         => $request->user()->hasPermission('itinerarios.ver') ? $oServ->itinerario_dias_count : null,
                     'iIDItinerario'           => $request->user()->hasPermission('itinerarios.ver') ? $oServ->iIDItinerario : null,
+                    'lTieneItinerario'        => $request->user()->hasPermission('itinerarios.ver') && $oServ->tiene_itinerario,
+                    'cTipoItinerario'         => $oServ->cTipoItinerario,
                     'cCategoria'             => $oServ->categoria ? $oServ->categoria->cNombre : 'N/A',
                     'cDestino'               => $oServ->destino ? $oServ->destino->ubicacion_completa : 'N/A',
                     'cProveedor'             => $oServ->proveedor ? $oServ->proveedor->cNombre : 'Sin Proveedor',
@@ -181,6 +195,9 @@ class ServicioTuristicoController extends Controller
                 'iIDDestino'            => $oServ->iIDDestino,
                 'iIDProveedor'          => $oServ->iIDProveedor,
                 'iIDItinerario'         => $oServ->iIDItinerario,
+                'cTipoItinerario'       => $oServ->cTipoItinerario,
+                'lTienePdfItinerario'   => !empty($oServ->cItinerarioPdf),
+                'urlItinerarioPdf'      => $oServ->cTipoItinerario === 'PDF' && $oServ->cItinerarioPdf ? route('servicios.paquetes.itinerarioArchivo', $oServ) : null,
                 'lPublicarItinerario'   => $oServ->lPublicarItinerario,
                 'cImagenPrincipal'      => $oServ->cImagenPrincipal ? asset(str_replace('public/', 'storage/', $oServ->cImagenPrincipal)) : null,
                 'dPrecioCompra'         => $oServ->dPrecioCompra,
@@ -228,6 +245,8 @@ class ServicioTuristicoController extends Controller
     {
         try {
             $iID = (int) $request->input('iID', 0);
+            $actual = $iID > 0 ? ServicioTuristico::find($iID) : null;
+            $request->merge(['cTipoItinerario' => $request->input('cTipoItinerario', $actual?->cTipoItinerario ?? 'CATALOGO')]);
             $request->merge(['lUsaVigencia' => $request->boolean('lUsaVigencia', true)]);
 
             $request->validate([
@@ -236,6 +255,8 @@ class ServicioTuristicoController extends Controller
                 'iIDDestino'           => 'nullable|exists:destino_turisticos,iID',
                 'iIDProveedor'         => 'nullable|exists:proveedores,iID',
                 'iIDItinerario'        => 'nullable|integer|exists:itinerarios,id',
+                'cTipoItinerario'      => 'required|in:CATALOGO,PDF',
+                'itinerarioPdfFile'    => 'nullable|file|mimes:pdf|max:10240',
                 'lPublicarItinerario'  => 'sometimes|boolean',
                 'dPrecioCompra'        => 'required|numeric|min:0',
                 'dPrecioVenta'         => 'required|numeric|min:0',
@@ -268,7 +289,11 @@ class ServicioTuristicoController extends Controller
             ]);
 
             $dPrecioCompra = (float) $request->input('dPrecioCompra', 0);
-            if ($request->boolean('lPublicarItinerario') && !$request->filled('iIDItinerario')) {
+            $esPdf = $request->cTipoItinerario === 'PDF';
+            if ($esPdf && !$request->hasFile('itinerarioPdfFile') && !$actual?->cItinerarioPdf) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['itinerarioPdfFile' => 'Selecciona el PDF del itinerario.']);
+            }
+            if ($request->boolean('lPublicarItinerario') && !$esPdf && !$request->filled('iIDItinerario')) {
                 throw \Illuminate\Validation\ValidationException::withMessages(['iIDItinerario' => 'Selecciona un itinerario antes de publicarlo.']);
             }
             $dPrecioVenta = (float) $request->input('dPrecioVenta', 0);
@@ -301,7 +326,9 @@ class ServicioTuristicoController extends Controller
                 'iIDCategoria'          => $request->filled('iIDCategoria') ? (int) $request->input('iIDCategoria') : null,
                 'iIDDestino'            => $request->filled('iIDDestino') ? (int) $request->input('iIDDestino') : null,
                 'iIDProveedor'          => $request->input('iIDProveedor') ? (int) $request->input('iIDProveedor') : null,
-                'iIDItinerario'         => $request->filled('iIDItinerario') ? (int) $request->input('iIDItinerario') : null,
+                'iIDItinerario'         => !$esPdf && $request->filled('iIDItinerario') ? (int) $request->input('iIDItinerario') : null,
+                'cTipoItinerario'       => $request->cTipoItinerario,
+                'cItinerarioPdf'        => $actual?->cItinerarioPdf,
                 'lPublicarItinerario'   => $request->boolean('lPublicarItinerario'),
                 'dPrecioCompra'         => $dPrecioCompra,
                 'dPrecioVenta'          => $dPrecioVenta,
@@ -323,6 +350,10 @@ class ServicioTuristicoController extends Controller
                 'dFechaFinVigencia'     => $request->boolean('lUsaVigencia') ? $request->input('dFechaFinVigencia') : null,
                 'lActivo'               => $request->boolean('lActivo', true) ? 1 : 0,
             ];
+
+            if ($esPdf && $request->hasFile('itinerarioPdfFile')) {
+                $aData['cItinerarioPdf'] = app(\App\Services\ItinerarioPdfService::class)->guardar($request->file('itinerarioPdfFile'));
+            }
 
             if ($iID === 0) {
                 $aData['cCodigo'] = $this->service->generarCodigoUnico();

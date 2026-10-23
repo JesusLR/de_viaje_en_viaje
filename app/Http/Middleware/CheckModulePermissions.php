@@ -52,12 +52,13 @@ class CheckModulePermissions
                 $venta = $request->route('venta');
                 if (!$venta instanceof VentaPaquete) $venta = VentaPaquete::findOrFail($venta);
                 $module = $venta->finalizada_at ? 'ventas' : 'apartados';
+                abort_if($venta->eliminada_at && !in_array($action, ['show', 'comprobante', 'itinerarioPdf', 'itinerarioArchivo', 'destroy'], true), 422, 'La venta está eliminada y no se puede modificar.');
                 abort_unless($request->user()->hasPermission($module.'.todos') || (int) $venta->iIDUsuario === (int) $request->user()->id, 403);
             }
             $this->require($request, $module.'.ver');
             $specific = match ($action) {
                 'saveData' => (int) $request->input('iID', 0) > 0 ? 'editar' : 'crear',
-                'deleteData' => 'activar',
+                'deleteData', 'activar' => 'activar',
                 'pago' => 'abonos', 'agregarPaquete' => 'paquetes', 'nombre' => 'nombre',
                 'fechaPago' => 'fecha', 'anularPago' => 'anular', 'cancelar' => 'cancelar', 'finalizar' => 'finalizar',
                 'comprobante', 'comprobanteCompra' => 'pdf',
@@ -78,8 +79,10 @@ class CheckModulePermissions
             $this->require($request, 'itinerarios.ver');
             $this->require($request, 'itinerarios.pdf');
         }
+        if (in_array($name, ['servicios.paquetes.itinerarioArchivo', 'agencia.ventas.itinerarioArchivo'], true)) $this->require($request, 'itinerarios.ver');
         if ($name === 'admin.usuarios.saveData' && (int) $request->iID > 0 && $request->filled('cPassword')) $this->require($request, 'usuarios.password');
         if ($name === 'admin.usuarios.saveData' && (int) $request->iID > 0 && User::find($request->iID)?->roles()->where('slug', 'administrador')->exists()) $this->require($request, 'permisos.asignar');
+        if ($name === 'admin.usuarios.activar' && User::find($request->iID)?->roles()->where('slug', 'administrador')->exists()) $this->require($request, 'permisos.asignar');
         if ($name === 'admin.usuarios.deleteData') {
             $target = User::findOrFail($request->iID);
             if ($target->roles()->where('slug', 'administrador')->exists()) {
@@ -93,6 +96,7 @@ class CheckModulePermissions
         }
         if ($name === 'servicios.paquetes.saveData') {
             $service = ServicioTuristico::find((int) $request->iID);
+            if ($request->hasFile('itinerarioPdfFile') || ($request->has('cTipoItinerario') && $request->cTipoItinerario !== ($service?->cTipoItinerario ?? 'CATALOGO'))) $this->require($request, 'itinerarios.asignar');
             foreach (['iIDItinerario' => 'itinerarios.asignar', 'lPublicarItinerario' => 'itinerarios.publicar'] as $field => $permission) {
                 $original = $service?->$field;
                 if ($request->has($field) && (int) $request->input($field) !== (int) $original) $this->require($request, $permission);

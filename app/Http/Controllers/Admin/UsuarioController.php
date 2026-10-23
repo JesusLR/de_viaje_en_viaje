@@ -29,13 +29,15 @@ class UsuarioController extends Controller
     }
 
     /**
-     * Retorna la lista de usuarios activos (lActivo = 1).
+     * Retorna los usuarios según el filtro de estado, excluyendo cuentas de desarrollo.
      */
     public function gridData(Request $request)
     {
+        $request->validate(['estado' => ['nullable', Rule::in(['todos', 'activos', 'inactivos'])]]);
         try {
-            $cData = User::where('lActivo', 1)
-                ->where('lDev', false)
+            $estado = $request->input('estado', 'activos');
+            $cData = User::where('lDev', false)
+                ->when($estado !== 'todos', fn ($query) => $query->where('lActivo', $estado !== 'inactivos'))
                 ->orderBy('id', 'desc')
                 ->get()
                 ->map(function ($oUser) {
@@ -201,6 +203,17 @@ class UsuarioController extends Controller
                 'cData'    => null,
             ], 500);
         }
+    }
+
+    /**
+     * Reactiva al usuario conservando sus roles y datos.
+     */
+    public function activar(Request $request)
+    {
+        $data = $request->validate(['iID' => 'required|integer|exists:users,id']);
+        $user = User::findOrFail($data['iID']);
+        $user->update(['lActivo' => true]);
+        return response()->json(['lSuccess' => true, 'cMensaje' => 'El usuario ha sido activado correctamente.']);
     }
 
     /**

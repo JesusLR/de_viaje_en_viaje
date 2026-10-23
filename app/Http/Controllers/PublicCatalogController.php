@@ -64,4 +64,12 @@ class PublicCatalogController extends Controller
         $paquete = ServicioTuristico::with(['destino', 'categoria', 'imagenes'])->publicados()->findOrFail($servicio);
         return view('publico.servicio', $this->branding() + compact('paquete'));
     }
+
+    public function itinerario(int $servicio)
+    {
+        $paquete = ServicioTuristico::publicados()->where('lPublicarItinerario', true)->where('cTipoItinerario', 'PDF')->findOrFail($servicio);
+        abort_unless($paquete->cItinerarioPdf, 404);
+        return response(app(\App\Services\ItinerarioPdfService::class)->contenido($paquete->cItinerarioPdf))
+            ->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="itinerario.pdf"', 'X-Content-Type-Options' => 'nosniff']);
+    }
 }
