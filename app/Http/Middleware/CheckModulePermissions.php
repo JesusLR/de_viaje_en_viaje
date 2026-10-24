@@ -26,9 +26,12 @@ class CheckModulePermissions
         }
         $name = $request->route()->getName();
         if (in_array($name, ['dashboard', 'logout', 'password.change', 'password.update', 'perfil.edit', 'perfil.update', 'perfil.photo'], true)) return $next($request);
+        if (str_starts_with($name, 'notificaciones.')) return $next($request);
         $parts = explode('.', $name);
         $action = end($parts);
         $module = match (true) {
+            str_starts_with($name, 'atencion.cotizaciones.') => 'cotizaciones_servicios',
+            str_starts_with($name, 'cotizaciones.') => 'cotizaciones',
             str_starts_with($name, 'itinerarios.') => 'itinerarios',
             str_starts_with($name, 'admin.permisos.') => 'permisos',
             str_starts_with($name, 'admin.usuarios.') => 'usuarios',
@@ -59,6 +62,9 @@ class CheckModulePermissions
             $specific = match ($action) {
                 'saveData' => (int) $request->input('iID', 0) > 0 ? 'editar' : 'crear',
                 'deleteData', 'activar' => 'activar',
+                'seguimiento' => 'atender',
+                'create' => $module === 'cotizaciones_servicios' ? 'crear' : null,
+                'pdf' => 'pdf',
                 'pago' => 'abonos', 'agregarPaquete' => 'paquetes', 'nombre' => 'nombre',
                 'fechaPago' => 'fecha', 'anularPago' => 'anular', 'cancelar' => 'cancelar', 'finalizar' => 'finalizar',
                 'comprobante', 'comprobanteCompra' => 'pdf',

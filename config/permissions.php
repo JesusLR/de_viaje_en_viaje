@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'cotizaciones_servicios' => ['label' => 'Atención al cliente · Cotizaciones', 'actions' => [
+        'cotizaciones_servicios.ver' => 'Consultar cotizaciones de servicios',
+        'cotizaciones_servicios.crear' => 'Crear cotizaciones de servicios',
+        'cotizaciones_servicios.pdf' => 'Descargar cotización PDF',
+    ]],
+    'cotizaciones' => ['label' => 'Atención al cliente · Cotizaciones web', 'actions' => [
+        'cotizaciones.ver' => 'Consultar solicitudes de cotización',
+        'cotizaciones.atender' => 'Atender solicitudes, cambiar estados y agregar observaciones',
+    ]],
     'itinerarios' => ['label' => 'Itinerarios', 'actions' => [
         'itinerarios.ver' => 'Consultar itinerarios',
         'itinerarios.editar' => 'Crear, editar y duplicar itinerarios',

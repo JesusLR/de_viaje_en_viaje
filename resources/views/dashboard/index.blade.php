@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('titulo', 'Dashboard')
 @section('contenido')
+
+
 <div class="apartados-panel dashboard-panel">
     <section class="dashboard-bienvenida mb-4">
         <div class="dashboard-bienvenida-contenido">
@@ -11,6 +13,8 @@
         </div>
         <div class="dashboard-bienvenido-imagen" aria-hidden="true"><i class="fas fa-user-shield"></i><span><i class="fas fa-plane"></i></span></div>
     </section>
+
+
 
     @canany(array_keys(config('permissions.dashboard.actions')))
     <div class="dashboard-seccion mb-3">
@@ -78,7 +82,7 @@
 
     <div class="row g-3 mb-4">
         @can('dashboard.apartados')
-<div class="col-md-6">
+<div class="col-md-6 col-xl-4">
             <a data-permission="dashboard.apartados" class="dashboard-indicador" href="{{ $user->hasPermission('apartados.ver') ? route('agencia.apartados.index', ['estado' => 'Abierto', 'desde' => $desdeApartados, 'hasta' => today()->toDateString()]) : '#' }}">
                 <span class="dashboard-icono abiertos"><i class="fas fa-clipboard-list" aria-hidden="true"></i></span>
                 <div class="flex-grow-1"><span class="dashboard-label">Apartados abiertos</span><strong class="dashboard-cantidad">{{ number_format($apartadosAbiertos) }}</strong><small>Con saldo pendiente · Todos los meses</small></div>
@@ -87,7 +91,7 @@
         </div>
 @endcan
         @can('dashboard.servicios')
-<div class="col-md-6">
+<div class="col-md-6 col-xl-4">
             <a data-permission="dashboard.servicios" class="dashboard-indicador" href="{{ $user->hasPermission('servicios.ver') ? route('servicios.paquetes.index') : '#' }}">
                 <span class="dashboard-icono servicios"><i class="fas fa-box-open" aria-hidden="true"></i></span>
                 <div class="flex-grow-1"><span class="dashboard-label">Servicios activos</span><strong class="dashboard-cantidad">{{ number_format($serviciosActivos) }}</strong><small>Todos los servicios abiertos y vigentes</small></div>
@@ -95,6 +99,15 @@
             </a>
         </div>
 @endcan
+        @can('cotizaciones.ver')
+        <div class="col-md-6 col-xl-4">
+            <a class="dashboard-indicador" href="{{ route('cotizaciones.index', ['estado' => 'NUEVA']) }}">
+                <span class="dashboard-icono abiertos"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></span>
+                <div class="flex-grow-1"><span class="dashboard-label">Cotizaciones web pendientes de atención</span><strong class="dashboard-cantidad">{{ number_format($cotizacionesWebPendientes) }}</strong><small>Solicitudes nuevas de la landing page</small></div>
+                <i class="fas fa-chevron-right dashboard-flecha" aria-hidden="true"></i>
+            </a>
+        </div>
+        @endcan
     </div>
 
     @can('dashboard.viajes')

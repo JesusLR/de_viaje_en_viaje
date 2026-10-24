@@ -17,6 +17,9 @@ Route::get('/catalogo', [\App\Http\Controllers\PublicCatalogController::class, '
 Route::get('/catalogo/{servicio}', [\App\Http\Controllers\PublicCatalogController::class, 'show'])->whereNumber('servicio')->name('catalogo.publico.show');
 Route::get('/catalogo/{servicio}/itinerario.pdf', [\App\Http\Controllers\PublicCatalogController::class, 'itinerario'])->whereNumber('servicio')->name('catalogo.publico.itinerario');
 
+Route::get('/cotizar', [\App\Http\Controllers\CotizacionController::class, 'formulario'])->name('cotizacion.formulario');
+Route::post('/cotizar', [\App\Http\Controllers\CotizacionController::class, 'enviar'])->middleware('throttle:5,1')->name('cotizacion.enviar');
+
 // Rutas Públicas de Autenticación (Middleware 'guest' evita que usuarios logueados accedan al login)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -25,6 +28,18 @@ Route::middleware('guest')->group(function () {
 
 // Rutas Privadas Protegidas (Middleware 'auth' + EnsurePasswordIsChanged)
 Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\CheckModulePermissions::class])->group(function () {
+    Route::get('/notificaciones', [\App\Http\Controllers\NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::post('/notificaciones/leidas', [\App\Http\Controllers\NotificacionController::class, 'leerTodas'])->name('notificaciones.leerTodas');
+    Route::post('/notificaciones/{notificacion}/leer', [\App\Http\Controllers\NotificacionController::class, 'leer'])->whereUuid('notificacion')->name('notificaciones.leer');
+
+    Route::prefix('atencion-al-cliente/cotizaciones')->name('atencion.cotizaciones.')->controller(\App\Http\Controllers\CotizacionServicioController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/nueva', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{cotizacion}/pdf', 'pdf')->name('pdf');
+        Route::get('/{cotizacion}', 'show')->name('show');
+    });
+
     // Cambio Obligatorio de Contraseña (Accesible cuando lCambiarPassword = 1)
     Route::get('/password/cambiar', [PasswordController::class, 'showChangeForm'])->name('password.change');
     Route::post('/password/update', [PasswordController::class, 'updatePassword'])->name('password.update');
@@ -32,6 +47,10 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
     Route::get('/perfil', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('perfil.edit');
     Route::put('/perfil', [\App\Http\Controllers\ProfileController::class, 'update'])->name('perfil.update');
     Route::get('/perfil/foto', [\App\Http\Controllers\ProfileController::class, 'photo'])->name('perfil.photo');
+
+    Route::get('/agencia/cotizaciones', [\App\Http\Controllers\CotizacionController::class, 'index'])->name('cotizaciones.index');
+    Route::get('/agencia/cotizaciones/{cotizacion}', [\App\Http\Controllers\CotizacionController::class, 'show'])->name('cotizaciones.show');
+    Route::put('/agencia/cotizaciones/{cotizacion}/seguimiento', [\App\Http\Controllers\CotizacionController::class, 'seguimiento'])->name('cotizaciones.seguimiento');
 
     // Dashboard
     Route::get('/servicios/itinerarios', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'index'])->name('itinerarios.index');

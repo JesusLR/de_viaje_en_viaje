@@ -17,7 +17,7 @@
             <a class="navbar-brand landing-brand" href="{{ route('landing') }}"><img src="{{ $settings->logo_path ? route('landing.image', ['image' => 'logo', 'v' => $settings->updated_at?->timestamp]) : asset('img/logo.jpg') }}" alt="Logo de {{ $content['brand'] }}"><span>{{ $content['brand'] }}</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navLanding" aria-controls="navLanding" aria-expanded="false" aria-label="Abrir menú"><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navLanding"><ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
-                <li><a class="nav-link" href="#paquetes">Paquetes</a></li><li><a class="nav-link" href="{{ route('catalogo.publico.index') }}">Catálogo</a></li><li><a class="nav-link" href="#nosotros">Nuestra agencia</a></li><li><a class="nav-link" href="#contacto">Contacto</a></li>
+                <li><a class="nav-link" href="{{ route('cotizacion.formulario') }}">Cotiza tu viaje</a></li><li><a class="nav-link" href="#paquetes">Paquetes</a></li><li><a class="nav-link" href="{{ route('catalogo.publico.index') }}">Catálogo</a></li><li><a class="nav-link" href="#nosotros">Nuestra agencia</a></li><li><a class="nav-link" href="#contacto">Contacto</a></li>
                 <li><a class="landing-button compact" href="{{ $whatsappUrl ?? '#contacto' }}" @if($whatsappUrl) target="_blank" rel="noopener" @endif><i class="fas fa-comment-dots" aria-hidden="true"></i>Planea tu viaje</a></li>
             </ul></div>
         </div>
@@ -54,6 +54,7 @@
                 </div></div>
             </div></div>
         </section>
+        <section class="landing-section py-5" id="cotiza"><div class="container"><div class="card border-0 shadow-sm rounded-4 p-4 p-md-5"><div class="row g-4 align-items-center"><div class="col-lg-8"><span class="landing-eyebrow">Riviera Maya te espera</span><h2 class="mt-2">¡COTIZA TU PRÓXIMO VIAJE DE FORMA RÁPIDA Y FÁCIL!</h2><p class="text-muted mb-0">Cuéntanos cuándo quieres viajar, con quién y qué tienes en mente. Te ayudamos a encontrar opciones para ti.</p></div><div class="col-lg-4"><a class="landing-button" href="{{ route('cotizacion.formulario') }}">Cotizar mi viaje <i class="fas fa-arrow-right" aria-hidden="true"></i></a></div></div></div></div></section>
         <section class="landing-section" id="paquetes"><div class="container">
             <div class="landing-section-heading"><div><span class="landing-eyebrow">EXPLORA NUESTROS PAQUETES</span><h2>{{ $content['packages_title'] }}</h2><p>{{ $content['packages_description'] }}</p></div><a class="landing-text-link" href="{{ route('catalogo.publico.index') }}">Ver catálogo completo<i class="fas fa-arrow-right ms-2" aria-hidden="true"></i></a></div>
             <div class="row g-4">

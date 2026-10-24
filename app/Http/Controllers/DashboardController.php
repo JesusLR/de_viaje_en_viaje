@@ -58,6 +58,7 @@ class DashboardController extends Controller
         elseif (!$user->hasPermission('apartados.todos')) $apartadosAbiertos = VentaPaquete::where('iIDUsuario', $user->id)->where('cTipoOperacion', 'APARTADO')->whereNull('cancelada_at')->whereNull('finalizada_at')->whereRaw('dTotal > (select coalesce(sum(dImporte), 0) from pagos_ventas where pagos_ventas.iIDVenta = ventas_paquetes.iID and anulado_at is null)')->count();
         if (!$user->hasPermission('dashboard.servicios')) $serviciosActivos = 0;
         if (!$user->hasPermission('dashboard.viajes')) $proximosViajes = collect();
-        return view('dashboard.index', compact('user', 'mes', 'serviciosActivos', 'apartadosAbiertos', 'finanzas', 'fechaDesde', 'fechaHasta', 'desdeApartados', 'proximosViajes'));
+        $cotizacionesWebPendientes = $user->hasPermission('cotizaciones.ver') ? \App\Models\Cotizacion::where('estado', 'NUEVA')->count() : 0;
+        return view('dashboard.index', compact('cotizacionesWebPendientes', 'user', 'mes', 'serviciosActivos', 'apartadosAbiertos', 'finanzas', 'fechaDesde', 'fechaHasta', 'desdeApartados', 'proximosViajes'));
     }
 }

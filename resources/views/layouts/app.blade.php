@@ -238,6 +238,7 @@
         }
     </style>
     <link rel="stylesheet" href="{{ asset('css/perfil-module.css') }}?v={{ filemtime(public_path('css/perfil-module.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/notificaciones.css') }}?v={{ filemtime(public_path('css/notificaciones.css')) }}">
     @stack('styles')
 </head>
 <body>
@@ -270,7 +271,7 @@
                 @endif --}}
             </ul>
 
-            @canany(['usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
+            @canany(['usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'cotizaciones.ver', 'cotizaciones_servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
             <!-- Módulo Administración y Catálogos -->
             <div class="sidebar-section">Módulos</div>
             <ul class="sidebar-nav">
@@ -355,6 +356,20 @@
                     </div>
                 </li>
 
+                @canany(['cotizaciones.ver', 'cotizaciones_servicios.ver'])
+                <li class="nav-item mt-1">
+                    <a href="#menuAtencionCliente" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('cotizaciones.*', 'atencion.cotizaciones.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('cotizaciones.*', 'atencion.cotizaciones.*') ? 'true' : 'false' }}" aria-controls="menuAtencionCliente"><div><i class="fas fa-headset me-1" aria-hidden="true"></i><span>Atención al cliente</span></div><i class="fas fa-chevron-down small" aria-hidden="true"></i></a>
+                    <div class="collapse {{ request()->routeIs('cotizaciones.*', 'atencion.cotizaciones.*') ? 'show' : '' }}" id="menuAtencionCliente"><ul class="sidebar-subnav mt-1">
+                        @can('cotizaciones.ver')
+                        <li class="nav-item"><a href="{{ route('cotizaciones.index') }}" class="nav-link {{ request()->routeIs('cotizaciones.*') ? 'active' : '' }}"><i class="fas fa-globe me-1" aria-hidden="true"></i><span>Cotizaciones web</span></a></li>
+                        @endcan
+                        @can('cotizaciones_servicios.ver')
+                        <li class="nav-item"><a href="{{ route('atencion.cotizaciones.index') }}" class="nav-link {{ request()->routeIs('atencion.cotizaciones.*') ? 'active' : '' }}"><i class="fas fa-file-invoice-dollar me-1" aria-hidden="true"></i><span>Cotizaciones</span></a></li>
+                        @endcan
+                    </ul></div>
+                </li>
+                @endcanany
+
                 <!-- Módulo Catálogos -->
                 <li class="nav-item mt-1">
                     <a href="#menuConfiguracion" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('configuracion.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('configuracion.*') ? 'true' : 'false' }}">
@@ -428,6 +443,7 @@
 
                 <div class="user-menu">
                     @auth
+                        @include('partials.notificaciones')
                         <div class="dropdown">
                             <button class="user-badge perfil-menu-boton" type="button" id="menuPerfil" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if(Auth::user()->profile_photo_path)
@@ -529,6 +545,7 @@
     <script>window.userPermissions = @json(auth()->user()?->permissionKeys() ?? []);</script>
     <script src="{{ asset('js/permissions-ui.js') }}?v={{ filemtime(public_path('js/permissions-ui.js')) }}"></script>
     <script src="{{ asset('js/grid-filtros.js') }}?v={{ filemtime(public_path('js/grid-filtros.js')) }}"></script>
+    <script src="{{ asset('js/notificaciones.js') }}?v={{ filemtime(public_path('js/notificaciones.js')) }}" defer></script>
     @stack('scripts')
 </body>
 </html>
