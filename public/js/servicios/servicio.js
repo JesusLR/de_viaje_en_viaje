@@ -137,7 +137,7 @@ $(document).ready(function () {
     });
 
     // Ver Detalle Completo del Servicio
-    $('#tablaServicios').on('click', '.btn-detalle', function () {
+    $(document).on('click', '#tablaServicios .btn-detalle, [data-grid-table="tablaServicios"] .btn-detalle', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -415,7 +415,7 @@ $(document).ready(function () {
     });
 
     // Editar Servicio Existente
-    $('#tablaServicios').on('click', '.btn-editar', function () {
+    $(document).on('click', '#tablaServicios .btn-editar, [data-grid-table="tablaServicios"] .btn-editar', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -539,7 +539,7 @@ $(document).ready(function () {
     });
 
     // Desactivar Servicio Turístico
-    $('#tablaServicios').on('click', '.btn-eliminar', function () {
+    $(document).on('click', '#tablaServicios .btn-eliminar, [data-grid-table="tablaServicios"] .btn-eliminar', function () {
         let iID = $(this).data('id');
 
         Swal.fire({

@@ -154,7 +154,7 @@ $(document).ready(function () {
     });
 
     // 5. Cargar datos para Editar (getData)
-    $('#tablaUsuarios').on('click', '.btn-editar', function () {
+    $(document).on('click', '#tablaUsuarios .btn-editar, [data-grid-table="tablaUsuarios"] .btn-editar', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -249,7 +249,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#tablaUsuarios').on('click', '.btn-activar', function () {
+    $(document).on('click', '#tablaUsuarios .btn-activar, [data-grid-table="tablaUsuarios"] .btn-activar', function () {
         const boton = $(this);
         boton.prop('disabled', true);
         $.ajax({
@@ -266,7 +266,7 @@ $(document).ready(function () {
     });
 
     // 7. Eliminar / Desactivar Lógicamente (deleteData)
-    $('#tablaUsuarios').on('click', '.btn-eliminar', function () {
+    $(document).on('click', '#tablaUsuarios .btn-eliminar, [data-grid-table="tablaUsuarios"] .btn-eliminar', function () {
         let iID = $(this).data('id');
 
         Swal.fire({

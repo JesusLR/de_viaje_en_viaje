@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" href="{{ asset('logo.ico') }}" type="image/x-icon">
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('titulo', 'Catálogo de viajes') | {{ $content['brand'] }}</title>
     <meta name="description" content="@yield('descripcion', 'Explora los servicios y paquetes de nuestra agencia. Consulta precios, promociones y fechas de viaje.')">

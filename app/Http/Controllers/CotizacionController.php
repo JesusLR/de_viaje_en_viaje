@@ -56,8 +56,19 @@ class CotizacionController extends Controller
 
     public function index(Request $request)
     {
-        $request->validate(['buscar' => 'nullable|string|max:150', 'estado' => ['nullable', Rule::in(array_keys(Cotizacion::ESTADOS))]]);
+        $request->merge([
+            'desde' => $request->input('desde') ?: today()->startOfMonth()->toDateString(),
+            'hasta' => $request->input('hasta') ?: today()->endOfMonth()->toDateString(),
+        ]);
+        $request->validate([
+            'buscar' => 'nullable|string|max:150',
+            'estado' => ['nullable', Rule::in(array_keys(Cotizacion::ESTADOS))],
+            'desde' => 'nullable|date_format:Y-m-d',
+            'hasta' => ['nullable', 'date_format:Y-m-d', ...($request->filled('desde') ? ['after_or_equal:desde'] : [])],
+        ]);
         $cotizaciones = Cotizacion::with('responsable')
+            ->when($request->filled('desde'), fn ($q) => $q->whereDate('created_at', '>=', $request->desde))
+            ->when($request->filled('hasta'), fn ($q) => $q->whereDate('created_at', '<=', $request->hasta))
             ->when($request->filled('estado'), fn ($q) => $q->where('estado', $request->estado))
             ->when($request->filled('buscar'), fn ($q) => $q->where(fn ($q) => $q->where('nombre', 'like', '%'.$request->buscar.'%')->orWhere('whatsapp', 'like', '%'.$request->buscar.'%')))
             ->orderByDesc('id')->paginate(10)->withQueryString();

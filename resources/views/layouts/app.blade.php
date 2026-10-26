@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" href="{{ asset('logo.ico') }}" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -239,6 +240,7 @@
     </style>
     <link rel="stylesheet" href="{{ asset('css/perfil-module.css') }}?v={{ filemtime(public_path('css/perfil-module.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/notificaciones.css') }}?v={{ filemtime(public_path('css/notificaciones.css')) }}">
+    <link href="{{ asset('css/apartados-acciones.css') }}?v={{ filemtime(public_path('css/apartados-acciones.css')) }}" rel="stylesheet">
     @stack('styles')
 </head>
 <body>
@@ -546,6 +548,7 @@
     <script src="{{ asset('js/permissions-ui.js') }}?v={{ filemtime(public_path('js/permissions-ui.js')) }}"></script>
     <script src="{{ asset('js/grid-filtros.js') }}?v={{ filemtime(public_path('js/grid-filtros.js')) }}"></script>
     <script src="{{ asset('js/notificaciones.js') }}?v={{ filemtime(public_path('js/notificaciones.js')) }}" defer></script>
-    @stack('scripts')
+    <script src="{{ asset('js/apartados-acciones.js') }}?v={{ filemtime(public_path('js/apartados-acciones.js')) }}"></script>
+@stack('scripts')
 </body>
 </html>

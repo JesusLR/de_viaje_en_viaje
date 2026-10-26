@@ -84,7 +84,7 @@ $(document).ready(function () {
         modalProveedor.show();
     });
 
-    $('#tablaProveedores').on('click', '.btn-editar', function () {
+    $(document).on('click', '#tablaProveedores .btn-editar, [data-grid-table="tablaProveedores"] .btn-editar', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -136,7 +136,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#tablaProveedores').on('click', '.btn-eliminar', function () {
+    $(document).on('click', '#tablaProveedores .btn-eliminar, [data-grid-table="tablaProveedores"] .btn-eliminar', function () {
         let iID = $(this).data('id');
 
         Swal.fire({

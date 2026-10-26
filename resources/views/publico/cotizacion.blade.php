@@ -12,7 +12,7 @@
         @csrf
         <div class="row g-4">
             <div class="col-md-7"><label for="nombre" class="form-label">Nombre completo</label><input id="nombre" name="nombre" value="{{ old('nombre') }}" required maxlength="150" autocomplete="name" class="form-control"></div>
-            <div class="col-md-5"><label for="whatsapp" class="form-label">Número de WhatsApp</label><input id="whatsapp" name="whatsapp" type="tel" value="{{ old('whatsapp') }}" required maxlength="30" autocomplete="tel" class="form-control" placeholder="Incluye la clave de tu país"></div>
+            <div class="col-md-5"><label for="whatsapp" class="form-label">Número de WhatsApp</label><input id="whatsapp" name="whatsapp" type="tel" value="{{ old('whatsapp') }}" required maxlength="10" autocomplete="tel" class="form-control" placeholder="999 901 0203"></div>
             <div class="col-12"><label for="fechas" class="form-label">¿En qué fechas desea viajar? (fecha exacta o aproximada)</label><input id="fechas" name="fechas" value="{{ old('fechas') }}" required maxlength="255" class="form-control" placeholder="Ej. del 10 al 15 de diciembre o durante enero"></div>
             <fieldset class="col-12"><legend class="h6">¿Cuántos días y cuántas noches desea hospedarse?</legend><div class="row g-3">
                 <div class="col-6"><label for="dias" class="form-label">Días</label><input id="dias" name="dias" type="number" min="1" max="365" value="{{ old('dias') }}" required class="form-control"></div>

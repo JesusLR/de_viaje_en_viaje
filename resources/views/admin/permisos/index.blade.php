@@ -14,7 +14,7 @@
         @foreach($roles as $role)
         <div class="col-md-6 col-xl-4"><section class="apartados-filtros h-100">
             <div class="d-flex align-items-start justify-content-between gap-2"><div><h5 class="permiso-titulo">{{ $role->name }}</h5><small class="text-muted">{{ $role->users_count }} usuarios · {{ count($role->permissions) }} permisos</small></div>
-                <div class="apartado-acciones">
+                <div class="apartado-acciones" data-grid-actions>
                     @if($role->slug === 'administrador')
                         <span class="apartados-contador"><i class="fas fa-lock me-1"></i>Protegido</span>
                     @else

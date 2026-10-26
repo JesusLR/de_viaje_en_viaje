@@ -99,7 +99,7 @@ $(document).ready(function () {
     });
 
     // 4. Cargar datos para Editar (getData)
-    $('#tablaClientes').on('click', '.btn-editar', function () {
+    $(document).on('click', '#tablaClientes .btn-editar, [data-grid-table="tablaClientes"] .btn-editar', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -195,7 +195,7 @@ $(document).ready(function () {
     });
 
     // 6. Eliminar / Desactivar Lógicamente (deleteData)
-    $('#tablaClientes').on('click', '.btn-eliminar', function () {
+    $(document).on('click', '#tablaClientes .btn-eliminar, [data-grid-table="tablaClientes"] .btn-eliminar', function () {
         let iID = $(this).data('id');
 
         Swal.fire({

@@ -43,6 +43,15 @@ class CotizacionServicioTest extends TestCase
         $pdf = $this->get(route('atencion.cotizaciones.pdf', $cotizacion))->assertOk()->assertDownload('cotizacion-'.$cotizacion->folio.'.pdf');
         $this->assertStringStartsWith('%PDF-', $pdf->getContent());
         $this->get(route('atencion.cotizaciones.index', ['buscar' => 'Familia de prueba']))->assertOk()->assertSee($cotizacion->folio);
+        $this->get(route('atencion.cotizaciones.index'))->assertOk()
+            ->assertSee('value="'.today()->startOfMonth()->toDateString().'"', false)
+            ->assertSee('value="'.today()->endOfMonth()->toDateString().'"', false);
+        $cotizacion->update(['created_at' => today()->startOfMonth()->subDay()->endOfDay()]);
+        $this->get(route('atencion.cotizaciones.index'))->assertOk()->assertViewHas('cotizaciones', fn ($items) => !$items->contains('id', $cotizacion->id));
+        $this->get(route('atencion.cotizaciones.index', ['desde' => $cotizacion->created_at->toDateString(), 'hasta' => $cotizacion->created_at->toDateString()]))->assertOk()
+            ->assertViewHas('cotizaciones', fn ($items) => $items->contains('id', $cotizacion->id));
+        $this->getJson(route('atencion.cotizaciones.index', ['desde' => '2000-02-01', 'hasta' => '2000-01-01']))->assertUnprocessable();
+
     }
 
     public function test_registered_client_and_service_validation(): void

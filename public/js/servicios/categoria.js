@@ -84,7 +84,7 @@ $(document).ready(function () {
         modalCategoria.show();
     });
 
-    $('#tablaCategorias').on('click', '.btn-editar', function () {
+    $(document).on('click', '#tablaCategorias .btn-editar, [data-grid-table="tablaCategorias"] .btn-editar', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -136,7 +136,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#tablaCategorias').on('click', '.btn-eliminar', function () {
+    $(document).on('click', '#tablaCategorias .btn-eliminar, [data-grid-table="tablaCategorias"] .btn-eliminar', function () {
         let iID = $(this).data('id');
 
         Swal.fire({

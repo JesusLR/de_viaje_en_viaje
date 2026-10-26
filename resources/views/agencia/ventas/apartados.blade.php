@@ -73,8 +73,6 @@
 @endsection
 @push('styles')
 <link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">
-<link href="{{ asset('css/apartados-acciones.css') }}?v={{ filemtime(public_path('css/apartados-acciones.css')) }}" rel="stylesheet">
 @endpush
 @push('scripts')
-<script src="{{ asset('js/apartados-acciones.js') }}?v={{ filemtime(public_path('js/apartados-acciones.js')) }}"></script>
 @endpush

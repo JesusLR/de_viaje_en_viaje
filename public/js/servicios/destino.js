@@ -94,7 +94,7 @@ $(document).ready(function () {
         modalDestino.show();
     });
 
-    $('#tablaDestinos').on('click', '.btn-editar', function () {
+    $(document).on('click', '#tablaDestinos .btn-editar, [data-grid-table="tablaDestinos"] .btn-editar', function () {
         let iID = $(this).data('id');
 
         $.ajax({
@@ -149,7 +149,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#tablaDestinos').on('click', '.btn-eliminar', function () {
+    $(document).on('click', '#tablaDestinos .btn-eliminar, [data-grid-table="tablaDestinos"] .btn-eliminar', function () {
         let iID = $(this).data('id');
 
         Swal.fire({

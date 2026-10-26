@@ -33,6 +33,25 @@ class CotizacionTest extends TestCase
             ->assertSee('cotizacion-publica.js')->assertSee('action="/cotizar"', false);
     }
 
+    public function test_web_quotes_filter_by_sent_date_inclusively_and_show_date_without_time(): void
+    {
+        $base = $this->solicitud();
+        $base->update(['created_at' => '2000-01-01 00:00:00']);
+        $last = $base->replicate(); $last->created_at = '2000-01-31 23:59:59'; $last->save();
+        $outside = $base->replicate(); $outside->created_at = '2000-02-01 00:00:00'; $outside->save();
+        $this->actingAs(User::factory()->create(['lCambiarPassword' => false]));
+        $this->get(route('cotizaciones.index'))->assertOk()
+            ->assertSee('value="'.today()->startOfMonth()->toDateString().'"', false)
+            ->assertSee('value="'.today()->endOfMonth()->toDateString().'"', false)
+            ->assertViewHas('cotizaciones', fn ($items) => !$items->contains('id', $base->id));
+        $this->get(route('cotizaciones.index', ['desde' => '2000-01-01', 'hasta' => '2000-01-31']))->assertOk()
+            ->assertViewHas('cotizaciones', fn ($items) => $items->contains('id', $base->id) && $items->contains('id', $last->id) && !$items->contains('id', $outside->id))
+            ->assertSee('Fecha de envío')->assertSee('31/01/2000')->assertDontSee('23:59');
+        $this->get(route('cotizaciones.index', ['desde' => '2000-01-01', 'hasta' => '2000-01-01']))->assertOk()
+            ->assertViewHas('cotizaciones', fn ($items) => $items->contains('id', $base->id) && !$items->contains('id', $last->id));
+        $this->getJson(route('cotizaciones.index', ['desde' => '2000-02-01', 'hasta' => '2000-01-01']))->assertUnprocessable();
+    }
+
     public function test_public_form_saves_request_without_exposing_private_data(): void
     {
         $this->get(route('landing'))->assertOk()->assertSee('¡COTIZA TU PRÓXIMO VIAJE DE FORMA RÁPIDA Y FÁCIL!')->assertSee(route('cotizacion.formulario'));

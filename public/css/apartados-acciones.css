@@ -12,3 +12,7 @@
 .apartado-menu .dropdown-item.text-danger{color:#bd4141!important}
 .apartado-menu .dropdown-item.text-danger:is(:hover,:focus,:active,.active){background:#ffeded}
 .apartado-menu .dropdown-item>span,.apartado-menu .dropdown-item>i{color:inherit}
+.apartado-menu{max-width:calc(100vw - 24px)}
+.apartado-menu form:has(input:not([type="hidden"])){display:flex;flex-direction:column;gap:6px;padding:6px}
+.apartado-menu form .form-control{min-width:0;width:100%}
+.apartado-mas[hidden]{display:none!important}

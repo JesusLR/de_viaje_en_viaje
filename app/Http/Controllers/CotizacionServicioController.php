@@ -12,8 +12,16 @@ class CotizacionServicioController extends Controller
 {
     public function index(Request $request)
     {
-        $request->validate(['buscar' => 'nullable|string|max:150']);
-        $cotizaciones = CotizacionServicio::with('usuario')->when($request->filled('buscar'), fn ($q) => $q->where(fn ($q) => $q
+        $request->merge([
+            'desde' => $request->input('desde') ?: today()->startOfMonth()->toDateString(),
+            'hasta' => $request->input('hasta') ?: today()->endOfMonth()->toDateString(),
+        ]);
+        $request->validate([
+            'buscar' => 'nullable|string|max:150',
+            'desde' => 'required|date_format:Y-m-d',
+            'hasta' => 'required|date_format:Y-m-d|after_or_equal:desde',
+        ]);
+        $cotizaciones = CotizacionServicio::with('usuario')->whereDate('created_at', '>=', $request->desde)->whereDate('created_at', '<=', $request->hasta)->when($request->filled('buscar'), fn ($q) => $q->where(fn ($q) => $q
             ->where('cliente_nombre', 'like', '%'.$request->buscar.'%')->orWhere('nombre', 'like', '%'.$request->buscar.'%')))
             ->orderByDesc('id')->paginate(10)->withQueryString();
         return view('atencion.cotizaciones.index', compact('cotizaciones'));

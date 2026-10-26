@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" href="{{ asset('logo.ico') }}" type="image/x-icon">
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $content['brand'] }} | Viajes y experiencias</title>
     <meta name="description" content="{{ $content['hero_description'] }}">
