@@ -75,10 +75,11 @@ class CotizacionServicioController extends Controller
         return redirect()->route('atencion.cotizaciones.show', $cotizacion)->with('success', 'Cotización guardada correctamente.');
     }
 
-    public function show(CotizacionServicio $cotizacion)
+    public function show(Request $request, CotizacionServicio $cotizacion)
     {
         $cotizacion->load('usuario');
-        return view('atencion.cotizaciones.show', compact('cotizacion'));
+        $enModal = $request->query('seccion') === 'detalle';
+        return view('atencion.cotizaciones.show', compact('cotizacion', 'enModal'));
     }
 
     public function pdf(CotizacionServicio $cotizacion)

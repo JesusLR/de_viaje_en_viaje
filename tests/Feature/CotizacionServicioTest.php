@@ -28,6 +28,26 @@ class CotizacionServicioTest extends TestCase
             'items' => [['iIDServicio' => $servicio->iID, 'iCantidad' => 2, 'iCantidadMenores' => 1]]];
     }
 
+    public function test_detail_modal_and_pdf_show_saved_discount_breakdown(): void
+    {
+        $servicio = $this->servicio();
+        $servicio->update(['lTienePromocion' => true, 'lPromocionActiva' => true, 'cTipoDescuento' => 'PORCENTAJE',
+            'dValorDescuento' => 10, 'dFechaInicioPromocion' => now()->subDay(), 'dFechaFinPromocion' => now()->addDay()]);
+        $this->post(route('atencion.cotizaciones.store'), $this->datos($servicio))->assertSessionHasNoErrors();
+        $cotizacion = CotizacionServicio::latest('id')->firstOrFail();
+        $this->assertEquals(200, $cotizacion->descuento_total);
+        $this->assertEquals('2000.00', $cotizacion->total);
+        $servicio->update(['dPrecioVenta' => 9999, 'dValorDescuento' => 50]);
+        $this->get(route('atencion.cotizaciones.index'))->assertOk()->assertSee('data-bs-target="#accionApartado"', false);
+        $this->get(route('atencion.cotizaciones.show', ['cotizacion' => $cotizacion, 'seccion' => 'detalle']))->assertOk()
+            ->assertSee('apartado-modal-page')->assertDontSee('id="sidebar"', false)
+            ->assertSee('Precio regular')->assertSee('Descuento por unidad')->assertSee('Precio final')
+            ->assertSee('100.00 MXN')->assertSee('Descuento total aplicado:')->assertSee('200.00 MXN');
+        $html = view('atencion.cotizaciones.pdf', ['cotizacion' => $cotizacion->load('usuario'), 'marca' => 'De Viaje', 'logo' => null])->render();
+        foreach (['Precio regular', 'Descuento unitario', 'Precio final', 'DESCUENTO TOTAL', '200.00', '900.00', '1,000.00'] as $text) $this->assertStringContainsString($text, $html);
+        $this->get(route('atencion.cotizaciones.pdf', $cotizacion))->assertOk()->assertDownload('cotizacion-'.$cotizacion->folio.'.pdf');
+    }
+
     public function test_quote_is_saved_without_sale_or_payment_and_keeps_prices_for_pdf(): void
     {
         $servicio = $this->servicio();

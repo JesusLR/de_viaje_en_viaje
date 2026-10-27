@@ -27,7 +27,7 @@
 @endphp
 <tr><td><strong>{{ $detalle->cPaquete }}</strong><br><span class="promocion">{{ $detalle->dPrecioRegular === null ? 'Desglose histórico no disponible' : ($detalle->cPromocion ?: 'Sin promoción') }}</span></td><td class="right">{{ $detalle->iCantidad }} {{ $detalle->iCantidad == 1 ? 'adulto' : 'adultos' }}</td><td class="right">{{ $detalle->dPrecioRegular === null ? '—' : number_format($detalle->dPrecioRegular, 2) }}</td><td class="right">{{ $detalle->dDescuentoUnitario === null ? '—' : number_format($detalle->dDescuentoUnitario, 2) }}</td><td class="right">{{ number_format($detalle->dPrecioUnitario, 2) }}</td><td class="right">{{ number_format($subtotalAdultos / 100, 2) }}</td></tr>
 @if($detalle->iCantidadMenores > 0)
-<tr><td><strong>{{ $detalle->cPaquete }}</strong><br><span class="muted">Tarifa para menores</span></td><td class="right">{{ $detalle->iCantidadMenores }} {{ $detalle->iCantidadMenores == 1 ? 'menor' : 'menores' }}</td><td class="right">{{ number_format($detalle->dPrecioMenor, 2) }}</td><td class="right">0.00</td><td class="right">{{ $detalle->dPrecioMenor > 0 ? number_format($detalle->dPrecioMenor, 2) : 'Gratis' }}</td><td class="right">{{ number_format($subtotalMenores / 100, 2) }}</td></tr>
+<tr><td><strong>{{ $detalle->cPaquete }}</strong><br><span class="muted">Tarifa para menores</span></td><td class="right">{{ $detalle->iCantidadMenores }} {{ $detalle->iCantidadMenores == 1 ? 'menor' : 'menores' }}</td><td class="right">{{ number_format($detalle->dPrecioMenor, 2) }}</td><td class="right">0.00</td><td class="right">{{ number_format($detalle->dPrecioMenor, 2) }}</td><td class="right">{{ number_format($subtotalMenores / 100, 2) }}</td></tr>
 @endif
 @endforeach
 </tbody></table>
