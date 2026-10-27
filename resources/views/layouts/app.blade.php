@@ -273,7 +273,7 @@
                 @endif --}}
             </ul>
 
-            @canany(['usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'cotizaciones.ver', 'cotizaciones_servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
+            @canany(['estadisticas.ver', 'usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'cotizaciones.ver', 'cotizaciones_servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'variables_entorno.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
             <!-- Módulo Administración y Catálogos -->
             <div class="sidebar-section">Módulos</div>
             <ul class="sidebar-nav">
@@ -302,6 +302,10 @@
                         </ul>
                     </div>
                 </li>
+
+                @can('estadisticas.ver')
+                <li class="nav-item mt-1"><a class="nav-link {{ request()->routeIs('estadisticas.*') ? 'active' : '' }}" href="{{ route('estadisticas.index') }}"><i class="fas fa-chart-column me-2" aria-hidden="true"></i><span>Estadísticas</span></a></li>
+                @endcan
 
                 <!-- Módulo Agencia -->
                 <li class="nav-item mt-1">
@@ -380,7 +384,11 @@
                     <div class="collapse {{ request()->routeIs('configuracion.*') ? 'show' : '' }}" id="menuConfiguracion">
                         <ul class="sidebar-subnav mt-1">@can('configuracion.ver')
 <li class="nav-item"><a href="{{ route('configuracion.landing.edit') }}" class="nav-link {{ request()->routeIs('configuracion.landing.*') ? 'active' : '' }}"><i class="fas fa-globe me-1"></i><span>Página de inicio</span></a></li>
-@endcan</ul>
+@endcan
+                        @can('variables_entorno.ver')
+                        <li class="nav-item"><a href="{{ route('configuracion.variables.edit') }}" class="nav-link {{ request()->routeIs('configuracion.variables.*') ? 'active' : '' }}"><i class="fas fa-sliders me-1" aria-hidden="true"></i><span>Variables de entorno</span></a></li>
+                        @endcan
+</ul>
                     </div>
                 </li>
                 <li class="nav-item mt-1">

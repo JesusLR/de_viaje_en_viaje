@@ -32,9 +32,11 @@ class CheckModulePermissions
         $module = match (true) {
             str_starts_with($name, 'atencion.cotizaciones.') => 'cotizaciones_servicios',
             str_starts_with($name, 'cotizaciones.') => 'cotizaciones',
+            str_starts_with($name, 'estadisticas.') => 'estadisticas',
             str_starts_with($name, 'itinerarios.') => 'itinerarios',
             str_starts_with($name, 'admin.permisos.') => 'permisos',
             str_starts_with($name, 'admin.usuarios.') => 'usuarios',
+            str_starts_with($name, 'configuracion.variables.') => 'variables_entorno',
             str_starts_with($name, 'configuracion.') => 'configuracion',
             str_starts_with($name, 'agencia.finanzas.') => 'finanzas',
             str_starts_with($name, 'agencia.vender.') => 'vender',

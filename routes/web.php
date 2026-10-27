@@ -58,7 +58,10 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
     Route::post('/servicios/itinerarios', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'store'])->name('itinerarios.store');
     Route::get('/servicios/itinerarios/{itinerario}', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'edit'])->name('itinerarios.edit');
     Route::put('/servicios/itinerarios/{itinerario}', [\App\Http\Controllers\Servicios\ItinerarioController::class, 'update'])->name('itinerarios.update');
+    Route::get('/estadisticas', [\App\Http\Controllers\EstadisticasController::class, 'index'])->name('estadisticas.index');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/configuracion/variables-entorno', [\App\Http\Controllers\Configuracion\VariablesEntornoController::class, 'edit'])->name('configuracion.variables.edit');
+    Route::put('/configuracion/variables-entorno', [\App\Http\Controllers\Configuracion\VariablesEntornoController::class, 'update'])->name('configuracion.variables.update');
     Route::get('/configuracion/pagina-inicio', [\App\Http\Controllers\Configuracion\LandingSettingsController::class, 'edit'])->name('configuracion.landing.edit');
     Route::put('/configuracion/pagina-inicio', [\App\Http\Controllers\Configuracion\LandingSettingsController::class, 'update'])->name('configuracion.landing.update');
 

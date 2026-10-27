@@ -9,13 +9,21 @@ class NotificacionController extends Controller
 {
     private function visibles(Request $request)
     {
-        return $request->user()->notifications()->where(function ($query) use ($request) {
+        $query = $request->user()->notifications()->where(function ($query) use ($request) {
             $query->whereNull('data->permiso')->orWhereIn('data->permiso', $request->user()->permissionKeys());
         });
+        if (!$request->user()->hasPermission('apartados.ver') || !$request->user()->hasPermission('apartados.recordatorios')) {
+            $query->where('type', '!=', \App\Notifications\RecordatorioAbono::class);
+        }
+        if (!$request->user()->hasPermission('apartados.todos')) {
+            $query->where(fn ($q) => $q->whereNull('data->apartado_usuario_id')->orWhere('data->apartado_usuario_id', $request->user()->id));
+        }
+        return $query;
     }
 
     public function index(Request $request)
     {
+        app(\App\Services\RecordatoriosAbonosService::class)->generarPara($request->user());
         $query = $this->visibles($request);
         $total = (clone $query)->whereNull('read_at')->count();
         $items = $query->orderByDesc('created_at')->orderByDesc('id')->limit(20)->get()->map(function ($notification) {

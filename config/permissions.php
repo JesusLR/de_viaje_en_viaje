@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'variables_entorno' => ['label' => 'Configuración · Variables de entorno', 'actions' => [
+        'variables_entorno.ver' => 'Consultar variables de entorno',
+        'variables_entorno.editar' => 'Modificar días sin abonos',
+    ]],
+    'estadisticas' => ['label' => 'Estadísticas', 'actions' => [
+        'estadisticas.ver' => 'Consultar estadísticas propias',
+        'estadisticas.todos' => 'Consultar estadísticas de todos y filtrar por vendedor',
+        'estadisticas.finanzas' => 'Ver ingresos, egresos, balance y saldos',
+        'estadisticas.cotizaciones' => 'Ver estadísticas de cotizaciones y atención',
+    ]],
     'cotizaciones_servicios' => ['label' => 'Atención al cliente · Cotizaciones', 'actions' => [
         'cotizaciones_servicios.ver' => 'Consultar cotizaciones de servicios',
         'cotizaciones_servicios.crear' => 'Crear cotizaciones de servicios',
@@ -45,6 +55,7 @@ return [
     ]],
     'apartados' => ['label' => 'Apartados', 'actions' => [
         'apartados.ver' => 'Consultar propios',
+        'apartados.recordatorios' => 'Recibir recordatorios por días sin abonos',
         'apartados.todos' => 'Consultar de todos los usuarios',
         'apartados.abonos' => 'Registrar abonos',
         'apartados.paquetes' => 'Agregar paquetes',

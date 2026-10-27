@@ -31,3 +31,25 @@ usuarios activos con `cotizaciones.ver`. No se generan avisos retroactivos.
 La campana consulta los 20 avisos más recientes y el total sin leer, cada 30 segundos
 mientras la pestaña está visible y al abrir el menú. Leer un aviso o marcar todos
 solo afecta a las notificaciones visibles del usuario de la sesión.
+
+## Recordatorios por días sin abonos
+
+El umbral se guarda en `variables_sistema` con clave `dias_sin_abonos`, desde
+Configuración → Variables de entorno. Es un parámetro de la base de datos; no
+modifica el archivo `.env`. Hasta que se configure no genera recordatorios.
+
+`RecordatoriosAbonosService` se ejecuta al consultar la campana. No requiere cron,
+colas ni mensajes externos. Considera apartados con saldo pendiente, sin cancelar,
+finalizar ni eliminar, y con al menos un abono válido. Se usa la fecha del último
+abono no anulado; los registros antiguos sin fecha de pago usan su fecha de alta.
+Los días son días de calendario en la zona horaria de la aplicación.
+
+Permisos: `variables_entorno.ver`, `variables_entorno.editar` y
+`apartados.recordatorios`. El destinatario también necesita `apartados.ver`.
+Sin `apartados.todos` solo recibe y consulta avisos de operaciones propias,
+incluso si antes tenía acceso global.
+
+El UUID determinista identifica usuario, apartado y ciclo de abonos, evitando
+duplicados entre consultas concurrentes. Al cambiar los abonos o cerrar el apartado,
+los avisos que ya no corresponden quedan leídos como historial. Un nuevo atraso
+después de un abono nuevo puede generar otro aviso; leer uno no genera copias.
