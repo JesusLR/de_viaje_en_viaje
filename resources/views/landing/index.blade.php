@@ -71,6 +71,11 @@
                 <div class="col-lg-7"><div class="landing-benefits">@foreach($content['benefits'] as $benefit)<article><span><i class="fas {{ ['fa-headset', 'fa-compass', 'fa-shield-alt'][$loop->index] }}" aria-hidden="true"></i></span><div><h3>{{ $benefit['title'] }}</h3><p>{{ $benefit['description'] }}</p></div></article>@endforeach</div></div>
             </div>
         </div></section>
+        <section class="landing-section" id="resenas" aria-label="Opiniones de nuestros viajeros"><div class="container">
+            <!-- Elfsight Google Reviews -->
+            <script src="https://elfsightcdn.com/platform.js" async></script>
+            <div class="elfsight-app-85abdb71-3599-47b7-a106-589729d249a8" data-elfsight-app-lazy></div>
+        </div></section>
         <section class="landing-section" id="contacto"><div class="container"><div class="landing-contact">
             <div><span class="landing-eyebrow">ESTAMOS PARA AYUDARTE</span><h2>{{ $content['contact_title'] }}</h2><p>{{ $content['contact_description'] }}</p></div>
             <div class="landing-contact-details">
