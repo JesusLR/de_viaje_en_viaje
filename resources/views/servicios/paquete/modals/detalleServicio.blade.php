@@ -148,7 +148,12 @@
                     </div>
                     <div class="card-body">
                         <p class="text-muted mb-2" id="detDescCorta"><em>Sin descripción corta.</em></p>
-                        <div class="p-3 bg-white rounded border text-slate-700 mt-2" id="detDescCompleta"><em>Sin descripción completa.</em></div>
+                        @foreach(['detDescCompleta' => 'Descripción', 'detDetalles' => 'Detalles', 'detCancelaciones' => 'Cancelaciones', 'detIncluye' => 'Qué incluye', 'detNoIncluye' => 'Qué no incluye'] as $id => $etiqueta)
+                        <details class="p-3 bg-white rounded border mt-2">
+                            <summary class="fw-semibold text-primary">{{ $etiqueta }}</summary>
+                            <div class="mt-3 text-break" style="white-space: pre-wrap" id="{{ $id }}"></div>
+                        </details>
+                        @endforeach
                     </div>
                 </div>
 

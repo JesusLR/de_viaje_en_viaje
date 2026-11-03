@@ -8,6 +8,7 @@ use Tests\TestCase;
 
 class PermissionTest extends TestCase
 {
+    use \Tests\Concerns\ReadsExcelExports;
     use DatabaseTransactions;
 
     private function userWith(array $permissions): User
@@ -90,8 +91,9 @@ class PermissionTest extends TestCase
         }
         $this->get(route('agencia.finanzas.index', ['moneda' => 'TST']))->assertOk()->assertViewHas('egresos', fn ($rows) => $rows->total() === 0)->assertViewHas('totales', fn ($totales) => $totales->egresos == 0 && $totales->ingresos == 55);
         $export = $this->get(route('agencia.finanzas.exportar', ['moneda' => 'TST']))->assertOk();
-        $this->assertStringContainsString('Permiso INGRESO', $export->streamedContent());
-        $this->assertStringNotContainsString('Permiso EGRESO', $export->streamedContent());
+        $texto = $this->textoExcel($export);
+        $this->assertStringContainsString('Permiso INGRESO', $texto);
+        $this->assertStringNotContainsString('Permiso EGRESO', $texto);
     }
 
     public function test_dashboard_tiene_permisos_independientes_y_bienvenida_siempre_visible(): void

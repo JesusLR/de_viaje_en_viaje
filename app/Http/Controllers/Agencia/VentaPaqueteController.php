@@ -246,7 +246,19 @@ class VentaPaqueteController extends Controller
         $pdf->render();
         $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
 
-        return $pdf->download(($compraSaldada ? 'compra-saldada-' : 'comprobante-').$venta->folio.'.pdf');
+        $limpiarNombre = static function (string $nombre, string $alternativo): string {
+            $nombre = \Illuminate\Support\Str::ascii($nombre);
+            $nombre = preg_replace('/[<>:"\/\\\\|?*\x00-\x1F\x7F]+/', ' ', $nombre);
+            $nombre = trim(preg_replace('/\s+/', ' ', $nombre), " .");
+
+            return substr($nombre ?: $alternativo, 0, 80);
+        };
+        $cliente = $limpiarNombre($venta->cliente?->nombre_completo ?? '', 'Cliente');
+        $servicios = $venta->detalles->pluck('cPaquete')->filter()->unique()->implode(' + ');
+        $servicio = $limpiarNombre($servicios ?: ($venta->cPaquete ?? ''), 'Servicio');
+        $tipo = $compraSaldada ? 'Venta' : 'Abono';
+
+        return $pdf->download($tipo.' _ '.$cliente.' _ '.$servicio.'.pdf');
     }
 
     public function pago(Request $request, VentaPaquete $venta)

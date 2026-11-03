@@ -16,7 +16,16 @@
                 <h1>{{ $paquete->cNombre }}</h1>
                 @if($paquete->categoria)<span class="catalogo-categoria">{{ $paquete->categoria->cNombre }}</span>@endif
                 <p class="mt-3">{{ strip_tags($paquete->cDescripcionCorta ?? '') }}</p>
-                @if($paquete->cDescripcionCompleta)<div class="catalogo-texto">{{ strip_tags($paquete->cDescripcionCompleta) }}</div>@endif
+                <div class="catalogo-informacion">
+                    @foreach(['cDescripcionCompleta' => 'Descripción', 'cDetalles' => 'Detalles', 'cCancelaciones' => 'Cancelaciones', 'cIncluye' => 'Qué incluye', 'cNoIncluye' => 'Qué no incluye'] as $campo => $etiqueta)
+                        @if(filled(trim(strip_tags($paquete->{$campo} ?? ''))))
+                        <details class="catalogo-informacion-seccion">
+                            <summary>{{ $etiqueta }}</summary>
+                            <div class="catalogo-texto">{{ strip_tags($paquete->{$campo}) }}</div>
+                        </details>
+                        @endif
+                    @endforeach
+                </div>
             </div>
             @if($paquete->lPublicarItinerario && $paquete->cTipoItinerario === 'PDF' && $paquete->cItinerarioPdf)
             <section class="mt-4"><h2 class="catalogo-subtitulo">Itinerario del viaje</h2><a class="landing-button" href="{{ route('catalogo.publico.itinerario', $paquete->iID) }}" target="_blank" rel="noopener">Ver itinerario PDF</a></section>

@@ -10,6 +10,19 @@ class PublicCatalogTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_informacion_publica_tiene_secciones_cerradas_y_oculta_las_vacias(): void
+    {
+        $servicio = $this->service(['cDescripcionCompleta' => 'Descripción previamente capturada']);
+        $respuesta = $this->get(route('catalogo.publico.show', $servicio->iID))->assertOk()->assertSee('Descripción previamente capturada');
+        $this->assertSame(1, substr_count($respuesta->getContent(), '<details class="catalogo-informacion-seccion">'));
+        $servicio->update(['cDetalles' => 'Horario de llegada', 'cCancelaciones' => 'Condiciones de cancelación', 'cIncluye' => "Hotel\nDesayuno", 'cNoIncluye' => '<b>Gastos personales</b>']);
+        $respuesta = $this->get(route('catalogo.publico.show', $servicio->iID))->assertOk()
+            ->assertSee('Descripción previamente capturada')->assertSee('Horario de llegada')->assertSee('Condiciones de cancelación')
+            ->assertSee('Hotel')->assertSee('Desayuno')->assertSee('Gastos personales')->assertDontSee('<b>Gastos personales</b>', false);
+        $this->assertSame(5, substr_count($respuesta->getContent(), '<details class="catalogo-informacion-seccion">'));
+        $this->assertStringNotContainsString('class="catalogo-informacion-seccion" open', $respuesta->getContent());
+    }
+
     private function service(array $changes = []): ServicioTuristico
     {
         return ServicioTuristico::create(array_merge(['cCodigo' => uniqid('PUB'), 'cNombre' => uniqid('Catálogo prueba '), 'dPrecioCompra' => 4321.98, 'dPrecioVenta' => 1000, 'cMoneda' => 'MXN', 'lActivo' => true, 'lUsaVigencia' => false, 'dFechaInicioViaje' => today()->addMonth(), 'dFechaFinViaje' => today()->addMonth()->addWeek()], $changes));

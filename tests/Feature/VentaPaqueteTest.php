@@ -15,6 +15,7 @@ use Tests\TestCase;
 class VentaPaqueteTest extends TestCase
 {
     use DatabaseTransactions;
+    use \Tests\Concerns\ReadsExcelExports;
 
     public function test_eliminar_venta_conserva_historial_y_excluye_finanzas_y_dashboard(): void
     {
@@ -33,8 +34,8 @@ class VentaPaqueteTest extends TestCase
             $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio, 'estado' => $estado]))->assertOk()->assertSee($venta->folio)->assertSee('Eliminada')->assertDontSee('Eliminar venta');
         }
         $this->get(route('agencia.finanzas.index', ['moneda' => 'DEL']))->assertViewHas('totales', fn ($total) => (float) $total->ingresos === 0.0);
-        $csv = $this->get(route('agencia.finanzas.exportar', ['moneda' => 'DEL']))->assertOk()->streamedContent();
-        $this->assertStringNotContainsString($venta->folio, $csv);
+        $excel = $this->textoExcel($this->get(route('agencia.finanzas.exportar', ['moneda' => 'DEL']))->assertOk());
+        $this->assertStringNotContainsString($venta->folio, $excel);
         $this->get(route('dashboard'))->assertViewHas('finanzas', fn ($finanzas) => ($finanzas['DEL']['ingresos'] ?? 0) == 0);
         $this->postJson(route('agencia.ventas.nombre', $venta), ['cNombre' => 'Cambio'])->assertUnprocessable();
         $this->get(route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'historial']))->assertOk()->assertSee('Venta eliminada');
@@ -216,7 +217,7 @@ class VentaPaqueteTest extends TestCase
         $this->post(route('agencia.ventas.anularPago', [$venta, $pago]))->assertSessionHasNoErrors();
         $this->post(route('agencia.ventas.pago', $venta), ['dImporte' => 500, 'cMetodo' => 'Transferencia'])->assertSessionHasNoErrors();
         $response = $this->get(route('agencia.ventas.comprobante', $venta));
-        $response->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('comprobante-'.$venta->folio.'.pdf');
+        $response->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('Abono _ Cliente Prueba _ Paquete de prueba.pdf');
         $this->assertStringStartsWith('%PDF-', $response->getContent());
         $html = view('agencia.ventas.comprobante-pdf', ['venta' => $venta->fresh()->load(['cliente', 'detalles', 'pagos.usuario', 'usuario']), 'logo' => 'data:image/jpeg;base64,'.base64_encode(file_get_contents(public_path('img/logo.jpg')))])->render();
         $this->assertStringContainsString('Historial de abonos', $html);
@@ -246,7 +247,7 @@ class VentaPaqueteTest extends TestCase
         $this->post(route('agencia.ventas.pago', $venta), ['dImporte' => 1800, 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
         $this->getJson(route('agencia.ventas.comprobanteCompra', $venta))->assertUnprocessable();
         $this->post(route('agencia.ventas.finalizar', $venta))->assertSessionHasNoErrors();
-        $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('compra-saldada-'.$venta->folio.'.pdf');
+        $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('Venta _ Cliente Prueba _ Paquete de prueba.pdf');
         $html = view('agencia.ventas.comprobante-pdf', ['venta' => $venta->fresh()->load(['cliente', 'detalles.servicio', 'usuario', 'pagos']), 'logo' => null, 'compraSaldada' => true])->render();
         $this->assertStringContainsString('COMPRA SALDADA', $html);
         $this->assertStringContainsString('pagado en su totalidad', $html);
@@ -311,6 +312,19 @@ class VentaPaqueteTest extends TestCase
         $this->get(route('agencia.apartados.index', ['estado' => 'Cancelado', 'buscar' => 'Vacaciones familiares']))->assertSee($venta->folio);
     }
 
+    public function test_finanzas_identifica_solo_ventas_directas_como_venta(): void
+    {
+        [$paquete, $data] = $this->datos();
+        $paquete->update(['cMoneda' => 'DIR']);
+        $this->post(route('agencia.ventas.store'), $data + ['accion' => 'vender', 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
+        $filtros = ['desde' => today()->toDateString(), 'hasta' => today()->toDateString(), 'moneda' => 'DIR'];
+        $this->get(route('agencia.finanzas.index', $filtros))->assertOk()
+            ->assertViewHas('origenes', fn ($origenes) => (float) $origenes->get('Venta') === 1800.0 && (float) $origenes->get('Abono', 0) === 0.0)
+            ->assertViewHas('ingresos', fn ($ingresos) => $ingresos->count() === 1 && $ingresos->first()->origen === 'Venta');
+        $export = $this->get(route('agencia.finanzas.exportar', $filtros))->assertOk();
+        $this->assertStringContainsString('"Venta"', $this->textoExcel($export));
+    }
+
     public function test_finanzas_cuenta_cobros_una_vez_y_separa_monedas_y_fechas(): void
     {
         [$paquete, $data] = $this->datos();
@@ -321,7 +335,8 @@ class VentaPaqueteTest extends TestCase
         $filtros = ['desde' => '2000-01-01', 'hasta' => '2000-01-31', 'moneda' => 'TST'];
         $this->get(route('agencia.finanzas.index', $filtros))->assertOk()->assertViewHas('totales', fn ($totales) => (float) $totales->ingresos === 1800.0)->assertViewHas('origenes', fn ($origenes) => (float) $origenes->get('Abono') === 1800.0);
         $this->post(route('agencia.ventas.finalizar', $venta))->assertSessionHasNoErrors();
-        $this->get(route('agencia.finanzas.index', $filtros))->assertViewHas('totales', fn ($totales) => (float) $totales->ingresos === 1800.0)->assertViewHas('origenes', fn ($origenes) => (float) $origenes->get('Venta') === 1800.0 && (float) $origenes->get('Abono', 0) === 0.0);
+        $this->get(route('agencia.finanzas.index', $filtros))->assertViewHas('totales', fn ($totales) => (float) $totales->ingresos === 1800.0)->assertViewHas('origenes', fn ($origenes) => (float) $origenes->get('Abono') === 1800.0 && (float) $origenes->get('Venta', 0) === 0.0)
+            ->assertViewHas('ingresos', fn ($ingresos) => $ingresos->every(fn ($ingreso) => $ingreso->origen === 'Abono'));
         foreach ([['EGRESO', 200, 'TST'], ['INGRESO', 100, 'TST'], ['INGRESO', 999, 'USD']] as [$tipo, $importe, $moneda]) {
             $this->post(route('agencia.finanzas.store'), ['cTipo' => $tipo, 'dImporte' => $importe, 'cMoneda' => $moneda, 'cConcepto' => 'Movimiento de prueba', 'cMetodo' => 'Efectivo', 'dFecha' => '2000-01-15'])->assertSessionHasNoErrors();
         }
@@ -329,9 +344,11 @@ class VentaPaqueteTest extends TestCase
         $gasto = MovimientoFinanciero::where('cTipo', 'EGRESO')->where('cMoneda', 'TST')->firstOrFail();
         $this->post(route('agencia.finanzas.anular', $gasto))->assertSessionHasNoErrors();
         $this->get(route('agencia.finanzas.index', $filtros))->assertViewHas('totales', fn ($totales) => (float) $totales->egresos === 0.0);
-        $export = $this->get(route('agencia.finanzas.exportar', $filtros))->assertOk()->assertDownload('finanzas-2000-01-01-2000-01-31.csv');
-        $this->assertStringContainsString('1800.00', $export->streamedContent());
-        $this->assertStringNotContainsString('999.00', $export->streamedContent());
+        $export = $this->get(route('agencia.finanzas.exportar', $filtros))->assertOk()->assertDownload('finanzas-2000-01-01-2000-01-31.xlsx');
+        $texto = $this->textoExcel($export);
+        $this->assertStringContainsString('1800', $texto);
+        $this->assertStringContainsString('"Abono"', $texto);
+        $this->assertStringNotContainsString('999', $texto);
         $this->get(route('agencia.finanzas.index', ['desde' => '2000-02-01', 'hasta' => '2000-02-28', 'moneda' => 'TST']))->assertViewHas('totales', fn ($totales) => (float) $totales->ingresos === 0.0);
         $this->postJson(route('agencia.finanzas.store'), ['cTipo' => 'INGRESO', 'dImporte' => -1])->assertUnprocessable();
         $this->getJson(route('agencia.finanzas.index', ['desde' => '2000-02-01', 'hasta' => '2000-01-01']))->assertUnprocessable();

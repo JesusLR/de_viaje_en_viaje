@@ -210,7 +210,9 @@ $(document).ready(function () {
 
                     // Descripciones
                     $('#detDescCorta').text(oData.cDescripcionCorta || 'Sin descripción corta.');
-                    $('#detDescCompleta').html(oData.cDescripcionCompleta ? oData.cDescripcionCompleta.replace(/\n/g, '<br>') : '<em>Sin descripción detallada.</em>');
+                    Object.entries({detDescCompleta: 'cDescripcionCompleta', detDetalles: 'cDetalles', detCancelaciones: 'cCancelaciones', detIncluye: 'cIncluye', detNoIncluye: 'cNoIncluye'}).forEach(([id, campo]) => {
+                        $('#' + id).text(oData[campo] || 'Sin información.').closest('details').prop('open', false);
+                    });
 
                     // Galería
                     let $galeria = $('#detGaleriaContainer').empty();
@@ -431,6 +433,7 @@ $(document).ready(function () {
                     $('#cNombre').val(oData.cNombre);
                     $('#cDescripcionCorta').val(oData.cDescripcionCorta);
                     $('#cDescripcionCompleta').val(oData.cDescripcionCompleta);
+                    ['cDetalles', 'cCancelaciones', 'cIncluye', 'cNoIncluye'].forEach(campo => $('#' + campo).val(oData[campo] || ''));
                     $('#iIDCategoria').val(oData.iIDCategoria || '');
                     $('#iIDDestino').val(oData.iIDDestino || '');
                     $('#iIDProveedor').val(oData.iIDProveedor || '');

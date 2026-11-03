@@ -34,6 +34,27 @@ class ServicioTuristicoTest extends TestCase
 
     use DatabaseTransactions;
 
+    public function test_informacion_se_guarda_por_secciones_y_conserva_la_descripcion_existente(): void
+    {
+        $servicio = ServicioTuristico::create(['cCodigo' => uniqid('SEC'), 'cNombre' => 'Viaje con información previa', 'cDescripcionCompleta' => "Texto existente\nSegunda línea", 'dPrecioCompra' => 500, 'dPrecioVenta' => 1000, 'lActivo' => true, 'lUsaVigencia' => false]);
+        $this->actingAs($this->user)->getJson(route('servicios.paquetes.getData', $servicio->iID))
+            ->assertOk()->assertJsonPath('cData.cDescripcionCompleta', "Texto existente\nSegunda línea")->assertJsonPath('cData.cDetalles', null);
+        $datos = ['iID' => $servicio->iID, 'cNombre' => $servicio->cNombre, 'cDescripcionCompleta' => $servicio->cDescripcionCompleta, 'dPrecioCompra' => 500, 'dPrecioVenta' => 1000, 'lUsaVigencia' => 0,
+            'cDetalles' => 'Llegar 30 minutos antes', 'cCancelaciones' => 'Consultar condiciones de cancelación', 'cIncluye' => "Hotel\nDesayuno", 'cNoIncluye' => 'Gastos personales'];
+        $this->postJson(route('servicios.paquetes.saveData'), $datos)->assertOk()->assertJsonPath('lSuccess', true);
+        $this->assertSame("Texto existente\nSegunda línea", $servicio->fresh()->cDescripcionCompleta);
+        $respuesta = $this->getJson(route('servicios.paquetes.getData', $servicio->iID))->assertOk();
+        foreach (['cDetalles', 'cCancelaciones', 'cIncluye', 'cNoIncluye'] as $campo) {
+            $respuesta->assertJsonPath('cData.'.$campo, $datos[$campo]);
+        }
+        $this->postJson(route('servicios.paquetes.saveData'), array_diff_key($datos, array_flip(['cDetalles', 'cCancelaciones', 'cIncluye', 'cNoIncluye'])))
+            ->assertOk()->assertJsonPath('lSuccess', true);
+        $this->assertSame($datos['cIncluye'], $servicio->fresh()->cIncluye);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['cNoIncluye' => '']))->assertOk()->assertJsonPath('lSuccess', true);
+        $this->assertEmpty($servicio->fresh()->cNoIncluye);
+        $this->postJson(route('servicios.paquetes.saveData'), array_merge($datos, ['cDetalles' => ['texto inválido']]))->assertStatus(422);
+    }
+
     public function test_servicio_sin_catalogos_ni_vigencia_se_puede_vender_y_conserva_su_configuracion(): void
     {
         $datos = ['cNombre' => 'Servicio flexible '.uniqid(), 'dPrecioCompra' => 500, 'dPrecioVenta' => 1000, 'lUsaVigencia' => 0, 'lActivo' => 1];

@@ -33,7 +33,7 @@ class FinanzasController extends Controller
             ->join('clientes as c', 'c.iID', '=', 'v.iIDCliente')
             ->whereNull('v.eliminada_at')->whereNull('p.anulado_at')->where('v.cMoneda', $moneda)
             ->whereBetween('p.dFechaPago', [$desde, $hasta])
-            ->selectRaw("p.iID as id, v.iID as venta_id, p.dFechaPago as fecha, 'INGRESO' as tipo, case when (v.cTipoOperacion = 'VENTA' or v.finalizada_at is not null) then 'Venta' else 'Abono' end as origen, v.cPaquete as concepto, c.cNombre as detalle, p.cMetodo as metodo, p.dImporte as importe, v.cMoneda as moneda, 0 as manual");
+            ->selectRaw("p.iID as id, v.iID as venta_id, p.dFechaPago as fecha, 'INGRESO' as tipo, case when v.cTipoOperacion = 'VENTA' then 'Venta' else 'Abono' end as origen, v.cPaquete as concepto, c.cNombre as detalle, p.cMetodo as metodo, p.dImporte as importe, v.cMoneda as moneda, 0 as manual");
         $manuales = DB::table('movimientos_financieros as m')->leftJoin('users as u', 'u.id', '=', 'm.iIDUsuario')
             ->whereNull('m.anulado_at')->where('m.cMoneda', $moneda)->whereBetween('m.dFecha', [$desde, $hasta])
             ->selectRaw("m.iID as id, null as venta_id, m.dFecha as fecha, m.cTipo as tipo, 'Manual' as origen, m.cConcepto as concepto, m.cObservaciones as detalle, m.cMetodo as metodo, m.dImporte as importe, m.cMoneda as moneda, 1 as manual");
@@ -86,16 +86,17 @@ class FinanzasController extends Controller
         [$desde, $hasta, $moneda] = $this->filtros($request);
         $query = $this->movimientos($desde, $hasta, $moneda)->orderBy('fecha')->orderBy('id');
 
-        return response()->streamDownload(function () use ($query) {
-            $archivo = fopen('php://output', 'w');
-            fwrite($archivo, "\xEF\xBB\xBF");
-            fputcsv($archivo, ['Fecha', 'Tipo', 'Origen', 'Folio', 'Concepto', 'Detalle', 'Método', 'Importe', 'Moneda']);
-            foreach ($query->cursor() as $fila) {
-                $valores = [$fila->fecha, $fila->tipo, $fila->origen, $fila->venta_id ? 'VTA-'.str_pad($fila->venta_id, 6, '0', STR_PAD_LEFT) : '', $fila->concepto, $fila->detalle, $fila->metodo, $fila->importe, $fila->moneda];
-                // Mantener los textos como texto al abrir el CSV en Excel.
-                fputcsv($archivo, array_map(fn ($valor) => preg_match('/^[\s]*[=+@-]/u', (string) $valor) ? "'".$valor : $valor, $valores));
+        return response()->streamDownload(function () use ($query, $desde, $hasta, $moneda, $request) {
+            $libro = app(\App\Services\FinanzasExcelService::class)->crear(
+                $query->cursor(), $desde, $hasta, $moneda,
+                $request->user()->hasPermission('finanzas.ingresos'),
+                $request->user()->hasPermission('finanzas.egresos'),
+            );
+            try {
+                (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($libro))->save('php://output');
+            } finally {
+                $libro->disconnectWorksheets();
             }
-            fclose($archivo);
-        }, 'finanzas-'.$desde.'-'.$hasta.'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+        }, 'finanzas-'.$desde.'-'.$hasta.'.xlsx', ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 }

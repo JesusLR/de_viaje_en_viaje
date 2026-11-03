@@ -85,8 +85,14 @@
                                         <input type="text" class="form-control" id="cDescripcionCorta" name="cDescripcionCorta" placeholder="Resumen atractivo para ofertas y catálogos rápidos" maxlength="255">
                                     </div>
                                     <div class="col-md-12">
-                                        <label for="cDescripcionCompleta" class="form-label fw-semibold">Descripción Detallada / Incluye</label>
-                                        <textarea class="form-control" id="cDescripcionCompleta" name="cDescripcionCompleta" rows="4" placeholder="Detalles de lo que incluye el viaje o excursión (vuelos, hospedaje, desayunos, traslados, etc.)"></textarea>
+                                        <p class="text-muted small mb-3">Organiza la información del catálogo por secciones. El texto capturado anteriormente se conserva en Descripción.</p>
+                                        @foreach(['cDescripcionCompleta' => 'Descripción', 'cDetalles' => 'Detalles', 'cCancelaciones' => 'Cancelaciones', 'cIncluye' => 'Qué incluye', 'cNoIncluye' => 'Qué no incluye'] as $campo => $etiqueta)
+                                        <details class="border rounded bg-white mb-2 p-3" @if($loop->first) open @endif>
+                                            <summary class="fw-semibold text-primary">{{ $etiqueta }}</summary>
+                                            <label for="{{ $campo }}" class="form-label mt-3">{{ $etiqueta }}</label>
+                                            <textarea class="form-control" id="{{ $campo }}" name="{{ $campo }}" rows="4" @if(!$loop->first) maxlength="20000" @endif placeholder="Escribe {{ mb_strtolower($etiqueta) }} del servicio"></textarea>
+                                        </details>
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>
