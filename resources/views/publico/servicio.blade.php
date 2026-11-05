@@ -16,8 +16,11 @@
                 <h1>{{ $paquete->cNombre }}</h1>
                 @if($paquete->categoria)<span class="catalogo-categoria">{{ $paquete->categoria->cNombre }}</span>@endif
                 <p class="mt-3">{{ strip_tags($paquete->cDescripcionCorta ?? '') }}</p>
+                @if(filled(trim(strip_tags($paquete->cDescripcionCompleta ?? ''))))
+                <div class="catalogo-texto mt-3">{{ strip_tags($paquete->cDescripcionCompleta) }}</div>
+                @endif
                 <div class="catalogo-informacion">
-                    @foreach(['cDescripcionCompleta' => 'Descripción', 'cDetalles' => 'Detalles', 'cCancelaciones' => 'Cancelaciones', 'cIncluye' => 'Qué incluye', 'cNoIncluye' => 'Qué no incluye'] as $campo => $etiqueta)
+                    @foreach(['cDetalles' => 'Detalles', 'cCancelaciones' => 'Cancelaciones', 'cIncluye' => 'Qué incluye', 'cNoIncluye' => 'Qué no incluye'] as $campo => $etiqueta)
                         @if(filled(trim(strip_tags($paquete->{$campo} ?? ''))))
                         <details class="catalogo-informacion-seccion">
                             <summary>{{ $etiqueta }}</summary>
