@@ -166,13 +166,19 @@ class VentaPaqueteController extends Controller
             return $venta;
         });
 
-        return redirect()->route('agencia.ventas.show', $venta)->with('success', $venta->finalizada_at ? 'Venta liquidada registrada.' : 'Apartado registrado correctamente.');
+        $respuesta = redirect()->route('agencia.ventas.show', $venta)->with('success', $venta->finalizada_at ? 'Venta liquidada registrada.' : 'Apartado registrado correctamente.');
+        if ($venta->finalizada_at && \App\Models\VariableSistema::envioAutomaticoVentaWhatsApp()) {
+            $envio = app(\App\Services\VentaLiquidadaWhatsAppService::class)->enviar($venta);
+            $respuesta->with($envio['enviado'] ? 'success' : 'whatsapp_warning', $envio['enviado'] ? 'Venta liquidada registrada. '.$envio['mensaje'] : $envio['mensaje']);
+        }
+        return $respuesta;
     }
 
     public function show(Request $request, VentaPaquete $venta)
     {
         $request->validate(['seccion' => ['nullable', Rule::in(['detalle', 'historial', 'abono', 'paquetes', 'nombre', 'itinerario'])]]);
         $seccion = $request->input('seccion');
+        abort_if($seccion === 'historial' && !$venta->tiene_historial_abonos, 422, 'Esta operación no tiene historial de abonos.');
         abort_if($request->seccion === 'itinerario' && !$request->user()->hasPermission('itinerarios.ver'), 403);
         $venta->load(['cliente', 'pagos.usuario', 'detalles.servicio', 'usuario']);
         $paquetes = $this->paquetesDisponibles()->where('cMoneda', $venta->cMoneda);
@@ -183,6 +189,7 @@ class VentaPaqueteController extends Controller
     public function itinerarioPdf(VentaPaquete $venta)
     {
         $venta->load('detalles.servicio');
+        $nombre = 'itinerario_'.\App\Support\NombreDocumento::parte($venta->detalles->pluck('cPaquete')->filter()->unique()->implode(' + ') ?: $venta->cPaquete).'.pdf';
         $pdfs = $venta->detalles->map(fn ($detalle) => $detalle->ruta_itinerario_pdf)->filter()->values();
         $pdfService = app(\App\Services\ItinerarioPdfService::class);
         $recorridos = $venta->detalles->map(function ($detalle) {
@@ -197,7 +204,7 @@ class VentaPaqueteController extends Controller
         if ($recorridos->isEmpty()) {
             $documentos = $pdfs->map(fn ($path) => $pdfService->contenido($path))->all();
             $contenido = count($documentos) === 1 ? $documentos[0] : $pdfService->combinar($documentos);
-            return response($contenido)->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="itinerario-'.$venta->folio.'.pdf"']);
+            return response($contenido)->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="'.$nombre.'"']);
         }
         $settings = \App\Models\LandingSetting::current();
         $marca = $settings->values()['brand'];
@@ -209,9 +216,9 @@ class VentaPaqueteController extends Controller
         $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
         if ($pdfs->isNotEmpty()) {
             $contenido = $pdfService->combinar(array_merge([$pdf->output()], $pdfs->map(fn ($path) => $pdfService->contenido($path))->all()));
-            return response($contenido)->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="itinerario-'.$venta->folio.'.pdf"']);
+            return response($contenido)->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="'.$nombre.'"']);
         }
-        return $pdf->download('itinerario-'.$venta->folio.'.pdf');
+        return $pdf->download($nombre);
     }
 
     public function itinerarioArchivo(VentaPaquete $venta, int $detalle)
@@ -224,7 +231,7 @@ class VentaPaqueteController extends Controller
 
     public function comprobante(VentaPaquete $venta)
     {
-        abort_if($venta->cTipoOperacion !== 'APARTADO' && !$venta->pagos()->whereNull('anulado_at')->exists(), 422, 'Esta venta no tiene abonos registrados para descargar su historial.');
+        abort_if(!$venta->tiene_historial_abonos, 422, 'Esta venta no tiene abonos registrados para descargar su historial.');
         return $this->generarComprobante($venta, false);
     }
 
@@ -237,7 +244,7 @@ class VentaPaqueteController extends Controller
     {
         $venta->load(['cliente', 'detalles.servicio', 'usuario', 'pagos' => fn ($query) => $query->with('usuario')->whereNull('anulado_at')->orderBy('dFechaPago')->orderBy('iID')]);
         if ($compraSaldada) {
-            abort_if($venta->cancelada_at || !$venta->finalizada_at || $venta->saldo_centavos !== 0, 422, 'El comprobante de compra saldada solo está disponible para ventas finalizadas y pagadas.');
+            abort_if($venta->cancelada_at || !$venta->finalizada_at || $venta->saldo_centavos !== 0, 422, 'El comprobante de pago solo está disponible para ventas finalizadas y pagadas.');
         }
         $rutaLogo = \App\Models\LandingSetting::current()->logoFilePath();
         $logo = is_file($rutaLogo) ? 'data:'.mime_content_type($rutaLogo).';base64,'.base64_encode(file_get_contents($rutaLogo)) : null;
@@ -256,7 +263,7 @@ class VentaPaqueteController extends Controller
         $cliente = $limpiarNombre($venta->cliente?->nombre_completo ?? '', 'Cliente');
         $servicios = $venta->detalles->pluck('cPaquete')->filter()->unique()->implode(' + ');
         $servicio = $limpiarNombre($servicios ?: ($venta->cPaquete ?? ''), 'Servicio');
-        $tipo = $compraSaldada ? 'Venta' : 'Abono';
+        $tipo = $compraSaldada ? 'Comprobante de pago' : 'Abono';
 
         return $pdf->download($tipo.' _ '.$cliente.' _ '.$servicio.'.pdf');
     }

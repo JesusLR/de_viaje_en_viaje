@@ -23,10 +23,11 @@ class ServicioTuristicoController extends Controller
 
     public function itinerarioPdf(ServicioTuristico $servicio)
     {
+        $nombre = 'itinerario_'.\App\Support\NombreDocumento::parte($servicio->cNombre).'.pdf';
         if ($servicio->cTipoItinerario === 'PDF') {
             abort_unless($servicio->cItinerarioPdf, 404);
             return response(app(\App\Services\ItinerarioPdfService::class)->contenido($servicio->cItinerarioPdf))
-                ->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="itinerario.pdf"', 'X-Content-Type-Options' => 'nosniff']);
+                ->withHeaders(['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="'.$nombre.'"', 'X-Content-Type-Options' => 'nosniff']);
         }
         $dias = $servicio->itinerarioSnapshot();
         abort_if(empty($dias), 422, 'Este servicio no tiene un itinerario asignado con días registrados.');
@@ -39,7 +40,7 @@ class ServicioTuristicoController extends Controller
             ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
         $pdf->render();
         $pdf->getDomPDF()->getCanvas()->page_text(455, 810, 'Página {PAGE_NUM} / {PAGE_COUNT}', null, 8, [0.45, 0.5, 0.6]);
-        return $pdf->download('itinerario-'.(\Illuminate\Support\Str::slug($servicio->cCodigo) ?: $servicio->iID).'.pdf');
+        return $pdf->download($nombre);
     }
 
     public function itinerarioArchivo(ServicioTuristico $servicio)

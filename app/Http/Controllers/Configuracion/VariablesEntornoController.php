@@ -10,13 +10,20 @@ class VariablesEntornoController extends Controller
 {
     public function edit()
     {
-        return view('configuracion.variables-entorno', ['dias' => VariableSistema::diasSinAbonos()]);
+        return view('configuracion.variables-entorno', ['dias' => VariableSistema::diasSinAbonos(), 'whatsappVentaAutomatica' => VariableSistema::envioAutomaticoVentaWhatsApp()]);
     }
 
     public function update(Request $request)
     {
-        $data = $request->validate(['dias_sin_abonos' => 'required|integer|min:1|max:3650']);
-        VariableSistema::updateOrCreate(['clave' => 'dias_sin_abonos'], ['valor' => $data['dias_sin_abonos'], 'actualizada_por' => $request->user()->id]);
-        return redirect()->route('configuracion.variables.edit')->with('success', 'Días sin abonos actualizados correctamente.');
+        $data = $request->validate([
+            'dias_sin_abonos' => 'required_without:whatsapp_venta_automatica|integer|min:1|max:3650',
+            'whatsapp_venta_automatica' => 'required_without:dias_sin_abonos|boolean',
+        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request) {
+            foreach ($data as $clave => $valor) {
+                VariableSistema::updateOrCreate(['clave' => $clave], ['valor' => (int) $valor, 'actualizada_por' => $request->user()->id]);
+            }
+        });
+        return redirect()->route('configuracion.variables.edit')->with('success', 'Variables de entorno actualizadas correctamente.');
     }
 }

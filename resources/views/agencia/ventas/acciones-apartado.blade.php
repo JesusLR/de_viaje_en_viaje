@@ -39,4 +39,15 @@
             @endif
         </ul>
     </div>
+    @if(auth()->user()->hasPermission('apartados.whatsapp') && auth()->user()->hasPermission('apartados.pdf'))
+    <div class="dropdown apartado-mas">
+        <button type="button" class="apartado-icono accion-abono" data-bs-toggle="dropdown" aria-expanded="false" title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp {{ $venta->folio }}"><i class="fab fa-whatsapp" aria-hidden="true"></i></button>
+        <ul class="dropdown-menu dropdown-menu-end apartado-menu">
+            @if(auth()->user()->hasPermission('itinerarios.ver') && auth()->user()->hasPermission('itinerarios.pdf') && $venta->detalles->contains(fn ($detalle) => $detalle->tiene_itinerario))
+            <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#whatsappApartado" data-tipo="itinerario" data-preparar="{{ route('agencia.apartados.whatsappPreparar', $venta) }}" data-enviar="{{ route('agencia.apartados.whatsappEnviar', $venta) }}"><i class="fas fa-route" aria-hidden="true"></i><span>Enviar itinerario PDF</span></button></li>
+            @endif
+            <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#whatsappApartado" data-tipo="abonos" data-preparar="{{ route('agencia.apartados.whatsappPreparar', $venta) }}" data-enviar="{{ route('agencia.apartados.whatsappEnviar', $venta) }}"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>Enviar historial de abonos PDF</span></button></li>
+        </ul>
+    </div>
+    @endif
 </div>

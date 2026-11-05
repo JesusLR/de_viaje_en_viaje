@@ -70,9 +70,13 @@
     </div>
 </div>
 @include('agencia.ventas.modal-accion')
+@include('agencia.ventas.modal-whatsapp')
 @endsection
 @push('styles')
 <link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">
 @endpush
 @push('scripts')
+@if(auth()->user()->hasPermission(($apartados ? 'apartados' : 'ventas').'.whatsapp') && auth()->user()->hasPermission(($apartados ? 'apartados' : 'ventas').'.pdf'))
+<script src="{{ asset('js/apartados-whatsapp.js') }}?v={{ filemtime(public_path('js/apartados-whatsapp.js')) }}" defer></script>
+@endif
 @endpush

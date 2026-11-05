@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'openwa' => [
+        'url' => env('OPENWA_URL', 'http://127.0.0.1:2785/api'),
+        'system_key' => env('OPENWA_SYSTEM_KEY'),
+        'source_system' => 'de_viaje_en_viaje',
+    ],
 
     /*
     |--------------------------------------------------------------------------

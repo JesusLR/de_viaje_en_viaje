@@ -28,10 +28,25 @@ Route::middleware('guest')->group(function () {
 
 // Rutas Privadas Protegidas (Middleware 'auth' + EnsurePasswordIsChanged)
 Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\CheckModulePermissions::class])->group(function () {
+    Route::post('/agencia/apartados/{venta}/whatsapp/preparar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappPreparar'])->middleware('throttle:30,1')->name('agencia.apartados.whatsappPreparar');
+    Route::post('/agencia/apartados/{venta}/whatsapp/enviar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappEnviar'])->middleware('throttle:10,1')->name('agencia.apartados.whatsappEnviar');
+    Route::post('/agencia/ventas/{venta}/whatsapp/preparar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappPreparar'])->middleware('throttle:30,1')->name('agencia.ventas.whatsappPreparar');
+    Route::post('/agencia/ventas/{venta}/whatsapp/enviar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappEnviar'])->middleware('throttle:10,1')->name('agencia.ventas.whatsappEnviar');
+    Route::prefix('mensajeria/inicio-sesion')->name('mensajeria.')->controller(\App\Http\Controllers\Mensajeria\SesionController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/datos', 'datos')->middleware('throttle:30,1')->name('datos');
+        Route::post('/', 'store')->middleware('throttle:10,1')->name('store');
+        Route::post('/{sesion}/iniciar', 'iniciar')->whereUuid('sesion')->middleware('throttle:10,1')->name('iniciar');
+        Route::get('/{sesion}/qr', 'qr')->whereUuid('sesion')->middleware('throttle:30,1')->name('qr');
+        Route::post('/{sesion}/cerrar', 'cerrar')->whereUuid('sesion')->middleware('throttle:10,1')->name('cerrar');
+        Route::delete('/{sesion}', 'destroy')->whereUuid('sesion')->middleware('throttle:10,1')->name('destroy');
+    });
     Route::get('/notificaciones', [\App\Http\Controllers\NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::post('/notificaciones/leidas', [\App\Http\Controllers\NotificacionController::class, 'leerTodas'])->name('notificaciones.leerTodas');
     Route::post('/notificaciones/{notificacion}/leer', [\App\Http\Controllers\NotificacionController::class, 'leer'])->whereUuid('notificacion')->name('notificaciones.leer');
 
+    Route::post('/atencion-al-cliente/cotizaciones/{cotizacion}/whatsapp/preparar', [\App\Http\Controllers\Agencia\CotizacionWhatsAppController::class, 'whatsappPreparar'])->middleware('throttle:30,1')->name('atencion.cotizaciones.whatsappPreparar');
+    Route::post('/atencion-al-cliente/cotizaciones/{cotizacion}/whatsapp/enviar', [\App\Http\Controllers\Agencia\CotizacionWhatsAppController::class, 'whatsappEnviar'])->middleware('throttle:10,1')->name('atencion.cotizaciones.whatsappEnviar');
     Route::prefix('atencion-al-cliente/cotizaciones')->name('atencion.cotizaciones.')->controller(\App\Http\Controllers\CotizacionServicioController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/nueva', 'create')->name('create');

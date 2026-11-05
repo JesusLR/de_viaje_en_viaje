@@ -38,7 +38,7 @@ class VentaPaqueteTest extends TestCase
         $this->assertStringNotContainsString($venta->folio, $excel);
         $this->get(route('dashboard'))->assertViewHas('finanzas', fn ($finanzas) => ($finanzas['DEL']['ingresos'] ?? 0) == 0);
         $this->postJson(route('agencia.ventas.nombre', $venta), ['cNombre' => 'Cambio'])->assertUnprocessable();
-        $this->get(route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'historial']))->assertOk()->assertSee('Venta eliminada');
+        $this->get(route('agencia.ventas.show', ['venta' => $venta, 'seccion' => 'detalle']))->assertOk()->assertSee('Venta eliminada');
     }
 
     public function test_eliminar_venta_requiere_permiso_y_no_admite_apartados(): void
@@ -247,9 +247,9 @@ class VentaPaqueteTest extends TestCase
         $this->post(route('agencia.ventas.pago', $venta), ['dImporte' => 1800, 'cMetodo' => 'Efectivo'])->assertSessionHasNoErrors();
         $this->getJson(route('agencia.ventas.comprobanteCompra', $venta))->assertUnprocessable();
         $this->post(route('agencia.ventas.finalizar', $venta))->assertSessionHasNoErrors();
-        $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('Venta _ Cliente Prueba _ Paquete de prueba.pdf');
+        $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('Comprobante de pago _ Cliente Prueba _ Paquete de prueba.pdf');
         $html = view('agencia.ventas.comprobante-pdf', ['venta' => $venta->fresh()->load(['cliente', 'detalles.servicio', 'usuario', 'pagos']), 'logo' => null, 'compraSaldada' => true])->render();
-        $this->assertStringContainsString('COMPRA SALDADA', $html);
+        $this->assertStringContainsString('COMPROBANTE DE PAGO', $html);
         $this->assertStringContainsString('pagado en su totalidad', $html);
         $this->assertStringNotContainsString('Saldo pendiente', $html);
         $this->assertStringNotContainsString('POR ABONAR', $html);
@@ -274,8 +274,8 @@ class VentaPaqueteTest extends TestCase
         $this->assertEquals(0, $venta->saldo_centavos);
         $this->assertNotNull($venta->finalizada_at);
         $this->assertEquals('Tarjeta', $venta->pagos->first()->cMetodo);
-        $this->get(route('agencia.ventas.comprobante', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
-        $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio]))->assertOk()->assertSee('Descargar historial de abonos PDF');
+        $this->getJson(route('agencia.ventas.comprobante', $venta))->assertUnprocessable();
+        $this->get(route('agencia.ventas.index', ['buscar' => $venta->folio]))->assertOk()->assertDontSee('Descargar historial de abonos PDF')->assertSee('Descargar comprobante de pago PDF');
         $this->get(route('agencia.ventas.comprobanteCompra', $venta))->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->get(route('agencia.ventas.index', ['cliente' => $data['iIDCliente']]))->assertSee($venta->folio);
         $this->postJson(route('agencia.ventas.agregarPaquete', $venta), ['iIDServicio' => $otro->iID, 'iCantidad' => 1])->assertUnprocessable();

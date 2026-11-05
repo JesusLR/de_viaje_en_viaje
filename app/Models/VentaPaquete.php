@@ -39,6 +39,11 @@ class VentaPaquete extends Model
         return 'VTA-'.str_pad($this->iID, 6, '0', STR_PAD_LEFT);
     }
 
+    public function getTieneHistorialAbonosAttribute(): bool
+    {
+        return $this->cTipoOperacion === 'APARTADO' && (!$this->finalizada_at || $this->pagos->whereNull('anulado_at')->isNotEmpty());
+    }
+
     public function getSaldoCentavosAttribute(): int
     {
         return (int) round((float) $this->dTotal * 100) - $this->pagos->whereNull('anulado_at')->sum(fn ($pago) => (int) round((float) $pago->dImporte * 100));

@@ -7,12 +7,18 @@
     <div class="d-flex align-items-center gap-3"><div class="apartados-emblema"><i class="fas fa-receipt" aria-hidden="true"></i></div><div><h3 class="fw-bold mb-1">{{ $venta->finalizada_at ? 'Detalle de venta' : 'Detalle de apartado' }}</h3><p class="text-muted small mb-0">{{ $venta->folio }} · {{ $venta->cliente->nombre_completo }}</p></div></div>
     <div class="apartado-acciones">
         <a href="{{ route($venta->finalizada_at ? 'agencia.ventas.index' : 'agencia.apartados.index') }}" class="apartado-icono" title="{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}" aria-label="{{ $venta->finalizada_at ? 'Volver a ventas' : 'Volver a apartados' }}"><i class="fas fa-arrow-left" aria-hidden="true"></i></a>
-        @if(!$venta->eliminada_at && $venta->finalizada_at && !$venta->cancelada_at && $venta->saldo_centavos === 0)<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar compra saldada PDF" aria-label="Descargar compra saldada PDF"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>@endif
-        @if(!$venta->finalizada_at || $venta->pagos->whereNull('anulado_at')->isNotEmpty())<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>@endif
+        @if(!$venta->eliminada_at && $venta->finalizada_at && !$venta->cancelada_at && $venta->saldo_centavos === 0)<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobanteCompra', $venta) }}" class="apartado-icono accion-abono" title="Descargar comprobante de pago PDF" aria-label="Descargar comprobante de pago PDF"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i></a>@endif
+        @if($venta->tiene_historial_abonos)<a data-permission="{{ $venta->finalizada_at ? 'ventas.pdf' : 'apartados.pdf' }}" href="{{ route('agencia.ventas.comprobante', $venta) }}" class="apartado-icono" title="Descargar historial de abonos PDF" aria-label="Descargar historial de abonos PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>@endif
+        @if(!$venta->eliminada_at && !$venta->cancelada_at && auth()->user()->hasPermission(($venta->finalizada_at ? 'ventas' : 'apartados').'.whatsapp') && auth()->user()->hasPermission(($venta->finalizada_at ? 'ventas' : 'apartados').'.pdf'))
+        @foreach(($venta->finalizada_at && $venta->saldo_centavos === 0 ? ['comprobante' => 'Enviar comprobante de pago PDF por WhatsApp'] : []) + ($venta->tiene_historial_abonos ? ['abonos' => 'Enviar historial de abonos PDF por WhatsApp'] : []) as $tipoWhatsapp => $tituloWhatsapp)
+        <button type="button" class="apartado-icono accion-abono" data-bs-toggle="modal" data-bs-target="#whatsappApartado" data-tipo="{{ $tipoWhatsapp }}" data-preparar="{{ route('agencia.'.($venta->finalizada_at ? 'ventas' : 'apartados').'.whatsappPreparar', $venta) }}" data-enviar="{{ route('agencia.'.($venta->finalizada_at ? 'ventas' : 'apartados').'.whatsappEnviar', $venta) }}" title="{{ $tituloWhatsapp }}" aria-label="{{ $tituloWhatsapp }}"><i class="fab fa-whatsapp" aria-hidden="true"></i></button>
+        @endforeach
+        @endif
     </div>
 </div>
 @endif
 @include('agencia.partials.avisos')
+@if(session('whatsapp_warning'))<div class="alert alert-warning" role="alert">La venta quedó registrada. {{ session('whatsapp_warning') }}</div>@endif
 @if($venta->eliminada_at)<div class="alert alert-secondary">Venta eliminada el {{ $venta->eliminada_at->format('d/m/Y H:i') }}. Sus pagos se conservan como historial y no suman en finanzas.</div>@endif
 @if($seccion === 'itinerario')
 <div class="p-4">@include('agencia.ventas.itinerarios')</div>
@@ -37,7 +43,7 @@
     @if($venta->cancelada_at)<div class="alert alert-secondary">Apartado cancelado. Los abonos recibidos se conservan en el historial y en finanzas.</div>@endif
     @if($venta->cObservaciones)<p class="text-break">Observaciones: {{ $venta->cObservaciones }}</p>@endif
     @endif
-    @if(!$seccion || $seccion === 'historial')
+    @if((!$seccion || $seccion === 'historial') && $venta->tiene_historial_abonos)
     <h5 class="mt-3">Historial de abonos</h5>
     <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Fecha</th><th>Importe</th><th>Método / Referencia</th><th>Registró</th><th class="no-print">Acciones</th></tr></thead><tbody>
     @forelse($venta->pagos as $pago)
@@ -80,7 +86,11 @@
 <form data-permission="{{ $venta->finalizada_at ? 'ventas.nombre' : 'apartados.nombre' }}" method="POST" action="{{ route('agencia.ventas.nombre', $venta) }}" class="card card-body">@csrf<label for="nombre" class="form-label">Nombre de la operación</label><div class="d-flex gap-2"><input id="nombre" name="cNombre" maxlength="150" value="{{ old('cNombre', $venta->cNombre) }}" class="form-control"><button class="btn btn-outline-primary"><i class="fas fa-floppy-disk me-2" aria-hidden="true"></i>Guardar nombre</button></div></form>
 @endif
 </div>
+@if(!$seccion) @include('agencia.ventas.modal-whatsapp', ['apartados' => !$venta->finalizada_at]) @endif
 @endsection
+@push('scripts')
+@if(!$seccion)<script src="{{ asset('js/apartados-whatsapp.js') }}?v={{ filemtime(public_path('js/apartados-whatsapp.js')) }}" defer></script>@endif
+@endpush
 @push('styles')
 @if(!$seccion)
 <link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">

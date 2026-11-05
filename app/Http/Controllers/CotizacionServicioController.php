@@ -90,6 +90,6 @@ class CotizacionServicioController extends Controller
         $logo = is_file($ruta) ? 'data:'.mime_content_type($ruta).';base64,'.base64_encode(file_get_contents($ruta)) : null;
         return Pdf::loadView('atencion.cotizaciones.pdf', compact('cotizacion', 'marca', 'logo'))
             ->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false])
-            ->download('cotizacion-'.$cotizacion->folio.'.pdf');
+            ->download('cotizacion_'.\App\Support\NombreDocumento::parte($cotizacion->cliente_nombre, 'cliente').'_'.\App\Support\NombreDocumento::parte(collect($cotizacion->partidas)->pluck('nombre')->filter()->unique()->implode(' + ')).'.pdf');
     }
 }

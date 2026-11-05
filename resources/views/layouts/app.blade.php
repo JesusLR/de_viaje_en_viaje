@@ -273,7 +273,7 @@
                 @endif --}}
             </ul>
 
-            @canany(['estadisticas.ver', 'usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'cotizaciones.ver', 'cotizaciones_servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'variables_entorno.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
+            @canany(['mensajeria.ver', 'estadisticas.ver', 'usuarios.ver', 'permisos.ver', 'servicios.ver', 'itinerarios.ver', 'cotizaciones.ver', 'cotizaciones_servicios.ver', 'vender.ver', 'apartados.ver', 'ventas.ver', 'finanzas.ver', 'configuracion.ver', 'variables_entorno.ver', 'clientes.ver', 'categorias.ver', 'destinos.ver', 'proveedores.ver'])
             <!-- Módulo Administración y Catálogos -->
             <div class="sidebar-section">Módulos</div>
             <ul class="sidebar-nav">
@@ -361,6 +361,15 @@
                         </ul>
                     </div>
                 </li>
+
+                @can('mensajeria.ver')
+                <li class="nav-item mt-1">
+                    <a href="#menuMensajeria" data-bs-toggle="collapse" class="nav-link justify-content-between {{ request()->routeIs('mensajeria.*') ? 'active' : '' }}" aria-expanded="{{ request()->routeIs('mensajeria.*') ? 'true' : 'false' }}" aria-controls="menuMensajeria"><div><i class="fab fa-whatsapp me-1" aria-hidden="true"></i><span>Mensajería</span></div><i class="fas fa-chevron-down small" aria-hidden="true"></i></a>
+                    <div class="collapse {{ request()->routeIs('mensajeria.*') ? 'show' : '' }}" id="menuMensajeria"><ul class="sidebar-subnav mt-1">
+                        <li class="nav-item"><a href="{{ route('mensajeria.index') }}" class="nav-link {{ request()->routeIs('mensajeria.*') ? 'active' : '' }}"><i class="fas fa-qrcode me-1" aria-hidden="true"></i><span>Inicio de sesión</span></a></li>
+                    </ul></div>
+                </li>
+                @endcan
 
                 @canany(['cotizaciones.ver', 'cotizaciones_servicios.ver'])
                 <li class="nav-item mt-1">

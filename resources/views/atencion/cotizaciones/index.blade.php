@@ -12,12 +12,23 @@
     </div></form>
     <div class="apartados-grid" data-grid-results="cotizacionesServicios"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Cotización</th><th>Cliente</th><th>Creada por</th><th>Total</th><th>Acciones</th></tr></thead><tbody>
     @forelse($cotizaciones as $cotizacion)
-    <tr><td><span class="apartado-folio">{{ $cotizacion->folio }}</span><div>{{ $cotizacion->nombre }}</div><small class="text-muted">{{ $cotizacion->created_at->format('d/m/Y H:i') }}</small></td><td>{{ $cotizacion->cliente_nombre }}<small class="d-block text-muted">{{ $cotizacion->cliente_id ? 'Cliente registrado' : 'Nombre genérico' }}</small></td><td>{{ $cotizacion->usuario?->nombre_completo }}</td><td>{{ number_format($cotizacion->total, 2) }} {{ $cotizacion->moneda }}</td><td><button type="button" class="apartado-icono" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('atencion.cotizaciones.show', ['cotizacion' => $cotizacion, 'seccion' => 'detalle']) }}" data-titulo="Cotización · {{ $cotizacion->folio }}" title="Ver cotización" aria-label="Ver cotización"><i class="fas fa-eye" aria-hidden="true"></i></button>@can('cotizaciones_servicios.pdf')<a class="apartado-icono" href="{{ route('atencion.cotizaciones.pdf', $cotizacion) }}" title="Descargar PDF" aria-label="Descargar PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i></a>@endcan</td></tr>
+    <tr><td><span class="apartado-folio">{{ $cotizacion->folio }}</span><div>{{ $cotizacion->nombre }}</div><small class="text-muted">{{ $cotizacion->created_at->format('d/m/Y H:i') }}</small></td><td>{{ $cotizacion->cliente_nombre }}<small class="d-block text-muted">{{ $cotizacion->cliente_id ? 'Cliente registrado' : 'Nombre genérico' }}</small></td><td>{{ $cotizacion->usuario?->nombre_completo }}</td><td>{{ number_format($cotizacion->total, 2) }} {{ $cotizacion->moneda }}</td><td><div class="apartado-acciones"><div class="dropdown apartado-mas"><button type="button" class="apartado-icono" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones" aria-label="Más opciones"><i class="fas fa-ellipsis-vertical" aria-hidden="true"></i></button><div class="dropdown-menu dropdown-menu-end apartado-menu"><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#accionApartado" data-url="{{ route('atencion.cotizaciones.show', ['cotizacion' => $cotizacion, 'seccion' => 'detalle']) }}" data-titulo="Cotización · {{ $cotizacion->folio }}" title="Ver cotización" aria-label="Ver cotización"><i class="fas fa-eye" aria-hidden="true"></i>Ver cotización</button>@can('cotizaciones_servicios.pdf')<a class="dropdown-item" href="{{ route('atencion.cotizaciones.pdf', $cotizacion) }}" title="Descargar PDF" aria-label="Descargar PDF"><i class="fas fa-file-pdf" aria-hidden="true"></i>Descargar PDF</a>@endcan</div></div>
+    @if(auth()->user()->hasPermission('cotizaciones_servicios.whatsapp') && auth()->user()->hasPermission('cotizaciones_servicios.pdf'))
+    <div class="dropdown apartado-mas"><button type="button" class="apartado-icono accion-abono" data-bs-toggle="dropdown" aria-expanded="false" title="Enviar por WhatsApp" aria-label="Enviar por WhatsApp"><i class="fab fa-whatsapp" aria-hidden="true"></i></button><ul class="dropdown-menu dropdown-menu-end apartado-menu"><li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#whatsappApartado" data-tipo="cotizacion" data-preparar="{{ route('atencion.cotizaciones.whatsappPreparar', $cotizacion) }}" data-enviar="{{ route('atencion.cotizaciones.whatsappEnviar', $cotizacion) }}"><i class="fas fa-file-pdf" aria-hidden="true"></i><span>Enviar cotización PDF</span></button></li></ul></div>
+    @endif
+    </div></td></tr>
     @empty
     <tr><td colspan="5" class="text-center text-muted py-5">No hay cotizaciones para mostrar.</td></tr>
     @endforelse
     </tbody></table></div>@include('agencia.partials.paginacion', ['paginador' => $cotizaciones, 'etiqueta' => 'cotizaciones'])</div>
 </div>
 @include('agencia.ventas.modal-accion')
+@include('agencia.ventas.modal-whatsapp', ['moduloWhatsapp' => 'cotizaciones_servicios'])
 @endsection
 @push('styles')<link href="{{ asset('css/apartados-modals.css') }}" rel="stylesheet"><link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">@endpush
+
+@push('scripts')
+@if(auth()->user()->hasPermission('cotizaciones_servicios.whatsapp') && auth()->user()->hasPermission('cotizaciones_servicios.pdf'))
+<script src="{{ asset('js/apartados-whatsapp.js') }}?v={{ filemtime(public_path('js/apartados-whatsapp.js')) }}" defer></script>
+@endif
+@endpush

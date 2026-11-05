@@ -15,6 +15,7 @@ return [
         'cotizaciones_servicios.ver' => 'Consultar cotizaciones de servicios',
         'cotizaciones_servicios.crear' => 'Crear cotizaciones de servicios',
         'cotizaciones_servicios.pdf' => 'Descargar cotización PDF',
+        'cotizaciones_servicios.whatsapp' => 'Enviar cotización por WhatsApp',
     ]],
     'cotizaciones' => ['label' => 'Atención al cliente · Cotizaciones web', 'actions' => [
         'cotizaciones.ver' => 'Consultar solicitudes de cotización',
@@ -65,13 +66,21 @@ return [
         'apartados.cancelar' => 'Cancelar apartados',
         'apartados.finalizar' => 'Finalizar apartados',
         'apartados.pdf' => 'Descargar comprobantes',
+        'apartados.whatsapp' => 'Enviar documentos por WhatsApp',
     ]],
     'ventas' => ['label' => 'Ventas', 'actions' => [
         'ventas.ver' => 'Consultar propias',
         'ventas.todos' => 'Consultar todas las ventas y filtrar por vendedor',
         'ventas.pdf' => 'Descargar PDF',
+        'ventas.whatsapp' => 'Enviar documentos por WhatsApp',
         'ventas.nombre' => 'Cambiar nombre de operación',
         'ventas.eliminar' => 'Eliminar ventas',
+    ]],
+    'mensajeria' => ['label' => 'Mensajería · Inicio de sesión', 'actions' => [
+        'mensajeria.ver' => 'Consultar sesiones del sistema',
+        'mensajeria.crear' => 'Crear sesiones',
+        'mensajeria.conectar' => 'Ver QR, conectar y cerrar sesiones',
+        'mensajeria.eliminar' => 'Eliminar sesiones',
     ]],
     'finanzas' => ['label' => 'Finanzas', 'actions' => [
         'finanzas.ver' => 'Acceder a finanzas',

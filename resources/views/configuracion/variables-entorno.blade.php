@@ -15,6 +15,18 @@
         @if($dias === null)<div class="alert alert-info small">Aún no se ha configurado esta variable. Los recordatorios se activarán al guardar un número de días.</div>@endif
         @can('variables_entorno.editar')<button class="apartado-icono nuevo-apartado mt-2"><i class="fas fa-save" aria-hidden="true"></i>Guardar cambios</button>@endcan
     </form>
+    <form method="POST" action="{{ route('configuracion.variables.update') }}" class="apartados-filtros mt-4" style="max-width:760px">
+        @csrf @method('PUT')
+        <h5 class="fw-bold mb-3">WhatsApp · Venta liquidada</h5>
+        <input type="hidden" name="whatsapp_venta_automatica" value="0" @disabled(!auth()->user()->hasPermission('variables_entorno.editar'))>
+        <div class="form-check form-switch">
+            <input type="checkbox" role="switch" class="form-check-input" id="whatsappVentaAutomatica" name="whatsapp_venta_automatica" value="1" @checked(old('whatsapp_venta_automatica', $whatsappVentaAutomatica)) @disabled(!auth()->user()->hasPermission('variables_entorno.editar')) aria-describedby="ayudaWhatsappVenta">
+            <label class="form-check-label" for="whatsappVentaAutomatica">Enviar automáticamente el PDF al registrar una venta liquidada</label>
+        </div>
+        <p id="ayudaWhatsappVenta" class="small text-muted mt-3">Activado: al vender se envía el comprobante al WhatsApp del cliente usando la sesión conectada. Desactivado: la venta se registra sin enviar mensajes automáticamente. El envío manual sigue disponible según los permisos.</p>
+        @error('whatsapp_venta_automatica')<p class="text-danger small mt-2">{{ $message }}</p>@enderror
+        @can('variables_entorno.editar')<button class="apartado-icono nuevo-apartado mt-2"><i class="fas fa-save" aria-hidden="true"></i>Guardar cambios de WhatsApp</button>@endcan
+    </form>
 </div>
 @endsection
 @push('styles')<link href="{{ asset('css/agencia-grid.css') }}" rel="stylesheet">@endpush

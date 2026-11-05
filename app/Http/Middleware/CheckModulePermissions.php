@@ -30,6 +30,7 @@ class CheckModulePermissions
         $parts = explode('.', $name);
         $action = end($parts);
         $module = match (true) {
+            str_starts_with($name, 'mensajeria.') => 'mensajeria',
             str_starts_with($name, 'atencion.cotizaciones.') => 'cotizaciones_servicios',
             str_starts_with($name, 'cotizaciones.') => 'cotizaciones',
             str_starts_with($name, 'estadisticas.') => 'estadisticas',
@@ -62,6 +63,8 @@ class CheckModulePermissions
             }
             $this->require($request, $module.'.ver');
             $specific = match ($action) {
+                'whatsappPreparar', 'whatsappEnviar' => 'whatsapp',
+                'iniciar', 'qr', 'cerrar' => 'conectar',
                 'saveData' => (int) $request->input('iID', 0) > 0 ? 'editar' : 'crear',
                 'deleteData', 'activar' => 'activar',
                 'seguimiento' => 'atender',
@@ -154,7 +157,7 @@ class CheckModulePermissions
             $response->setData($filter($response->getData(true)));
         }
         $success = $response instanceof \Illuminate\Http\JsonResponse ? ($response->getData(true)['lSuccess'] ?? false) : ($response->isRedirection() && $request->session()->has('success'));
-        if ($module !== 'permisos' && $action !== 'simularPrecios' && !$request->isMethod('GET') && $success) {
+        if ($module !== 'permisos' && !in_array($action, ['simularPrecios', 'whatsappPreparar'], true) && !$request->isMethod('GET') && $success) {
             $registro = $request->route('venta');
             $registro = $registro instanceof VentaPaquete ? $registro->iID : $registro;
             \Illuminate\Support\Facades\DB::table('permission_audits')->insert([

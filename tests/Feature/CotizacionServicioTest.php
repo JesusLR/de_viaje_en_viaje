@@ -45,7 +45,7 @@ class CotizacionServicioTest extends TestCase
             ->assertSee('100.00 MXN')->assertSee('Descuento total aplicado:')->assertSee('200.00 MXN');
         $html = view('atencion.cotizaciones.pdf', ['cotizacion' => $cotizacion->load('usuario'), 'marca' => 'De Viaje', 'logo' => null])->render();
         foreach (['Precio regular', 'Descuento unitario', 'Precio final', 'DESCUENTO TOTAL', '200.00', '900.00', '1,000.00'] as $text) $this->assertStringContainsString($text, $html);
-        $this->get(route('atencion.cotizaciones.pdf', $cotizacion))->assertOk()->assertDownload('cotizacion-'.$cotizacion->folio.'.pdf');
+        $this->get(route('atencion.cotizaciones.pdf', $cotizacion))->assertOk()->assertDownload('cotizacion_familia_de_prueba_riviera_maya_prueba.pdf');
     }
 
     public function test_quote_is_saved_without_sale_or_payment_and_keeps_prices_for_pdf(): void
@@ -60,7 +60,7 @@ class CotizacionServicioTest extends TestCase
         $this->assertEquals($ventas, VentaPaquete::count()); $this->assertEquals($pagos, PagoVenta::count());
         $servicio->update(['dPrecioVenta' => 9999, 'cNombre' => 'Nombre nuevo']);
         $this->get(route('atencion.cotizaciones.show', $cotizacion))->assertOk()->assertSee('2,200.00')->assertSee('Riviera Maya prueba')->assertDontSee('Nombre nuevo');
-        $pdf = $this->get(route('atencion.cotizaciones.pdf', $cotizacion))->assertOk()->assertDownload('cotizacion-'.$cotizacion->folio.'.pdf');
+        $pdf = $this->get(route('atencion.cotizaciones.pdf', $cotizacion))->assertOk()->assertDownload('cotizacion_familia_de_prueba_riviera_maya_prueba.pdf');
         $this->assertStringStartsWith('%PDF-', $pdf->getContent());
         $this->get(route('atencion.cotizaciones.index', ['buscar' => 'Familia de prueba']))->assertOk()->assertSee($cotizacion->folio);
         $this->get(route('atencion.cotizaciones.index'))->assertOk()

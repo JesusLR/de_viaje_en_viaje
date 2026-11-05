@@ -97,7 +97,7 @@ class ItinerarioTest extends TestCase
         $this->get(route('agencia.ventas.show', ['venta' => $sale, 'seccion' => 'itinerario']))->assertOk()->assertSee('Llegada')->assertDontSee('Nuevo recorrido');
         $this->get(route('agencia.apartados.index', ['buscar' => $sale->folio]))->assertOk()->assertSee('Ver itinerario');
         $this->get(route('agencia.apartados.index', ['buscar' => $sale->folio]))->assertSee('Descargar itinerario PDF');
-        $this->get(route('agencia.ventas.itinerarioPdf', $sale))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('itinerario-'.$sale->folio.'.pdf');
+        $this->get(route('agencia.ventas.itinerarioPdf', $sale))->assertOk()->assertHeader('Content-Type', 'application/pdf')->assertDownload('itinerario_'.\App\Support\NombreDocumento::parte($sale->detalles->pluck('cPaquete')->filter()->unique()->implode(' + ') ?: $sale->cPaquete).'.pdf');
         $sale->update(['finalizada_at' => now()]);
         $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertOk()->assertSee('Ver itinerario');
         $this->get(route('agencia.ventas.index', ['buscar' => $sale->folio]))->assertSee('Descargar itinerario PDF');
