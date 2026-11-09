@@ -21,10 +21,12 @@
         <div class="vender-resumen border-top"><div><small>Descuento total</small><strong id="descuentoTotal" class="text-success">0.00</strong></div><div class="vender-total"><small>Total estimado</small><strong id="total">0.00</strong></div></div>
         <div class="px-4 pb-3"><small class="text-muted">Los precios incluyen las promociones vigentes y se verifican al guardar. Todos los paquetes deben tener la misma moneda.</small></div>
     </div>
+    @can('vender.promocion')
     <div class="apartados-filtros mb-4"><h5 class="vender-seccion">Promoción exclusiva de esta operación</h5><div class="row g-3">
         <div class="col-md-6"><label for="promocionVentaTipo" class="form-label">Tipo de promoción</label><select id="promocionVentaTipo" name="cTipoPromocionVenta" class="form-select"><option value="">Sin promoción adicional</option><option value="IMPORTE" @selected(old('cTipoPromocionVenta')==='IMPORTE')>Cantidad de dinero</option><option value="PORCENTAJE" @selected(old('cTipoPromocionVenta')==='PORCENTAJE')>Porcentaje</option></select></div>
         <div class="col-md-6"><label for="promocionVentaValor" class="form-label">Valor de la promoción</label><input id="promocionVentaValor" name="dValorPromocionVenta" type="number" min="0.01" step="0.01" value="{{ old('dValorPromocionVenta') }}" class="form-control"></div>
     </div><p class="small text-muted mt-3">Se descuenta del total, después de las promociones vigentes de los servicios. Solo aplica a esta operación y no modifica el catálogo.</p><strong id="promocionVentaResumen">Sin promoción adicional</strong></div>
+    @endcan
     <div class="apartados-filtros"><h5 class="vender-seccion"><span>03</span>Confirmar operación</h5><div class="row g-3">
         <div class="col-md-4"><label for="accion" class="form-label">Operación</label><select id="accion" name="accion" class="form-select"><option data-permission="vender.venta" value="vender" @selected(old('accion', 'vender') === 'vender')>Venta liquidada</option><option data-permission="vender.apartado" value="apartar" @selected(old('accion') === 'apartar')>Apartado (pago posterior)</option></select></div>
         <div class="col-md-4 pago-directo"><label for="metodo" class="form-label">Método de pago recibido</label><select id="metodo" name="cMetodo" class="form-select">@foreach(['Efectivo', 'Transferencia', 'Tarjeta'] as $metodo)<option @selected(old('cMetodo') === $metodo)>{{ $metodo }}</option>@endforeach</select></div>
@@ -72,8 +74,9 @@ function calcular() {
         if (moneda) totales[moneda] = (totales[moneda] || 0) + centavos;
         if (moneda) descuentos[moneda] = (descuentos[moneda] || 0) + descuento * cantidad;
     });
-    const tipoPromocion = document.getElementById('promocionVentaTipo').value;
+    const tipoPromocion = document.getElementById('promocionVentaTipo')?.value || ''; 
     const valorInput = document.getElementById('promocionVentaValor');
+    if (valorInput) {
     valorInput.disabled = !tipoPromocion; valorInput.required = Boolean(tipoPromocion);
     valorInput.max = tipoPromocion === 'PORCENTAJE' ? '100' : '999999999999.99';
     valorInput.setCustomValidity('');
@@ -86,6 +89,7 @@ function calcular() {
         totales[moneda] -= aplicado; descuentos[moneda] = (descuentos[moneda] || 0) + aplicado; descuentoOperacion += aplicado;
     }
     document.getElementById('promocionVentaResumen').textContent = tipoPromocion ? 'Promocion aplicada: ' + formato(descuentoOperacion / 100) + (Object.keys(totales).length === 1 ? ' ' + Object.keys(totales)[0] : '') : 'Sin promoción adicional';
+    }
     document.getElementById('total').textContent = Object.entries(totales).map(([moneda, centavos]) => formato(centavos / 100) + ' ' + moneda).join(' + ') || '0.00';
     document.getElementById('descuentoTotal').textContent = Object.entries(descuentos).map(([moneda, centavos]) => formato(centavos / 100) + ' ' + moneda).join(' + ') || '0.00';
 }
@@ -105,7 +109,7 @@ function agregar(item = {}) {
 document.getElementById('agregarFila').addEventListener('click', () => { if (lineas.children.length < 30) agregar(); });
 $(lineas).on('change', '.paquete', calcular);
 $('#promocionVentaTipo').on('change', calcular);
-document.getElementById('promocionVentaValor').addEventListener('input', calcular);
+document.getElementById('promocionVentaValor')?.addEventListener('input', calcular);
 lineas.addEventListener('input', calcular);
 lineas.addEventListener('click', e => { const boton = e.target.closest('.quitar'); if (boton) { $(boton.closest('tr')).find('select').select2('destroy'); boton.closest('tr').remove(); if (!lineas.children.length) agregar(); calcular(); } });
 function operacion() {

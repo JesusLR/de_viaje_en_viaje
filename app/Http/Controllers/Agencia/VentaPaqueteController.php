@@ -129,6 +129,9 @@ class VentaPaqueteController extends Controller
             'dValorPromocionVenta' => 'required_with:cTipoPromocionVenta|nullable|numeric|decimal:0,2|min:0.01|max:999999999999.99',
             'cObservaciones' => 'nullable|string|max:2000',
         ]);
+        if ($request->filled('cTipoPromocionVenta') || $request->filled('dValorPromocionVenta')) {
+            \Illuminate\Support\Facades\Gate::authorize('vender.promocion');
+        }
         $venta = DB::transaction(function () use ($data, $request) {
             $detalles = [];
             $total = 0;
