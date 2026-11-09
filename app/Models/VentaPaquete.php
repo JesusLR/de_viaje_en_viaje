@@ -12,7 +12,7 @@ class VentaPaquete extends Model
 
     protected $guarded = ['iID'];
 
-    protected $casts = ['dFechaViaje' => 'date', 'eliminada_at' => 'datetime', 'cancelada_at' => 'datetime', 'finalizada_at' => 'datetime', 'dPrecioUnitario' => 'decimal:2', 'dTotal' => 'decimal:2'];
+    protected $casts = ['dPromocionVenta'=>'decimal:2','dValorPromocionVenta'=>'decimal:2','dFechaViaje' => 'date', 'eliminada_at' => 'datetime', 'cancelada_at' => 'datetime', 'finalizada_at' => 'datetime', 'dPrecioUnitario' => 'decimal:2', 'dTotal' => 'decimal:2'];
 
     public function cliente()
     {

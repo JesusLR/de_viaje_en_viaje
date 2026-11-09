@@ -17,6 +17,37 @@ class VentaPaqueteTest extends TestCase
     use DatabaseTransactions;
     use \Tests\Concerns\ReadsExcelExports;
 
+    public function test_promocion_exclusiva_reduce_cobro_sin_modificar_servicio_y_se_muestra(): void
+    {
+        foreach (['PORCENTAJE'=>10,'IMPORTE'=>180] as $tipo=>$valor) {
+            [$paquete,$data]=$this->datos();
+            $precio=$paquete->dPrecioVenta;
+            $this->post(route('agencia.ventas.store'),$data+['accion'=>'vender','cMetodo'=>'Efectivo','cTipoPromocionVenta'=>$tipo,'dValorPromocionVenta'=>$valor])->assertSessionHasNoErrors();
+            $venta=VentaPaquete::latest('iID')->firstOrFail();
+            $this->assertEquals(1620,$venta->dTotal);
+            $this->assertEquals(180,$venta->dPromocionVenta);
+            $this->assertEquals(1620,$venta->pagos()->sum('dImporte'));
+            $this->assertEquals($precio,$paquete->fresh()->dPrecioVenta);
+            $this->assertSame(0,$venta->saldo_centavos);
+            $this->get(route('agencia.ventas.index',['buscar'=>$venta->folio]))->assertOk()->assertDontSee('Promocion aplicada');
+            $this->get(route('agencia.ventas.show',$venta))->assertOk()->assertSee('Promocion aplicada');
+            $this->get(route('agencia.ventas.comprobanteCompra',$venta))->assertOk();
+            $html=view('agencia.ventas.comprobante-pdf',['venta'=>$venta->load(['cliente','detalles.servicio','usuario','pagos']),'logo'=>null,'compraSaldada'=>true])->render();
+            $this->assertStringContainsString('Promocion aplicada',$html);
+        }
+    }
+
+    public function test_promocion_exclusiva_valida_limites_y_no_crea_operaciones_invalidas(): void
+    {
+        [$paquete,$data]=$this->datos();$antes=VentaPaquete::count();
+        foreach ([['PORCENTAJE',101],['IMPORTE',1801],['IMPORTE',-1],['IMPORTE',null],['OTRO',10],['PORCENTAJE',1.234]] as [$tipo,$valor]) {
+            $this->postJson(route('agencia.ventas.store'),$data+['accion'=>'vender','cMetodo'=>'Efectivo','cTipoPromocionVenta'=>$tipo,'dValorPromocionVenta'=>$valor])->assertUnprocessable();
+        }
+        $this->assertSame($antes,VentaPaquete::count());
+        $this->post(route('agencia.ventas.store'),$data+['cTipoPromocionVenta'=>'PORCENTAJE','dValorPromocionVenta'=>100])->assertSessionHasNoErrors();
+        $this->assertEquals(0,VentaPaquete::latest('iID')->firstOrFail()->dTotal);
+    }
+
     public function test_eliminar_venta_conserva_historial_y_excluye_finanzas_y_dashboard(): void
     {
         [$paquete, $data] = $this->datos();
