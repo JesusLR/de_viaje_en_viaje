@@ -76,6 +76,7 @@ return [
         'ventas.nombre' => 'Cambiar nombre de operación',
         'ventas.eliminar' => 'Eliminar ventas',
     ]],
+    'conversaciones' => ['label' => 'Mensajería · Conversaciones', 'actions' => ['conversaciones.ver'=>'Consultar propias', 'conversaciones.todos'=>'Consultar todas y sin asignar', 'conversaciones.asignar'=>'Asignar y transferir', 'conversaciones.responder'=>'Responder mensajes', 'conversaciones.atender'=>'Cerrar y reabrir atención', 'conversaciones.nota'=>'Agregar notas internas']],
     'mensajeria' => ['label' => 'Mensajería · Inicio de sesión', 'actions' => [
         'mensajeria.ver' => 'Consultar sesiones del sistema',
         'mensajeria.crear' => 'Crear sesiones',

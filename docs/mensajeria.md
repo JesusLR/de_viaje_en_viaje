@@ -114,3 +114,35 @@ El envío automático de ventas liquidadas se activa o desactiva desde Configura
 ## Comprobante de pago e historial
 
 Las ventas directas (`cTipoOperacion=VENTA`) muestran el comprobante de pago; su pago único no se considera un abono. Las ventas originadas como apartado conservan su historial cuando tienen abonos vigentes. El detalle y el grid permiten enviar el comprobante de pago y, cuando corresponde, el historial mediante el modal de confirmación del número. Las rutas de historial también validan el origen. El comprobante completo se denomina Comprobante de pago en el PDF, la descarga y el envío manual o automático.
+
+
+## Bandeja compartida de conversaciones
+
+Mensajería → Conversaciones utiliza el mismo número de la agencia. Cada empleado entra con su cuenta de De Viaje en Viaje y no vincula un teléfono propio.
+
+Permisos:
+- `conversaciones.ver`: abrir la bandeja y consultar las conversaciones asignadas al usuario.
+- `conversaciones.todos`: consultar también conversaciones ajenas y sin asignar (supervisor).
+- `conversaciones.asignar`: asignar, transferir o dejar sin responsable las conversaciones que puede consultar.
+- `conversaciones.responder`: enviar texto o adjuntar un PDF de hasta 15 MB.
+- `conversaciones.atender`: marcar atendida o reabrir una conversación visible.
+- `conversaciones.nota`: agregar notas internas, que nunca se envían a WhatsApp.
+
+Para un supervisor asignar `ver`, `todos`, `asignar` y los permisos operativos que necesite. Para un asesor asignar `ver`, `responder`, `atender` y `nota`. Solo usuarios activos con permisos de consulta y respuesta aparecen como destinatarios de una asignación.
+
+Las comprobaciones de responsable se realizan en Laravel antes de consultar o enviar. Las respuestas y transferencias bloquean el registro para que una transferencia no compita con un envío. OpenWA autentica el origen del sistema en todas las rutas nuevas de chat; las credenciales no salen al navegador. Las notas y transferencias se guardan en tablas locales separadas del historial de mensajes de OpenWA.
+
+La bandeja actualiza las novedades cada 15 segundos mientras está visible, compartiendo un bloqueo y un intervalo de sincronización entre empleados. No requiere configurar un webhook público. Las conversaciones atendidas se reabren al detectar un nuevo mensaje entrante y conservan su responsable. Se muestran conversaciones individuales, no grupos, estados ni canales.
+
+El historial se consulta en páginas de 100 mensajes y comprende los mensajes que OpenWA conserva. No importa automáticamente todo el historial antiguo del teléfono. Por ahora el chat muestra texto y un indicador para mensajes de otros tipos; no reproduce audio ni muestra imágenes recibidas. Permite subir el PDF ya descargado de ventas, itinerarios o cotizaciones. No hay distribución automática ni selección directa de documentos de esos módulos dentro del chat.
+
+Si el teléfono puede identificarse, se muestra el cliente relacionado y enlaces a sus ventas, apartados y cotizaciones, respetando permisos y filtros del usuario. Los identificadores internos LID pueden no proporcionar un teléfono para esta relación.
+
+### Despliegue
+
+1. Subir ambos proyectos y actualizar primero OpenWA: el controlador `integration-conversation.controller.ts` y su registro en `message.module.ts` agregan las rutas protegidas `/api/integrations/sessions/:sessionId/conversations`, `/messages`, `/text` y `/pdf`.
+2. Reconstruir OpenWA usando los comandos de despliegue documentados arriba y conservando la clave de integración y el volumen existentes.
+3. Actualizar De Viaje en Viaje y reconstruir `app`. El entrypoint ejecuta la migración `2026_11_06_000001_create_whatsapp_conversations`, que crea `whatsapp_conversations` y `whatsapp_conversation_events`. No requiere seeders. En un entorno sin ese entrypoint ejecutar `php artisan migrate --force`.
+4. Asignar permisos a los roles y abrir Mensajería → Conversaciones. Un supervisor verá las conversaciones sin asignar y podrá repartirlas.
+
+No se han enviado mensajes reales durante las pruebas. La operación final requiere una sesión conectada de OpenWA y comprobar recepción real después del despliegue.

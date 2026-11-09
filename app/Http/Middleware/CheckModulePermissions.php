@@ -30,6 +30,7 @@ class CheckModulePermissions
         $parts = explode('.', $name);
         $action = end($parts);
         $module = match (true) {
+            str_starts_with($name, 'conversaciones.') => 'conversaciones',
             str_starts_with($name, 'mensajeria.') => 'mensajeria',
             str_starts_with($name, 'atencion.cotizaciones.') => 'cotizaciones_servicios',
             str_starts_with($name, 'cotizaciones.') => 'cotizaciones',
@@ -63,6 +64,7 @@ class CheckModulePermissions
             }
             $this->require($request, $module.'.ver');
             $specific = match ($action) {
+                'asignar' => 'asignar', 'documento', 'responder' => 'responder', 'nota' => 'nota', 'atender' => 'atender',
                 'whatsappPreparar', 'whatsappEnviar' => 'whatsapp',
                 'iniciar', 'qr', 'cerrar' => 'conectar',
                 'saveData' => (int) $request->input('iID', 0) > 0 ? 'editar' : 'crear',

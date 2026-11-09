@@ -74,6 +74,12 @@ class OpenWaService
         return array_map(fn ($sesion) => $this->sesion($sesion), $datos['sessions']);
     }
 
+    public function conversaciones(string $id): array { return $this->solicitud('GET', '/'.$id.'/conversations'); }
+    public function mensajes(string $id, string $chat, int $offset = 0): array { return $this->solicitud('GET', '/'.$id.'/conversations/messages?'.http_build_query(['chatId' => $chat, 'offset' => $offset])); }
+    public function responderChat(string $id, string $chat, string $texto, string $solicitud): array { return $this->solicitud('POST', '/'.$id.'/conversations/text', ['chatId' => $chat, 'text' => $texto], $solicitud); }
+
+    public function documentoChat(string $id, string $chat, string $bytes, string $nombre, string $solicitud): array { return $this->solicitud('POST', '/'.$id.'/conversations/pdf', ['chatId'=>$chat,'base64'=>base64_encode($bytes),'filename'=>$nombre], $solicitud); }
+
     public function crear(string $nombre): array
     {
         $lock = Cache::lock('openwa:crear-sesion:'.config('services.openwa.source_system'), 120);
