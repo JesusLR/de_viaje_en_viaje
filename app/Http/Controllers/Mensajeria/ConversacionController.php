@@ -131,6 +131,9 @@ class ConversacionController extends Controller
             $anterior = $c->assigned_to;
             $c->update(['assigned_to' => $u?->id, 'estado' => $u ? 'en_atencion' : 'sin_asignar']);
             $this->evento($c, 'asignacion', 'Responsable anterior: '.($anterior ?? 'ninguno').'. Nuevo responsable: '.($u?->nombre_completo ?? 'sin asignar'));
+            if ($u && (int)$anterior !== (int)$u->id) {
+                $u->notify(new \App\Notifications\ConversacionAsignada($c->id, $c->nombre ?: 'Cliente', auth()->user()->nombre_completo));
+            }
         });
 
         return response()->json(['ok' => true]);
@@ -143,8 +146,10 @@ class ConversacionController extends Controller
             $c = WhatsAppConversation::lockForUpdate()->findOrFail($conversacion->id);
             $this->acceso($c);
             abort_unless($c->assigned_to, 422, 'Asigna un responsable primero.');
+            $anterior = $c->assigned_to;
+            if ($data['estado'] === 'atendida') $data['assigned_to'] = null;
             $c->update($data);
-            $this->evento($c, 'estado', $data['estado']);
+            $this->evento($c, 'estado', $data['estado'].($data['estado'] === 'atendida' ? '. Responsable liberado: '.$anterior : ''));
         });
 
         return response()->json(['ok' => true]);

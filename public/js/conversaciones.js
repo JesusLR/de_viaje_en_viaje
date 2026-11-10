@@ -155,6 +155,7 @@
         }
         $("chatResponsable").textContent = "Responsable: " + (selected?.responsable?.name || "Sin asignar");
     }
+    let abrirDesdeNotificacion = new URLSearchParams(location.search).get('conversacion');
     async function load() {
         if (loading || busy) return;
         loading = true;
@@ -189,6 +190,12 @@
                     return b;
                 }),
             );
+            if (abrirDesdeNotificacion) {
+                const index=d.conversaciones.data.findIndex(c=>String(c.id)===abrirDesdeNotificacion);
+                if(index>=0){$("chatLista").children[index]?.click();abrirDesdeNotificacion=null;}
+                else if(page<d.conversaciones.last_page){page++; loading=false;return load();}
+                else abrirDesdeNotificacion=null;
+            }
             $("chatAnterior").disabled = page <= 1;
             $("chatSiguiente").disabled = page >= d.conversaciones.last_page;
             if ($("chatUsuario")) {

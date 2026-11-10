@@ -104,6 +104,24 @@ return Http::response(['sourceSystem' => 'de_viaje_en_viaje', 'sessions' => []])
         Http::assertNothingSent();
     }
 
+    public function test_assignment_notifies_only_new_owner_and_bell_marks_all_read(): void
+    {
+        $boss=$this->userWith(['conversaciones.ver','conversaciones.todos','conversaciones.asignar']);
+        $a=$this->userWith(['conversaciones.ver','conversaciones.responder']);
+        $b=$this->userWith(['conversaciones.ver','conversaciones.responder']);
+        $c=WhatsAppConversation::create(['session_id'=>'12345678-1234-4234-8234-123456789012','chat_id'=>'529991234567@c.us','nombre'=>'Cliente de prueba']);
+        $this->actingAs($boss)->postJson(route('conversaciones.asignar',$c),['usuario'=>$a->id])->assertOk();
+        $this->postJson(route('conversaciones.asignar',$c),['usuario'=>$a->id])->assertOk();
+        $this->assertSame(1,$a->notifications()->count());
+        $this->assertSame(0,$b->notifications()->count());
+        $this->actingAs($a)->getJson(route('notificaciones.index'))->assertOk()->assertJsonPath('sin_leer',1)->assertJsonPath('notificaciones.0.titulo','Conversación asignada');
+        $this->postJson(route('notificaciones.leerTodas'))->assertOk();
+        $this->getJson(route('notificaciones.index'))->assertJsonPath('sin_leer',0);
+        $this->actingAs($boss)->postJson(route('conversaciones.asignar',$c),['usuario'=>$b->id])->assertOk();
+        $this->assertSame(1,$b->notifications()->count());
+        $this->assertSame(0,$boss->notifications()->count());
+    }
+
     public function test_closed_conversation_cannot_send_and_inactive_assignee_rejected(): void
     {
         $p = ['conversaciones.ver', 'conversaciones.todos', 'conversaciones.responder', 'conversaciones.asignar', 'conversaciones.atender'];
@@ -112,7 +130,10 @@ return Http::response(['sourceSystem' => 'de_viaje_en_viaje', 'sessions' => []])
         $c = WhatsAppConversation::create(['session_id' => '12345678-1234-4234-8234-123456789012', 'chat_id' => '529991234567@c.us', 'assigned_to' => $u->id, 'estado' => 'en_atencion']);
         $this->postJson(route('conversaciones.atender', $c), ['estado' => 'atendida'])->assertOk();
         $this->postJson(route('conversaciones.responder', $c), ['texto' => 'No enviar', 'solicitud' => (string) Str::uuid()])->assertUnprocessable();
-        $this->postJson(route('conversaciones.atender', $c), ['estado' => 'en_atencion'])->assertOk();
+        $this->assertNull($c->fresh()->assigned_to);
+        $this->assertSame('atendida',$c->fresh()->estado);
+        $this->postJson(route('conversaciones.atender', $c), ['estado' => 'en_atencion'])->assertUnprocessable();
+        $this->postJson(route('conversaciones.asignar', $c), ['usuario' => $u->id])->assertOk();
         $bad = $this->userWith($p);
         $bad->update(['lActivo' => false]);
         $this->postJson(route('conversaciones.asignar',$c), ['usuario' => $bad->id])->assertUnprocessable();

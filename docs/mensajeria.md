@@ -146,3 +146,6 @@ Si el teléfono puede identificarse, se muestra el cliente relacionado y enlaces
 4. Asignar permisos a los roles y abrir Mensajería → Conversaciones. Un supervisor verá las conversaciones sin asignar y podrá repartirlas.
 
 No se han enviado mensajes reales durante las pruebas. La operación final requiere una sesión conectada de OpenWA y comprobar recepción real después del despliegue.
+
+
+Al marcar una conversación como atendida se libera su responsable y se mantiene el historial. Un nuevo mensaje la devuelve a Sin asignar. Cada asignación a un responsable diferente genera una notificación de campana para ese usuario, con acceso a la conversación. Repetir la misma asignación no duplica el aviso. La campana permite marcar todas las notificaciones visibles del usuario como leídas.
