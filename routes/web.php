@@ -32,6 +32,16 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
     Route::post('/agencia/apartados/{venta}/whatsapp/enviar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappEnviar'])->middleware('throttle:10,1')->name('agencia.apartados.whatsappEnviar');
     Route::post('/agencia/ventas/{venta}/whatsapp/preparar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappPreparar'])->middleware('throttle:30,1')->name('agencia.ventas.whatsappPreparar');
     Route::post('/agencia/ventas/{venta}/whatsapp/enviar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappEnviar'])->middleware('throttle:10,1')->name('agencia.ventas.whatsappEnviar');
+    Route::prefix('mensajeria/conversaciones')->name('conversaciones.')->controller(\App\Http\Controllers\Mensajeria\ConversacionController::class)->group(function() {
+        Route::get('/', 'index')->name('index');
+        Route::get('/datos', 'datos')->middleware('throttle:30,1')->name('datos');
+        Route::get('/{conversacion}/mensajes', 'mensajes')->middleware('throttle:60,1')->name('mensajes');
+        Route::post('/{conversacion}/asignar', 'asignar')->name('asignar');
+        Route::post('/{conversacion}/atender', 'atender')->name('atender');
+        Route::post('/{conversacion}/nota', 'nota')->name('nota');
+        Route::post('/{conversacion}/documento', 'documento')->middleware('throttle:10,1')->name('documento');
+        Route::post('/{conversacion}/responder', 'responder')->middleware('throttle:20,1')->name('responder');
+    });
     Route::prefix('mensajeria/inicio-sesion')->name('mensajeria.')->controller(\App\Http\Controllers\Mensajeria\SesionController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/datos', 'datos')->middleware('throttle:30,1')->name('datos');

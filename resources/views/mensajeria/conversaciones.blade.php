@@ -1,0 +1,22 @@
+@extends('layouts.app')
+@section('titulo','Conversaciones')
+@section('contenido')
+<div class="apartados-panel" id="conversaciones" data-base="{{ route('conversaciones.index') }}">
+<h3>Conversaciones de WhatsApp</h3><p class="text-muted">Selecciona una conversación para consultar su historial y atenderla.</p>
+<div id="chatError" class="alert alert-warning d-none" role="alert"></div>
+<div class="chat-layout"><aside class="chat-sidebar"><label for="chatFiltro" class="form-label">Estado</label><select id="chatFiltro" class="form-select"><option value="">Todos los estados</option><option value="sin_asignar">Sin asignar</option><option value="en_atencion">En atención</option><option value="atendida">Atendida</option></select><div id="chatLista" class="list-group mt-3"></div><div class="d-flex gap-2 mt-2"><button id="chatAnterior" class="btn btn-outline-secondary">Anterior</button><button id="chatSiguiente" class="btn btn-outline-secondary">Siguiente</button></div></aside>
+<section class="chat-thread"><div class="chat-empty">Selecciona una conversación para comenzar</div><div id="chatPanel" class="d-none"><header class="chat-heading"><button type="button" id="chatVolver" class="btn btn-light">←</button><h5 id="chatNombre"></h5><div id="chatCliente" class="d-flex flex-wrap gap-2 mb-2"></div><p id="chatResponsable" class="text-muted"></p>
+</header><details class="chat-tools"><summary>Responsable y seguimiento</summary>
+@can('conversaciones.asignar')<form id="chatAsignacion" class="d-flex gap-2 mb-3"><select id="chatUsuario" class="form-select" aria-label="Responsable"></select><button class="btn btn-primary">Asignar</button></form>@endcan
+@can('conversaciones.atender')<div class="d-flex gap-2 mb-3"><button class="btn btn-outline-primary" id="chatCerrar">Marcar atendida</button><button class="btn btn-outline-secondary" id="chatReabrir">Reabrir atención</button></div>@endcan
+</details><div class="chat-paging d-flex gap-2"><button type="button" id="chatAnteriores" class="btn btn-outline-secondary">Mensajes anteriores</button><button type="button" id="chatRecientes" class="btn btn-outline-secondary">Más recientes</button></div><div id="chatMensajes" class="border rounded p-3 mb-3" style="overflow:auto;white-space:pre-wrap" aria-live="polite"></div>
+<p id="chatEnvioAviso" class="alert alert-info m-2 d-none" role="status"></p>
+@can('conversaciones.responder')<form id="chatRespuesta"><label for="chatTexto" class="form-label">Mensaje para el cliente</label><textarea id="chatTexto" class="form-control" maxlength="4000" required rows="2"></textarea><button class="btn btn-primary mt-2">Enviar mensaje</button></form>@endcan
+<details class="chat-tools"><summary>Adjuntos, notas e historial interno</summary>
+@can('conversaciones.nota')<form id="chatNota" class="mt-3"><label for="chatNotaTexto" class="form-label">Nota interna (no se envía al cliente)</label><textarea id="chatNotaTexto" class="form-control" maxlength="4000" required rows="2"></textarea><button class="btn btn-outline-primary mt-2">Guardar nota</button></form>@endcan
+@can('conversaciones.responder')<form id="chatDocumento" class="mt-3"><label for="chatPdf" class="form-label">Adjuntar PDF (máximo 15 MB)</label><input id="chatPdf" type="file" accept="application/pdf" class="form-control" required><button class="btn btn-outline-primary mt-2">Enviar PDF</button></form>@endcan
+<h6 class="mt-4">Notas y movimientos</h6><div id="chatEventos"></div>
+</details></div></section></div></div>
+@endsection
+@push('styles')<link rel="stylesheet" href="{{ asset('css/conversaciones.css') }}?v={{ filemtime(public_path('css/conversaciones.css')) }}"><style>#conversaciones .card{border:1px solid #e8edf4;border-radius:16px}#conversaciones .btn{border-radius:10px;font-size:13px}#conversaciones .form-control,#conversaciones .form-select{border-radius:10px}#conversaciones #chatMensajes>div{overflow-wrap:anywhere}@media(max-width:768px){#app-wrapper:has(#conversaciones) .topbar{flex-wrap:wrap;height:auto;min-height:64px;padding:12px 16px;gap:8px}#app-wrapper:has(#conversaciones) .topbar h5{font-size:16px}#app-wrapper:has(#conversaciones) .main-container{padding:16px}#conversaciones .d-flex{flex-wrap:wrap}#conversaciones .card-body{padding:14px}}</style><link rel="stylesheet" href="{{ asset('css/agencia-grid.css') }}">@endpush
+@push('scripts')<script src="{{ asset('js/conversaciones.js') }}?v={{ filemtime(public_path('js/conversaciones.js')) }}" defer></script>@endpush
