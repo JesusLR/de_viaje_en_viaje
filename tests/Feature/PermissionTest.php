@@ -19,6 +19,23 @@ class PermissionTest extends TestCase
         return $user;
     }
 
+    public function test_promociones_al_vender_requieren_permiso_especifico(): void
+    {
+        $servicio=ServicioTuristico::create(['cCodigo'=>uniqid('PROM'),'cNombre'=>'Promoción protegida','dPrecioCompra'=>500,'dPrecioVenta'=>1000,'lActivo'=>true,'lUsaVigencia'=>false]);
+        $cliente=Cliente::create(['cNombre'=>'Cliente','cPrimerApellido'=>'Prueba','lActivo'=>true]);
+        $data=['iIDCliente'=>$cliente->iID,'accion'=>'vender','cMetodo'=>'Efectivo','items'=>[['iIDServicio'=>$servicio->iID,'iCantidad'=>1]]];
+        $this->actingAs($this->userWith(['vender.ver','vender.venta']));
+        $this->get(route('agencia.vender.index'))->assertOk()->assertDontSee('name="cTipoPromocionVenta"',false);
+        $antes=VentaPaquete::count();
+        $this->postJson(route('agencia.ventas.store'),$data+['cTipoPromocionVenta'=>'IMPORTE','dValorPromocionVenta'=>100])->assertForbidden();
+        $this->assertSame($antes,VentaPaquete::count());
+        $this->post(route('agencia.ventas.store'),$data)->assertSessionHasNoErrors();
+        $this->actingAs($this->userWith(['vender.ver','vender.venta','vender.promocion']));
+        $this->get(route('agencia.vender.index'))->assertOk()->assertSee('name="cTipoPromocionVenta"',false);
+        $this->post(route('agencia.ventas.store'),$data+['cTipoPromocionVenta'=>'IMPORTE','dValorPromocionVenta'=>100])->assertSessionHasNoErrors();
+        $this->assertEquals(900,VentaPaquete::latest('iID')->firstOrFail()->dTotal);
+    }
+
     public function test_administrador_gestiona_roles_asigna_y_registra_auditoria(): void
     {
         $admin = User::factory()->create(['lCambiarPassword' => false]);

@@ -125,8 +125,13 @@ class VentaPaqueteController extends Controller
             'cNombre' => 'nullable|string|max:150',
             'cMetodo' => ['required_if:accion,vender', 'nullable', Rule::in(['Efectivo', 'Transferencia', 'Tarjeta'])],
             'cReferencia' => 'nullable|string|max:150',
+            'cTipoPromocionVenta' => ['nullable', Rule::in(['IMPORTE','PORCENTAJE'])],
+            'dValorPromocionVenta' => 'required_with:cTipoPromocionVenta|nullable|numeric|decimal:0,2|min:0.01|max:999999999999.99',
             'cObservaciones' => 'nullable|string|max:2000',
         ]);
+        if ($request->filled('cTipoPromocionVenta') || $request->filled('dValorPromocionVenta')) {
+            \Illuminate\Support\Facades\Gate::authorize('vender.promocion');
+        }
         $venta = DB::transaction(function () use ($data, $request) {
             $detalles = [];
             $total = 0;
@@ -149,12 +154,19 @@ class VentaPaqueteController extends Controller
             if ($total > 999999999999) {
                 throw ValidationException::withMessages(['items' => 'El total excede el importe permitido.']);
             }
+            $tipoPromocion = $data['cTipoPromocionVenta'] ?? null;
+            $valorPromocion = $tipoPromocion ? (float)$data['dValorPromocionVenta'] : 0;
+            if ($tipoPromocion === 'PORCENTAJE' && $valorPromocion > 100) throw ValidationException::withMessages(['dValorPromocionVenta'=>'El porcentaje no puede superar 100.']);
+            $promocion = $tipoPromocion === 'PORCENTAJE' ? (int) round($total * $valorPromocion / 100) : (int) round($valorPromocion * 100);
+            if ($promocion > $total) throw ValidationException::withMessages(['dValorPromocionVenta'=>'La promoción no puede superar el total de la operación.']);
+            $total -= $promocion;
             $directa = ($data['accion'] ?? 'apartar') === 'vender';
             $venta = VentaPaquete::create([
                 'iIDCliente' => $data['iIDCliente'], 'iIDUsuario' => $request->user()->id,
                 'iIDServicio' => $detalles[0]['iIDServicio'], 'cPaquete' => $detalles[0]['cPaquete'],
                 'iCantidad' => array_sum(array_column($detalles, 'iCantidad')) + array_sum(array_column($detalles, 'iCantidadMenores')), 'dPrecioUnitario' => $detalles[0]['dPrecioUnitario'],
                 'cNombre' => $data['cNombre'] ?? null, 'dFechaViaje' => $detalles[0]['dFechaInicio'],
+                'cTipoPromocionVenta'=>$tipoPromocion, 'dValorPromocionVenta'=>$valorPromocion, 'dPromocionVenta'=>$promocion/100,
                 'cObservaciones' => $data['cObservaciones'] ?? null, 'cMoneda' => $moneda, 'dTotal' => $total / 100,
                 'cTipoOperacion' => $directa ? 'VENTA' : 'APARTADO', 'finalizada_at' => $directa ? now() : null,
             ]);

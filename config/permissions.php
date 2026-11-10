@@ -53,6 +53,7 @@ return [
         'vender.ver' => 'Acceder a vender',
         'vender.venta' => 'Registrar ventas',
         'vender.apartado' => 'Crear apartados',
+        'vender.promocion' => 'Aplicar promociones al vender',
     ]],
     'apartados' => ['label' => 'Apartados', 'actions' => [
         'apartados.ver' => 'Consultar propios',

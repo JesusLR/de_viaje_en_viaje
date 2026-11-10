@@ -34,6 +34,7 @@
 @if($venta->detalles->contains(fn ($detalle) => $detalle->dPrecioRegular === null || $detalle->dDescuentoUnitario === null))
 <p class="nota">En operaciones antiguas sin desglose guardado, se conserva el precio final original. Los datos históricos faltantes se indican con —.</p>
 @endif
+@include('agencia.ventas.promocion-aplicada')
 <table class="totales"><tr>
     <td style="width:{{ $compraSaldada ? '50' : '33' }}%"><span class="label">TOTAL ({{ $venta->cMoneda }})</span><br><strong>{{ number_format($venta->dTotal, 2) }}</strong></td>
     <td style="width:{{ $compraSaldada ? '50' : '33' }}%"><span class="label">{{ $compraSaldada ? 'TOTAL PAGADO' : 'ABONADO' }} ({{ $venta->cMoneda }})</span><br><strong class="verde">{{ number_format((float) $venta->dTotal - $venta->saldo_centavos / 100, 2) }}</strong></td>
