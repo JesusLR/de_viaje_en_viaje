@@ -149,3 +149,65 @@ No se han enviado mensajes reales durante las pruebas. La operación final requi
 
 
 Al marcar una conversación como atendida se libera su responsable y se mantiene el historial. Un nuevo mensaje la devuelve a Sin asignar. Cada asignación a un responsable diferente genera una notificación de campana para ese usuario, con acceso a la conversación. Repetir la misma asignación no duplica el aviso. La campana permite marcar todas las notificaciones visibles del usuario como leídas.
+
+
+### Historial combinado de conversaciones
+
+La bandeja consulta los mensajes guardados y, al abrir la primera página, hasta 100 mensajes recientes disponibles directamente en WhatsApp, como `/chats` de OpenWA. Combina por identificador de WhatsApp y da prioridad a la copia guardada para conservar estados y adjuntos. La lectura en vivo usa una caché de 60 segundos, acotada a 100 conversaciones, sin descargar medios. Las páginas anteriores siguen recorriendo los mensajes guardados. El historial completo del teléfono puede no estar disponible: se muestra un aviso si la consulta falla y un estado vacío explícito si no hay mensajes. Este cambio requiere actualizar OpenWA y Laravel.
+
+
+El clip de conversaciones admite archivos generales de hasta 15 MB. JPEG, PNG y WebP se envían como imágenes; los demás formatos como documentos adjuntos. La compatibilidad final depende de WhatsApp. Se conserva el nombre normalizado y la extensión. El archivo se selecciona antes de pulsar el icono de envío. Requiere actualizar OpenWA con el endpoint de integración `/conversations/files` y Laravel; no requiere migraciones nuevas.
+
+
+### Imágenes y mensajes sin leer
+
+Las imágenes JPEG, PNG, WebP y GIF conservadas por OpenWA se muestran dentro de la conversación mediante una ruta privada con comprobación del responsable. Si OpenWA no conserva los bytes aparece Imagen no disponible. Los identificadores internos y las credenciales no se exponen como enlaces a OpenWA. La bolita verde usa el contador de no leídos de WhatsApp, sincronizado con la bandeja, y al abrir el chat se solicita el recibo de lectura a WhatsApp. Es un estado compartido de la cuenta, no un contador independiente por empleado. Requiere actualizar ambos proyectos y ejecutar la migración `2026_11_11_000001_add_chat_unread_count`.
+
+
+## Webhooks de OpenWA
+
+La bandeja admite avisos firmados de mensajes recibidos/enviados, confirmaciones, cambios o eliminación de mensajes y estado de sesión. El receptor es `POST /webhooks/openwa`. Solo esa ruta está exenta de CSRF; exige `X-OpenWA-Signature: sha256=...`, calculada sobre el cuerpo original con la clave exclusiva del receptor. Rechaza sesiones no registradas, claves ausentes, cuerpos mayores de 1 MiB y eventos no admitidos. No guarda el texto ni los archivos del evento: actualiza metadatos de conversación, no leídos y un indicador de cambios. La tabla de recibos evita procesar nuevamente los reintentos con la misma clave de idempotencia.
+
+OpenWA conserva sus validaciones de URL, restricciones de red y mecanismo de reintentos. El registro usa la credencial de integración del sistema: `POST /api/integrations/sessions/:sessionId/webhook`. Actualiza un webhook con la misma URL o crea uno si falta; no elimina otros. No devuelve la clave de firma.
+
+### Activación en producción
+
+1. Subir los cambios de ambos proyectos y actualizar primero OpenWA, con los comandos de reconstrucción indicados arriba.
+2. Generar una clave de firma independiente de las credenciales de MySQL y de `OPENWA_SYSTEM_KEY`:
+
+```bash
+openssl rand -hex 32
+```
+
+3. En `.env.docker` de De Viaje en Viaje, configurar:
+
+```dotenv
+OPENWA_WEBHOOK_URL=https://de-viaje-en-viaje.com/webhooks/openwa
+OPENWA_WEBHOOK_SECRET=CLAVE_ALEATORIA_GENERADA
+```
+
+No publicar la clave ni colocarla en el navegador. OpenWA recibe esa misma clave a través del comando de registro; no necesita otra variable de entorno de firma.
+
+4. Reconstruir `app`. El entrypoint ejecuta la migración `2026_11_11_000002_create_openwa_webhook_receipts`, que crea las tablas de sesiones registradas y recibos, sin eliminar datos existentes:
+
+```bash
+sudo docker compose --env-file .env.docker -f compose.yaml -f compose.https.yaml up -d --build --no-deps app
+sudo docker compose --env-file .env.docker -f compose.yaml -f compose.https.yaml exec app php artisan openwa:webhook
+```
+
+La URL debe ser HTTPS en producción y accesible desde OpenWA. El comando registra las sesiones existentes del sistema y puede repetirse para actualizar la clave o la URL. Después de crear otra sesión, volver a ejecutarlo. No requiere seeders, Redis ni un worker adicional en Laravel.
+
+### Actualización de la pantalla y recuperación
+
+El navegador consulta un indicador pequeño cada 5 segundos mientras la pestaña está visible y recarga los datos cuando cambia. Se mantiene la consulta de respaldo cada 15 segundos. No es WebSocket: un aviso se refleja normalmente en la siguiente consulta del indicador. Los mensajes y archivos se siguen consultando en OpenWA con los mismos permisos y rutas privadas.
+
+Si OpenWA no entrega un aviso o el receptor no está disponible, sus reintentos y la sincronización periódica mantienen una vía de recuperación. La firma no arregla desconexiones de WhatsApp ni recupera historial que el motor no tenga disponible. Para probar la activación, usar un mensaje autorizado de prueba y comprobar recepción, bolita verde y lectura; nunca ejecutar mensajes reales como parte de la suite automática.
+
+Los recibos contienen hashes, sesión, evento y fecha, sin cuerpos de mensajes. Actualmente se conservan sin depuración automática para mantener la deduplicación de reintentos antiguos.
+
+
+### Desarrollo local con Laragon
+
+Para proyectos cuyos dominios `.test` contienen guiones bajos, la validación de URL puede rechazarlos. En la instalación local de Laragon se comprobó el receptor `http://127.0.0.1/de_viaje_en_viaje/public/webhooks/openwa`. Configurarlo en `OPENWA_WEBHOOK_URL` y agregar solo `127.0.0.1` a `SSRF_ALLOWED_HOSTS` en el `.env` privado de OpenWA, manteniendo las entradas existentes y la protección SSRF activa. No copiar esta excepción de desarrollo al servidor. Recargar el backend local al cambiar esa variable.
+
+`openwa:webhook` ahora comprueba también una entrega HTTP con el evento `test` del servicio nativo de OpenWA. El receptor acepta esa prueba firmada sin crear conversaciones ni enviar mensajes de WhatsApp. Si la entrega falla, el comando termina indicando que el registro existe pero el receptor no respondió correctamente.

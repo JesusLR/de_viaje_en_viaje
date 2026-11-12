@@ -30,9 +30,11 @@ class ConversacionesTest extends TestCase
         config(['cache.default' => 'array', 'services.openwa.url' => 'http://openwa.test/api', 'services.openwa.system_key' => 'test']);
         Http::preventStrayRequests();
         Http::fake(function ($r) {
+            if (str_contains($r->url(), '/media')) return Http::response(['mimetype'=>'image/png','data'=>'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9WQAAAAASUVORK5CYII=']);
+            if (str_contains($r->url(), '/read')) return Http::response(['success'=>true]);
             if (str_contains($r->url(), '/messages')) {
                 return Http::response(['total' => 1, 'messages' => [['id' => 'm1', 'body' => 'Hola', 'direction' => 'incoming', 'timestamp' => 1]]]);
-            }if (str_contains($r->url(), '/pdf')) return Http::response(['id'=>'p1','status'=>'sent']);
+            }if (str_contains($r->url(), '/files')) return Http::response(['id'=>'p1','status'=>'sent']);
             if (str_contains($r->url(), '/text')) {
                 return Http::response(['id' => 'm2', 'status' => 'sent']);
             }
@@ -48,7 +50,7 @@ return Http::response(['sourceSystem' => 'de_viaje_en_viaje', 'sessions' => []])
         $b = $this->userWith($p);
         $boss = $this->userWith(array_merge($p, ['conversaciones.todos', 'conversaciones.asignar', 'conversaciones.atender']));
         $c = WhatsAppConversation::create(['session_id' => '12345678-1234-4234-8234-123456789012', 'chat_id' => '529991234567@c.us', 'nombre' => 'Cliente']);
-        $this->actingAs($a)->get(route('conversaciones.index'))->assertOk()->assertSee('Conversaciones de WhatsApp');
+        $this->actingAs($a)->get(route('conversaciones.index'))->assertOk()->assertSee('WhatsApp de la agencia')->assertSee('Buscar por nombre o teléfono');
         $this->getJson(route('conversaciones.mensajes', $c))->assertForbidden();
         $this->getJson(route('conversaciones.datos'))->assertJsonPath('conversaciones.total', 0);
         $this->postJson(route('conversaciones.asignar', $c), ['usuario' => $a->id])->assertForbidden();
@@ -74,7 +76,7 @@ return Http::response(['sourceSystem' => 'de_viaje_en_viaje', 'sessions' => []])
         $datos=['documento'=>\Illuminate\Http\UploadedFile::fake()->createWithContent('Documento.pdf',"%PDF-1.4\nTest\n%%EOF"),'solicitud'=>(string)\Illuminate\Support\Str::uuid()];
         $this->actingAs($b)->postJson(route('conversaciones.documento',$c),$datos)->assertForbidden();
         $this->actingAs($a)->postJson(route('conversaciones.documento',$c),$datos)->assertOk();
-        Http::assertSent(fn($r)=>str_contains($r->url(),'/conversations/pdf')&&$r['chatId']==='123456789@lid');
+        Http::assertSent(fn($r)=>str_contains($r->url(),'/conversations/files')&&$r['chatId']==='123456789@lid');
         $this->postJson(route('conversaciones.documento',$c),['documento'=>\Illuminate\Http\UploadedFile::fake()->createWithContent('falso.pdf','no es pdf'),'solicitud'=>(string)\Illuminate\Support\Str::uuid()])->assertUnprocessable();
     }
 
@@ -120,6 +122,36 @@ return Http::response(['sourceSystem' => 'de_viaje_en_viaje', 'sessions' => []])
         $this->actingAs($boss)->postJson(route('conversaciones.asignar',$c),['usuario'=>$b->id])->assertOk();
         $this->assertSame(1,$b->notifications()->count());
         $this->assertSame(0,$boss->notifications()->count());
+    }
+
+    public function test_clip_acepta_archivos_generales_e_imagenes(): void
+    {
+        $u=$this->userWith(['conversaciones.ver','conversaciones.responder']);$this->actingAs($u);
+        $c=WhatsAppConversation::create(['session_id'=>'12345678-1234-4234-8234-123456789012','chat_id'=>'529991234567@c.us','assigned_to'=>$u->id,'estado'=>'en_atencion']);
+        foreach (['lista.txt'=>'Información del viaje','imagen.png'=>base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9WQAAAAASUVORK5CYII=')] as $nombre=>$bytes) {
+            $this->postJson(route('conversaciones.documento',$c),['documento'=>\Illuminate\Http\UploadedFile::fake()->createWithContent($nombre,$bytes),'solicitud'=>(string)\Illuminate\Support\Str::uuid()])->assertOk();
+            Http::assertSent(fn($r)=>str_contains($r->url(),'/conversations/files')&&$r['filename']===$nombre&&base64_decode($r['base64'])===$bytes);
+        }
+    }
+
+    public function test_disconnected_session_hides_saved_conversations_even_when_sync_cached(): void
+    {
+        $u=$this->userWith(['conversaciones.ver','conversaciones.todos']);$this->actingAs($u);
+        $c=WhatsAppConversation::create(['session_id'=>'12345678-1234-4234-8234-123456789012','chat_id'=>'529991234567@c.us','nombre'=>'Conversación guardada','assigned_to'=>$u->id]);
+        \Illuminate\Support\Facades\Cache::put('whatsapp:sync-conversations:recent',true,60);
+        $this->getJson(route('conversaciones.datos'))->assertOk()->assertJsonPath('aviso','No hay una sesión de WhatsApp conectada.')->assertJsonPath('conectado',false)->assertJsonPath('conversaciones.total',0)->assertJsonPath('usuarios',[])->assertDontSee('Conversación guardada');
+        $this->assertNotNull($c->fresh());
+    }
+
+    public function test_images_and_read_receipts_require_access_to_conversation(): void
+    {
+        $a=$this->userWith(['conversaciones.ver']);$b=$this->userWith(['conversaciones.ver']);
+        $c=WhatsAppConversation::create(['session_id'=>'12345678-1234-4234-8234-123456789012','chat_id'=>'529991234567@c.us','assigned_to'=>$a->id,'estado'=>'en_atencion','unread_count'=>3]);
+        $this->actingAs($b)->getJson(route('conversaciones.imagen',['conversacion'=>$c,'mensaje'=>'wa-image']))->assertForbidden();
+        $this->postJson(route('conversaciones.leer',$c))->assertForbidden();
+        $this->actingAs($a)->get(route('conversaciones.imagen',['conversacion'=>$c,'mensaje'=>'wa-image']))->assertOk()->assertHeader('Content-Type','image/png')->assertHeader('X-Content-Type-Options','nosniff');
+        $this->postJson(route('conversaciones.leer',$c))->assertOk();
+        $this->assertEquals(0,$c->fresh()->unread_count);
     }
 
     public function test_closed_conversation_cannot_send_and_inactive_assignee_rejected(): void

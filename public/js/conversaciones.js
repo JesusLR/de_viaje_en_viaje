@@ -58,12 +58,17 @@
             );
         return d;
     }
+    let historyPending=null;
     async function history() {
         if (!selected) return;
+        const requestOffset=offset;
+        const requestKey=selected.id+':'+offset;
+        if(historyPending===requestKey)return;
+        historyPending=requestKey;
         const id = selected.id;
         try {
             const d = await api("/" + id + "/mensajes?offset=" + offset);
-            if (selected?.id !== id) return;
+            if (selected?.id !== id || offset !== requestOffset) return;
             $("chatAnteriores").disabled = offset + 100 >= d.total;
             $("chatRecientes").disabled = offset === 0;
             $("chatCliente").replaceChildren();
@@ -82,12 +87,18 @@
                         $("chatCliente").append(a);
                     }
             }
+            if(d.warning) error(d.warning);
             const panel = $("chatMensajes"),
                 bottom =
                     panel.scrollHeight - panel.scrollTop - panel.clientHeight <
                     80;
             panel.replaceChildren();
-            [...d.messages].reverse().forEach((m) => {
+            if(!d.messages?.length) panel.append(node('p',d.warning || 'No hay mensajes disponibles en OpenWA ni en el historial consultado de WhatsApp.','chat-history-empty'));
+            let lastDay='';
+            [...(d.messages || [])].reverse().forEach((m) => {
+                const date=m.timestamp?new Date(m.timestamp*1000):null;
+                const day=date?date.toLocaleDateString('es-MX'):'';
+                if(day && day!==lastDay){panel.append(node('div',day,'chat-day'));lastDay=day;}
                 const box = node(
                     "div",
                     null,
@@ -104,7 +115,12 @@
                     ),
                     node("div", m.body || (m.type === "document" || m.attachment ? "" : "[" + m.type + "]")),
                 );
-                if (m.type === "document" || m.attachment) {
+                if (m.type === 'image' && m.image_url) {
+                    const image=document.createElement('img');image.className='chat-message-image';image.alt='Imagen de la conversación';image.loading='lazy';image.src=m.image_url;
+                    image.addEventListener('error',()=>{image.replaceWith(node('span','Imagen no disponible en OpenWA','chat-image-unavailable'))});
+                    const link=node('a');link.href=m.image_url;link.setAttribute('aria-label','Ampliar imagen');link.addEventListener('click',event=>{event.preventDefault();$('chatImagenAmpliada').src=m.image_url;bootstrap.Modal.getOrCreateInstance($('chatImagenModal')).show();});link.append(image);box.prepend(link);
+                }
+                if (m.type !== 'image' && (m.type === "document" || m.attachment)) {
                     const card = node("div", null, "chat-attachment");
                     const filename = m.attachment?.filename || "Documento adjunto";
                     const isPdf = /\.pdf$/i.test(filename) || m.attachment?.mimetype === "application/pdf";
@@ -112,9 +128,13 @@
                     card.append(node("small", m.direction === "outgoing" ? "Documento enviado" : "Documento recibido", "d-block text-muted"));
                     box.prepend(card);
                 }
+                if(date) box.append(node('small', date.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) + (m.direction==='outgoing'?' · '+({read:'Leído',delivered:'Entregado',sent:'Enviado',pending:'Pendiente',failed:'Fallido'}[m.status]||'Enviado'):''), 'chat-message-time'));
                 panel.append(box);
             });
             if (bottom) panel.scrollTop = panel.scrollHeight;
+            if(!document.hidden && selected?.id===id && Number(selected.unread_count)>0){
+                api('/'+id+'/leer',{}).then(()=>{if(selected?.id===id){selected.unread_count=0;$('chatLista').querySelector('[data-chat-id="'+id+'"] .chat-unread-dot')?.remove();}}).catch(()=>{});
+            }
             $("chatEventos").replaceChildren(
                 ...d.eventos.map((e) =>
                     node(
@@ -138,8 +158,11 @@
                 }
                 error(e.message);
             }
+        } finally {
+            if(historyPending===requestKey)historyPending=null;
         }
     }
+
     function reflejarResponsable() {
         const disponible = selected?.estado === "en_atencion" && Boolean(selected?.assigned_to);
         for (const formId of ["chatRespuesta", "chatDocumento"]) {
@@ -165,9 +188,18 @@
                     new URLSearchParams({
                         page,
                         estado: $("chatFiltro").value,
+                        buscar: $("chatBuscar").value,
                     }),
             );
+            root.classList.toggle('chat-offline',d.conectado===false);
             error(d.aviso);
+            if(d.conectado===false){
+                if($('chatImagenModal'))bootstrap.Modal.getInstance($('chatImagenModal'))?.hide();
+                selected=null;root.classList.remove('chat-selected');$('chatPanel').classList.add('d-none');$('chatLista').replaceChildren();$('chatMensajes').replaceChildren();$('chatEventos').replaceChildren();
+                $('chatAnterior').disabled=true;$('chatSiguiente').disabled=true;
+                if($('chatUsuario'))$('chatUsuario').replaceChildren(new Option('Sin asignar',''));
+                reflejarResponsable();return;
+            }
             $("chatLista").replaceChildren(
                 ...d.conversaciones.data.map((c) => {
                     const b = node(
@@ -175,10 +207,21 @@
                         c.nombre + " · " + c.estado,
                         "list-group-item list-group-item-action text-break",
                     );
-                    b.type = "button";
+                    b.type = "button";b.dataset.chatId=c.id;
+                    b.classList.toggle('chat-active', selected?.id === c.id);
+                    const initials=(c.nombre || '?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+                    b.replaceChildren(node('span',initials,'chat-avatar'));
+                    const info=node('span',null,'chat-list-info');
+                    info.append(node('strong',c.nombre),node('small',({sin_asignar:'Sin asignar',en_atencion:'En atención',atendida:'Atendida'})[c.estado] || c.estado));
+                    b.append(info);
+                    if(Number(c.unread_count)>0){const dot=node('span',null,'chat-unread-dot');dot.setAttribute('aria-label','Mensajes sin leer');dot.title='Mensajes sin leer';b.append(dot);}
+                    if(c.last_timestamp) b.append(node('small',new Date(c.last_timestamp*1000).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit'}),'chat-list-time'));
                     b.onclick = () => {
+                        if(selected?.id!==c.id){clearAttachment();if($('chatImagenModal'))bootstrap.Modal.getInstance($('chatImagenModal'))?.hide();}
                         selected = c; root.classList.add("chat-selected");
                         offset = 0;
+                        $('chatLista').querySelectorAll('button').forEach(el=>el.classList.toggle('chat-active',el===b));
+                        $('chatMensajes').replaceChildren(node('p','Cargando conversación…','chat-history-empty'));
                         $("chatPanel").classList.remove("d-none");
                         $("chatNombre").textContent = c.nombre;
                         $("chatResponsable").textContent =
@@ -215,6 +258,7 @@
                 !d.conversaciones.data.some((c) => c.id === selected.id)
             ) {
                 selected = null;
+                root.classList.remove('chat-selected');
                 $("chatPanel").classList.add("d-none");
                 $("chatMensajes").replaceChildren();
                 $("chatEventos").replaceChildren();
@@ -230,6 +274,17 @@
         busy = true;
         const id = selected.id;
         let failure = "";
+        const loadingAlert = ["responder", "documento", "asignar"].includes(path) && Boolean(window.Swal);
+        if (loadingAlert) {
+            Swal.fire({
+                title: "Cargando…",
+                text: path === "asignar" ? "Guardando asignación…" : "Enviando mensaje…",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading(),
+            });
+        }
         root.querySelectorAll("button").forEach((b) => (b.disabled = true));
         try {
             await api("/" + id + "/" + path, data);
@@ -242,48 +297,77 @@
             root.querySelectorAll("button").forEach(
                 (b) => (b.disabled = false),
             );
-            await load();
-            await history();
-            reflejarResponsable();
+            try {
+                await load();
+                await history();
+                reflejarResponsable();
+            } finally {
+                if (loadingAlert) Swal.close();
+            }
             if (failure) error(failure);
         }
     }
     $("chatVolver")?.addEventListener("click",()=>root.classList.remove("chat-selected"));
+    function clearAttachment() {
+        if(!$('chatPdf'))return;
+        $('chatPdf').value='';$('chatAdjuntoVista').classList.add('d-none');$('chatAdjuntoNombre').textContent='';$('chatTexto').required=true;
+    }
+    $('chatClip')?.addEventListener('click',()=>{if(!busy)$('chatPdf').click()});
+    $('chatQuitarAdjunto')?.addEventListener('click',()=>{if(!busy)clearAttachment()});
+    $('chatPdf')?.addEventListener('change',()=>{
+        const file=$('chatPdf').files[0];
+        if(!file){clearAttachment();return;}
+        if(file.size>15*1024*1024){clearAttachment();error('Selecciona un archivo de hasta 15 MB.');return;}
+        $('chatAdjuntoNombre').textContent=file.name;$('chatAdjuntoVista').classList.remove('d-none');$('chatTexto').required=false;error('');
+    });
+    $("chatTexto")?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+        event.preventDefault();
+        if (event.repeat || busy || !selected || selected.estado !== "en_atencion" || !selected.assigned_to) return;
+        if (!$("chatTexto").value.trim() && !$("chatPdf")?.files.length) return;
+        $("chatRespuesta").requestSubmit();
+    });
     $("chatRespuesta")?.addEventListener("submit", async (e) => {
         e.preventDefault();
-        if (
-            await action("responder", {
-                texto: $("chatTexto").value,
-                solicitud: uuid(),
-            })
-        )
-            $("chatTexto").value = "";
-    });
-    $("chatDocumento")?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const data = new FormData();
-        data.append("documento", $("chatPdf").files[0]);
-        data.append("solicitud", uuid());
-        if (await action("documento", data)) $("chatPdf").value = "";
+        if(busy)return;
+        const file=$('chatPdf')?.files[0];
+        if(file){
+            const data=new FormData();data.append('documento',file);data.append('solicitud',uuid());
+            if(await action('documento',data))clearAttachment();
+        }else if(await action('responder',{texto:$('chatTexto').value,solicitud:uuid()}))$('chatTexto').value='';
     });
     $("chatNota")?.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (await action("nota", { texto: $("chatNotaTexto").value }))
             $("chatNotaTexto").value = "";
     });
-    $("chatAsignacion")?.addEventListener("submit", (e) => {
-        e.preventDefault();
-        action("asignar", { usuario: $("chatUsuario").value || null });
-    });
+    const assignOnChange=async()=>{
+        const selector=$('chatUsuario');
+        if(!selected || busy){reflejarResponsable();return;}
+        const usuario=selector.value||null;
+        if(String(usuario||'')===String(selected.assigned_to||''))return;
+        selector.disabled=true;
+        if(window.jQuery)window.jQuery(selector).trigger('change.select2');
+        try{await action('asignar',{usuario});}
+        finally{selector.disabled=false;reflejarResponsable();}
+    };
+    if($('chatUsuario')){
+        if(window.jQuery)window.jQuery('#chatUsuario').on('change.chatAssignment',assignOnChange);
+        else $('chatUsuario').addEventListener('change',assignOnChange);
+    }
+    $('chatImagenModal')?.addEventListener('hidden.bs.modal',()=>{$('chatImagenAmpliada').removeAttribute('src')});
     $("chatCerrar")?.addEventListener("click", () =>
         action("atender", { estado: "atendida" }),
     );
     $("chatReabrir")?.addEventListener("click", () =>
         action("atender", { estado: "en_atencion" }),
     );
+    let searchTimer;
+    $('chatBuscar').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{page=1;load()},350)});
     $("chatFiltro").onchange = () => {
         page = 1;
         selected = null;
+        root.classList.remove('chat-selected');
         $("chatPanel").classList.add("d-none");
         load();
     };
@@ -309,5 +393,12 @@
             history();
         }
     }, 15000);
+    let revision=null,checkingChanges=false;
+    setInterval(async()=>{
+        if(document.hidden || busy || checkingChanges)return;
+        checkingChanges=true;
+        try{const d=await api('/cambios');if(d.revision!==revision){revision=d.revision;await load();await history();}}
+        catch{}finally{checkingChanges=false;}
+    },5000);
     load();
 })();
