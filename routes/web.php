@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Catalogos\ClienteController;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 
+Route::post('/webhooks/openwa', \App\Http\Controllers\Mensajeria\OpenWaWebhookController::class)->middleware('throttle:600,1')->name('openwa.webhook');
+
 // Landing Page Pública de la Agencia de Viajes ("De Viaje")
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/pagina/imagen/{image}', [LandingController::class, 'image'])->name('landing.image');
@@ -34,7 +36,10 @@ Route::middleware(['auth', EnsurePasswordIsChanged::class, \App\Http\Middleware\
     Route::post('/agencia/ventas/{venta}/whatsapp/enviar', [\App\Http\Controllers\Agencia\ApartadoWhatsAppController::class, 'whatsappEnviar'])->middleware('throttle:10,1')->name('agencia.ventas.whatsappEnviar');
     Route::prefix('mensajeria/conversaciones')->name('conversaciones.')->controller(\App\Http\Controllers\Mensajeria\ConversacionController::class)->group(function() {
         Route::get('/', 'index')->name('index');
+        Route::get('/cambios', fn()=>response()->json(['revision'=>\Illuminate\Support\Facades\Cache::get('openwa:conversation-revision','')])->header('Cache-Control','private, no-store'))->middleware('throttle:60,1')->name('cambios');
         Route::get('/datos', 'datos')->middleware('throttle:30,1')->name('datos');
+        Route::get('/{conversacion}/imagen','imagen')->middleware('throttle:120,1')->name('imagen');
+        Route::post('/{conversacion}/leer','leer')->middleware('throttle:30,1')->name('leer');
         Route::get('/{conversacion}/mensajes', 'mensajes')->middleware('throttle:60,1')->name('mensajes');
         Route::post('/{conversacion}/asignar', 'asignar')->name('asignar');
         Route::post('/{conversacion}/atender', 'atender')->name('atender');

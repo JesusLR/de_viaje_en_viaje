@@ -33,7 +33,7 @@ class OpenWaService
                 401, 403 => 'La credencial de Mensajería no es válida o no tiene acceso a este sistema.',
                 404 => 'No se encontró la sesión en este sistema. Comprueba también que OpenWA esté actualizado.',
                 400, 422 => str_ends_with($ruta, '/documents') ? 'WhatsApp no pudo aceptar el destinatario o el PDF. Confirma que el número tenga WhatsApp y que la sesión esté conectada.' : 'La sesión no está lista para esta acción o los datos no son válidos. Actualiza su estado e intenta de nuevo.',
-                409 => str_ends_with($ruta, '/documents') ? 'La sesión no está lista o el envío está en proceso. Revisa su estado antes de intentar de nuevo.' : 'Ya existe una sesión con ese nombre o hay una operación en curso.',
+                409 => str_contains($ruta, '/conversations') ? 'OpenWA no pudo consultar o utilizar el chat en su estado actual. Revisa la sesión y el registro de OpenWA.' : (str_ends_with($ruta, '/documents') ? 'La sesión no está lista o el envío está en proceso. Revisa su estado antes de intentar de nuevo.' : 'Ya existe una sesión con ese nombre o hay una operación en curso.'),
                 413 => 'El PDF supera el tamaño permitido por OpenWA.',
                 429 => 'Se alcanzó el límite de solicitudes. Espera un momento antes de intentar de nuevo.',
                 default => 'OpenWA no pudo completar la solicitud. Intenta de nuevo en unos momentos.',
@@ -78,7 +78,14 @@ class OpenWaService
     public function mensajes(string $id, string $chat, int $offset = 0): array { return $this->solicitud('GET', '/'.$id.'/conversations/messages?'.http_build_query(['chatId' => $chat, 'offset' => $offset])); }
     public function responderChat(string $id, string $chat, string $texto, string $solicitud): array { return $this->solicitud('POST', '/'.$id.'/conversations/text', ['chatId' => $chat, 'text' => $texto], $solicitud); }
 
-    public function documentoChat(string $id, string $chat, string $bytes, string $nombre, string $solicitud): array { return $this->solicitud('POST', '/'.$id.'/conversations/pdf', ['chatId'=>$chat,'base64'=>base64_encode($bytes),'filename'=>$nombre], $solicitud); }
+    public function documentoChat(string $id, string $chat, string $bytes, string $nombre, string $solicitud, string $mime = 'application/pdf'): array { return $this->solicitud('POST', '/'.$id.'/conversations/files', ['chatId'=>$chat,'base64'=>base64_encode($bytes),'filename'=>$nombre,'mimetype'=>$mime], $solicitud); }
+
+    public function imagenChat(string $id,string $chat,string $message): array {return $this->solicitud('GET','/'.$id.'/conversations/media?'.http_build_query(['chatId'=>$chat,'messageId'=>$message]));}
+    public function leerChat(string $id,string $chat): array {return $this->solicitud('POST','/'.$id.'/conversations/read',['chatId'=>$chat]);}
+
+    public function probarWebhook(string $id): array {return $this->solicitud('POST','/'.$id.'/webhook/test',['url'=>config('services.openwa.webhook_url')]);}
+
+    public function registrarWebhook(string $id): array {return $this->solicitud('POST','/'.$id.'/webhook',['url'=>config('services.openwa.webhook_url'),'secret'=>config('services.openwa.webhook_secret')]);}
 
     public function crear(string $nombre): array
     {

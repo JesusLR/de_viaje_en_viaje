@@ -38,12 +38,18 @@ class ConversacionController extends Controller
 
     public function datos(Request $r)
     {
-        $r->validate(['estado' => ['nullable', Rule::in(['sin_asignar', 'en_atencion', 'atendida'])]]);
+        $r->validate(['buscar'=>'nullable|string|max:150','estado' => ['nullable', Rule::in(['sin_asignar', 'en_atencion', 'atendida'])]]);
+        try {
+            $sesiones = array_values(array_filter($this->openwa->sesiones(), fn($s)=>$s['estado']==='ready' && $s['motorActivo']));
+        } catch (OpenWaException $e) {
+            return $this->sinConexion('No se pudo comprobar la conexión con OpenWA. '.$e->getMessage());
+        }
+        if (!$sesiones) return $this->sinConexion('No hay una sesión de WhatsApp conectada.');
         try {
             $lock = Cache::lock('whatsapp:sync-conversations', 60);
             if (! Cache::has('whatsapp:sync-conversations:recent') && $lock->get()) {
                 try {
-                    foreach ($this->openwa->sesiones() as $s) {
+                    foreach ($sesiones as $s) {
                         if ($s['estado'] !== 'ready' || ! $s['motorActivo']) {
                             continue;
                         }
@@ -66,7 +72,7 @@ class ConversacionController extends Controller
                                     });
                                 }
                             }
-                            $c->update(['nombre' => mb_substr($chat['name'] ?? $chat['id'], 0, 255), 'last_timestamp' => max($c->last_timestamp, (int) ($chat['timestamp'] ?? 0))]);
+                            $c->update(['unread_count'=>max(0,min(100000,(int)($chat['unreadCount']??0))),'nombre' => mb_substr($chat['name'] ?? $chat['id'], 0, 255), 'last_timestamp' => max($c->last_timestamp, (int) ($chat['timestamp'] ?? 0))]);
                         }
                     }
                     Cache::put('whatsapp:sync-conversations:recent', true, 15);
@@ -77,15 +83,39 @@ class ConversacionController extends Controller
         } catch (OpenWaException $e) {
             $error = $e->getMessage();
         }
-        $q = WhatsAppConversation::with('responsable');
+        $q = WhatsAppConversation::with('responsable')->whereIn('session_id', array_column($sesiones,'id'));
         if (! $r->user()->hasPermission('conversaciones.todos')) {
             $q->where('assigned_to', $r->user()->id);
         }
+        if ($r->filled('buscar')) $q->where(fn($query)=>$query->where('nombre','like','%'.$r->buscar.'%')->orWhere('chat_id','like','%'.$r->buscar.'%'));
         if ($r->filled('estado')) {
             $q->where('estado', $r->estado);
         }
 
-        return response()->json(['conversaciones' => $q->orderByDesc('last_timestamp')->paginate(30), 'usuarios' => $r->user()->hasPermission('conversaciones.asignar') ? User::where('lActivo', true)->where('lDev', false)->get()->filter(fn ($u) => $u->hasPermission('conversaciones.ver') && $u->hasPermission('conversaciones.responder'))->map(fn ($u) => ['id' => $u->id, 'nombre' => $u->nombre_completo])->values() : [], 'aviso' => $error ?? null])->header('Cache-Control', 'private, no-store');
+        return response()->json(['conectado'=>true,'conversaciones' => $q->orderByDesc('last_timestamp')->paginate(30), 'usuarios' => $r->user()->hasPermission('conversaciones.asignar') ? User::where('lActivo', true)->where('lDev', false)->get()->filter(fn ($u) => $u->hasPermission('conversaciones.ver') && $u->hasPermission('conversaciones.responder'))->map(fn ($u) => ['id' => $u->id, 'nombre' => $u->nombre_completo])->values() : [], 'aviso' => $error ?? null])->header('Cache-Control', 'private, no-store');
+    }
+
+    private function sinConexion(string $aviso)
+    {
+        return response()->json(['conectado'=>false,'conversaciones'=>WhatsAppConversation::whereRaw('1=0')->paginate(30),'usuarios'=>[],'aviso'=>$aviso])->header('Cache-Control','private, no-store');
+    }
+
+    public function imagen(Request $r,WhatsAppConversation $conversacion) {
+        $this->acceso($conversacion);$r->validate(['mensaje'=>'required|string|max:500']);
+        try {$data=$this->openwa->imagenChat($conversacion->session_id,$conversacion->chat_id,$r->mensaje);}
+        catch(OpenWaException $e){abort(404,'Imagen no disponible.');}
+        abort_unless(in_array($data['mimetype']??'', ['image/jpeg','image/png','image/webp','image/gif']),404);
+        $bytes=base64_decode($data['data']??'',true);
+        abort_unless($bytes && strlen($bytes)<=15*1024*1024 && @getimagesizefromstring($bytes),404);
+        $this->acceso($conversacion->fresh());
+        return response($bytes)->withHeaders(['Content-Type'=>$data['mimetype'],'Cache-Control'=>'private, no-store','X-Content-Type-Options'=>'nosniff']);
+    }
+    public function leer(WhatsAppConversation $conversacion) {
+        $this->acceso($conversacion);
+        try {$result=$this->openwa->leerChat($conversacion->session_id,$conversacion->chat_id);}
+        catch(OpenWaException $e){return response()->json(['message'=>'No se pudo marcar como leída.'],503);}
+        if(!($result['success']??false)) return response()->json(['message'=>'WhatsApp no confirmó la lectura.'],409);
+        $conversacion->update(['unread_count'=>0]);return response()->json(['ok'=>true]);
     }
 
     public function mensajes(Request $request, WhatsAppConversation $conversacion)
@@ -97,6 +127,10 @@ class ConversacionController extends Controller
         } catch (OpenWaException $e) {
             return response()->json(['message' => $e->getMessage()], 503);
         }
+        foreach ($datos['messages'] as &$message) {
+            if (($message['type']??null)==='image' && !empty($message['mediaId'])) $message['image_url']=route('conversaciones.imagen',['conversacion'=>$conversacion->id,'mensaje'=>$message['mediaId']]);
+        }
+        unset($message);
         $datos['eventos'] = DB::table('whatsapp_conversation_events')->leftJoin('users', 'users.id', '=', 'user_id')->where('conversation_id', $conversacion->id)->orderByDesc('whatsapp_conversation_events.id')->limit(100)->get(['texto', 'tipo', 'users.name', 'whatsapp_conversation_events.created_at']);
         $datos['cliente'] = null;
         if (preg_match('/^([0-9]+)@(c\.us|s\.whatsapp\.net)$/D', $conversacion->chat_id, $numero)) {
@@ -166,12 +200,13 @@ class ConversacionController extends Controller
 
     public function documento(Request $r, WhatsAppConversation $conversacion)
     {
-        $r->validate(['documento' => 'required|file|mimes:pdf|max:15360', 'solicitud' => 'required|uuid']);
+        $r->validate(['documento' => 'required|file|max:15360', 'solicitud' => 'required|uuid']);
         $this->acceso($conversacion);
         abort_unless($conversacion->estado === 'en_atencion' && $conversacion->assigned_to, 422, 'Asigna un responsable y abre la atención de esta conversación antes de enviar documentos.');
         $bytes = file_get_contents($r->file('documento')->getRealPath());
-        abort_unless(str_starts_with($bytes, '%PDF-'), 422, 'El archivo debe ser un PDF válido.');
-        $r->merge(['texto' => '[PDF]']);
+        $extension = strtolower($r->file('documento')->getClientOriginalExtension());
+        abort_if($extension === 'pdf' && !str_starts_with($bytes, '%PDF-'),422,'El archivo debe ser un PDF válido.');
+
         try {
             return DB::transaction(function () use ($conversacion, $r, $bytes) {
                 $c = WhatsAppConversation::lockForUpdate()->findOrFail($conversacion->id);
@@ -181,20 +216,21 @@ class ConversacionController extends Controller
                 $hash = hash('sha256', $c->id.$bytes);
                 if ($prev = Cache::get($key)) {
                     abort_unless($prev['hash'] === $hash, 422);
-                    abort_unless($prev['ok'], 409, 'Revisa el chat antes de reenviar el PDF.');
+                    abort_unless($prev['ok'], 409, 'Revisa el chat antes de reenviar el archivo.');
 
                     return response()->json(['ok' => true]);
                 }
                 Cache::put($key, ['hash' => $hash, 'ok' => false], 86400);
-                $nombre = NombreDocumento::parte(pathinfo($r->file('documento')->getClientOriginalName(), PATHINFO_FILENAME), 'documento').'.pdf';
-                $this->openwa->documentoChat($c->session_id, $c->chat_id, $bytes, $nombre, $r->solicitud);
+                $ext = preg_replace('/[^a-z0-9]/','',strtolower($r->file('documento')->getClientOriginalExtension()));
+                $nombre = NombreDocumento::parte(pathinfo($r->file('documento')->getClientOriginalName(), PATHINFO_FILENAME), 'documento').($ext ? '.'.substr($ext,0,12) : '');
+                $this->openwa->documentoChat($c->session_id, $c->chat_id, $bytes, $nombre, $r->solicitud, $r->file('documento')->getMimeType() ?: 'application/octet-stream');
                 Cache::put($key, ['hash' => $hash, 'ok' => true], 86400);
-                $this->evento($c, 'documento', 'PDF enviado: '.$nombre);
+                $this->evento($c, 'documento', 'Archivo enviado: '.$nombre);
 
                 return response()->json(['ok' => true]);
             });
         } catch (OpenWaException $e) {
-            return response()->json(['message' => 'No se pudo confirmar el envío del PDF. Revisa el chat antes de repetir.'], 503);
+            return response()->json(['message' => 'No se pudo confirmar el envío del archivo. Revisa el chat antes de repetir.'], 503);
         }
     }
 
