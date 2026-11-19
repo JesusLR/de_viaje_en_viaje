@@ -6,6 +6,16 @@ Instalación en servidor con Docker: [guía de instalación y respaldos](docs/DO
 
 Integración de WhatsApp, permisos y despliegue de ambos proyectos: [guía de mensajería](docs/mensajeria.md).
 
+## Opciones de precio para hospedaje
+
+En **Servicios → Nuevo / Editar → Precios**, selecciona **Varias opciones de precio / habitación** para capturar nombre, descripción, tipo de cama, capacidad, costo y precio de cada opción. Los importes corresponden a la **estancia completa**, con cobro por habitación o por persona; no se calculan por noche ni por temporada.
+
+El catálogo muestra **Desde** y el detalle de las opciones activas. Al cotizar, vender o agregar un servicio a un apartado se debe elegir una opción. En tarifas por habitación, la cantidad indica habitaciones e incluye la capacidad publicada; cada opción tiene su propio interruptor **Activar precio para menor** e importe independiente (en blanco o en cero: gratis). En cobro por habitación con el interruptor apagado, adultos y menores están incluidos hasta la capacidad indicada; al activarlo, los menores agregados se cobran por separado. Al vender se captura cuántos menores viajarán y se muestra su precio unitario y subtotal. Los menores incluidos en una habitación también se registran, a precio cero; su cantidad no puede superar la capacidad de las habitaciones seleccionadas. Las promociones vigentes del servicio se aplican a cada opción.
+
+La opción y sus precios quedan guardados en la operación y sus PDF, aunque posteriormente se modifique o desactive la tarifa. Los servicios existentes conservan precio único. Los permisos `servicios.precios`, `servicios.costos.ver` y `servicios.costos.editar` protegen la captura y consulta de estas tarifas; el catálogo nunca publica costos.
+
+El despliegue requiere `php artisan migrate --force`. No requiere seeders ni modifica las operaciones existentes.
+
 ---
 
 ## 🏛️ Arquitectura del Sistema

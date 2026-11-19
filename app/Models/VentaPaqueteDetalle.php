@@ -30,6 +30,7 @@ class VentaPaqueteDetalle extends Model
     }
 
     protected $casts = [
+        'opcion_precio' => 'array',
         'iCantidadMenores' => 'integer',
         'dPrecioMenor' => 'decimal:2',
         'itinerario' => 'array',

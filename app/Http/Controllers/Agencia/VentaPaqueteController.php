@@ -118,7 +118,8 @@ class VentaPaqueteController extends Controller
         $data = $request->validate([
             'iIDCliente' => ['required', Rule::exists('clientes', 'iID')->where('lActivo', 1)],
             'items' => 'required|array|min:1|max:30',
-            'items.*.iIDServicio' => 'required|integer|distinct|exists:servicio_turisticos,iID',
+            'items.*.iIDServicio' => 'required|integer|exists:servicio_turisticos,iID',
+            'items.*.opcion_id' => 'nullable|uuid',
             'items.*.iCantidad' => 'required|integer|min:1|max:1000',
             'items.*.iCantidadMenores' => 'sometimes|integer|min:0|max:1000',
             'accion' => ['nullable', Rule::in(['vender', 'apartar'])],
@@ -132,6 +133,7 @@ class VentaPaqueteController extends Controller
         if ($request->filled('cTipoPromocionVenta') || $request->filled('dValorPromocionVenta')) {
             \Illuminate\Support\Facades\Gate::authorize('vender.promocion');
         }
+        app(\App\Services\OpcionesPrecioService::class)->validarPartidas($data['items']);
         $venta = DB::transaction(function () use ($data, $request) {
             $detalles = [];
             $total = 0;
@@ -147,7 +149,7 @@ class VentaPaqueteController extends Controller
                     throw ValidationException::withMessages(['items' => 'Los paquetes de una operación deben tener la misma moneda.']);
                 }
                 $moneda = $paquete->cMoneda;
-                $detalle = $this->detalleServicio($paquete, $item['iCantidad'], $item['iCantidadMenores'] ?? 0);
+                $detalle = $this->detalleServicio($paquete, $item['iCantidad'], $item['iCantidadMenores'] ?? 0, $item['opcion_id'] ?? null);
                 $total += (int) round($detalle['dSubtotal'] * 100);
                 $detalles[] = $detalle;
             }
@@ -368,7 +370,7 @@ class VentaPaqueteController extends Controller
 
     public function agregarPaquete(Request $request, VentaPaquete $venta)
     {
-        $data = $request->validate(['iIDServicio' => 'required|integer|exists:servicio_turisticos,iID', 'iCantidad' => 'required|integer|min:1|max:1000', 'iCantidadMenores' => 'sometimes|integer|min:0|max:1000']);
+        $data = $request->validate(['opcion_id' => 'nullable|uuid', 'iIDServicio' => 'required|integer|exists:servicio_turisticos,iID', 'iCantidad' => 'required|integer|min:1|max:1000', 'iCantidadMenores' => 'sometimes|integer|min:0|max:1000']);
         DB::transaction(function () use ($venta, $data) {
             $locked = VentaPaquete::lockForUpdate()->findOrFail($venta->iID);
             if ($locked->cancelada_at || $locked->finalizada_at) {
@@ -378,7 +380,7 @@ class VentaPaqueteController extends Controller
             if ($paquete->c_estatus_disponibilidad !== 'ACTIVO' || $paquete->cMoneda !== $locked->cMoneda) {
                 throw ValidationException::withMessages(['iIDServicio' => 'Selecciona un paquete vigente de la misma moneda.']);
             }
-            $detalle = $this->detalleServicio($paquete, $data['iCantidad'], $data['iCantidadMenores'] ?? 0);
+            $detalle = $this->detalleServicio($paquete, $data['iCantidad'], $data['iCantidadMenores'] ?? 0, $data['opcion_id'] ?? null);
             $subtotal = (int) round($detalle['dSubtotal'] * 100);
             $total = (int) round((float) $locked->dTotal * 100) + $subtotal;
             if ($total > 999999999999) {
@@ -391,8 +393,9 @@ class VentaPaqueteController extends Controller
         return back()->with('success', 'Paquete agregado al apartado.');
     }
 
-    private function detalleServicio(ServicioTuristico $paquete, int $cantidad, int $menores = 0): array
+    private function detalleServicio(ServicioTuristico $paquete, int $cantidad, int $menores = 0, ?string $opcionId = null): array
     {
+        $paquete = app(\App\Services\OpcionesPrecioService::class)->resolver($paquete, $opcionId, $menores, $cantidad);
         if ($menores > 0 && !$paquete->lPrecioMenorActivo) {
             throw ValidationException::withMessages(['iCantidadMenores' => 'El paquete '.$paquete->cNombre.' no tiene activa la tarifa para menores.']);
         }
@@ -402,6 +405,7 @@ class VentaPaqueteController extends Controller
         $promocion = $paquete->l_promocion_vigente;
 
         return [
+            'opcion_precio' => $paquete->opcionSeleccionada,
             'iIDServicio' => $paquete->iID, 'cPaquete' => $paquete->cNombre, 'iCantidad' => $cantidad,
             'itinerario' => $paquete->itinerarioSnapshot(),
             'cItinerarioPdf' => $paquete->cTipoItinerario === 'PDF' ? $paquete->cItinerarioPdf : null,

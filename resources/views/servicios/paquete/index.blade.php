@@ -32,5 +32,7 @@
 <link href="{{ asset('css/servicios-module.css') }}" rel="stylesheet">
 @endpush
 @push('scripts')
+<script src="{{ asset('js/servicios/opciones-precio.js') }}?v={{ filemtime(public_path('js/servicios/opciones-precio.js')) }}"></script>
+<script src="{{ asset('js/servicios/detalle-opciones-precio.js') }}?v={{ filemtime(public_path('js/servicios/detalle-opciones-precio.js')) }}"></script>
 <script src="{{ asset('js/servicios/servicio.js') }}?v={{ filemtime(public_path('js/servicios/servicio.js')) }}"></script>
 @endpush

@@ -34,7 +34,7 @@
     </div><div class="vender-confirmacion mt-4 pt-3 border-top"><p class="text-muted mb-0 small" id="explicacion"></p><button id="guardarVenta" class="vender-guardar" @disabled($clientes->isEmpty() || $paquetes->isEmpty())><i class="fas fa-check" aria-hidden="true"></i><span id="guardarVentaTexto">Registrar venta liquidada</span></button></div></div>
     @if($clientes->isEmpty() || $paquetes->isEmpty())<div class="alert alert-warning mt-3">Necesitas clientes activos y paquetes vigentes para registrar una operación.</div>@endif
 </form>
-<template id="filaPaquete"><tr><td><select class="form-select paquete" required>@include('agencia.ventas.opciones-paquetes')</select><small class="promocion d-block mt-2"></small></td><td class="fechas text-nowrap">Selecciona un paquete</td><td><label class="small d-block">Adultos<input class="form-control cantidad" type="number" min="1" max="1000" value="1" required></label><div class="menores-container d-none mt-2"><label class="small d-block">Menores<input class="form-control menores" type="number" min="0" max="1000" value="0" disabled></label><small class="tarifa-menor text-muted"></small></div></td><td class="regular text-nowrap">0.00</td><td class="descuento text-success text-nowrap">0.00</td><td class="subtotal text-nowrap text-end">0.00</td><td><button type="button" class="apartado-icono accion-cancelar quitar" title="Quitar paquete" aria-label="Quitar paquete"><i class="fas fa-xmark" aria-hidden="true"></i></button></td></tr></template>
+<template id="filaPaquete"><tr><td><select class="form-select paquete" required>@include('agencia.ventas.opciones-paquetes')</select>@include('agencia.ventas.selector-opcion-precio')<small class="promocion d-block mt-2"></small></td><td class="fechas text-nowrap">Selecciona un paquete</td><td><label class="small d-block"><span class="cantidad-etiqueta">Adultos</span><input class="form-control cantidad" type="number" min="1" max="1000" value="1" required></label><div class="menores-container d-none mt-2"><label class="small d-block">Menores<input class="form-control menores" type="number" min="0" max="1000" value="0" disabled></label><small class="tarifa-menor text-muted"></small></div></td><td class="regular text-nowrap">0.00</td><td class="descuento text-success text-nowrap">0.00</td><td class="text-nowrap text-end"><span class="subtotal">0.00</span><small class="subtotal-menores d-block text-muted"></small></td><td><button type="button" class="apartado-icono accion-cancelar quitar" title="Quitar paquete" aria-label="Quitar paquete"><i class="fas fa-xmark" aria-hidden="true"></i></button></td></tr></template>
 </div>
 @endsection
 @push('styles')
@@ -42,6 +42,7 @@
 <link href="{{ asset('css/vender-module.css') }}" rel="stylesheet">
 @endpush
 @push('scripts')
+<script src="{{ asset('js/opciones-precio-operacion.js') }}?v={{ filemtime(public_path('js/opciones-precio-operacion.js')) }}"></script>
 <script>
 const lineas = document.getElementById('lineas');
 let siguienteFila = 0;
@@ -50,7 +51,7 @@ function calcular() {
     const totales = {};
     const descuentos = {};
     lineas.querySelectorAll('tr').forEach(fila => {
-        const opcion = fila.querySelector('.paquete').selectedOptions[0];
+        const opcion = window.opcionPrecioOperacion(fila, fila.querySelector('.paquete').selectedOptions[0]);
         const cantidad = Number(fila.querySelector('.cantidad').value);
         const moneda = opcion.dataset.moneda;
         const admiteMenores = opcion.dataset.menoresActivo === '1';
@@ -60,7 +61,8 @@ function calcular() {
         if (!admiteMenores) menoresInput.value = 0;
         const menores = admiteMenores ? Number(menoresInput.value) : 0;
         const precioMenor = Math.round(Number(opcion.dataset.precioMenor || 0) * 100);
-        fila.querySelector('.tarifa-menor').textContent = admiteMenores ? (precioMenor === 0 ? 'Gratis para menores' : formato(precioMenor / 100) + ' ' + moneda + ' por menor') : '';
+        fila.querySelector('.tarifa-menor').textContent = admiteMenores ? formato(precioMenor / 100) + ' ' + moneda + ' por menor' + (opcion.dataset.menoresIncluidos === '1' ? ' · Incluido en la habitación' : '') : '';
+        fila.querySelector('.subtotal-menores').textContent = admiteMenores && menores > 0 ? menores + ' menores × ' + formato(precioMenor / 100) + ' = ' + formato(precioMenor * menores / 100) + ' ' + moneda : '';
         const centavos = Math.round(Number(opcion.dataset.precio || 0) * 100) * cantidad + precioMenor * menores;
         const regular = Math.round(Number(opcion.dataset.regular || 0) * 100);
         const descuento = Math.max(0, regular - Math.round(Number(opcion.dataset.precio || 0) * 100));
@@ -101,13 +103,15 @@ function agregar(item = {}) {
     fila.querySelector('.paquete').value = item.iIDServicio || '';
     fila.querySelector('.cantidad').value = item.iCantidad || 1;
     fila.querySelector('.menores').value = item.iCantidadMenores || 0;
+    fila.querySelector('.opcion-precio').name = `items[${siguienteFila}][opcion_id]`;
+    fila.querySelector('.opcion-precio').dataset.anterior = item.opcion_id || '';
     siguienteFila++;
     lineas.appendChild(fila);
     window.inicializarControles(lineas);
     calcular();
 }
 document.getElementById('agregarFila').addEventListener('click', () => { if (lineas.children.length < 30) agregar(); });
-$(lineas).on('change', '.paquete', calcular);
+$(lineas).on('change', '.paquete, .opcion-precio', calcular);
 $('#promocionVentaTipo').on('change', calcular);
 document.getElementById('promocionVentaValor')?.addEventListener('input', calcular);
 lineas.addEventListener('input', calcular);

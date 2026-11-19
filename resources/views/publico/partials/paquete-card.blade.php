@@ -20,10 +20,10 @@
         @endif
         @include('publico.partials.precio-menor')
         <div class="landing-package-bottom">
-            <div><small>Precio por persona</small>@if($paquete->l_promocion_vigente)<del>{{ number_format($paquete->dPrecioVenta, 2) }}</del>@endif<strong>{{ number_format($paquete->d_precio_final, 2) }} <small>{{ $paquete->cMoneda }}</small></strong></div>
+            <div><small>{{ $paquete->lOpcionesPrecio ? 'Desde · estancia completa' : 'Precio por persona' }}</small>@if($paquete->l_promocion_vigente)<del>{{ number_format($paquete->dPrecioVenta, 2) }}</del>@endif<strong>{{ number_format($paquete->d_precio_final, 2) }} <small>{{ $paquete->cMoneda }}</small></strong></div>
             <a class="landing-package-link" aria-label="Ver detalles de {{ $paquete->cNombre }}" href="{{ route('catalogo.publico.show', $paquete->iID) }}"><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
         </div>
-        @if($paquete->l_promocion_vigente)
+        @if($paquete->l_promocion_vigente && !$paquete->lOpcionesPrecio)
             <small class="landing-discount">Descuento: {{ number_format($paquete->d_monto_descuento, 2) }} {{ $paquete->cMoneda }} por persona</small>
         @endif
     </div>

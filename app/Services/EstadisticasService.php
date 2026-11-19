@@ -64,8 +64,11 @@ class EstadisticasService
     {
         $cantidad = $this->ventas($f)->count();
         $importe = !empty($f['servicio']) ? (float) $this->detalles($f)->sum('d.dSubtotal') : (float) $this->ventas($f)->sum('v.dTotal');
-        $cantidades = $this->detalles($f)->selectRaw('coalesce(sum(d.iCantidad),0) adultos, coalesce(sum(d.iCantidadMenores),0) menores, coalesce(sum(d.dDescuentoUnitario * d.iCantidad),0) descuentos')->first();
-        $ranking = $this->detalles($f)->selectRaw('d.iIDServicio id, max(d.cPaquete) nombre, count(distinct v.iID) ventas, sum(d.iCantidad) adultos, sum(d.iCantidadMenores) menores, sum(d.dSubtotal) importe')
+        $esHabitacion = "coalesce(json_unquote(json_extract(d.opcion_precio, '$.unidad')), '') = 'HABITACION'";
+        $adultos = "sum(case when $esHabitacion then 0 else d.iCantidad end)";
+        $habitaciones = "sum(case when $esHabitacion then d.iCantidad else 0 end)";
+        $cantidades = $this->detalles($f)->selectRaw("coalesce($adultos,0) adultos, coalesce($habitaciones,0) habitaciones,".' coalesce(sum(d.iCantidadMenores),0) menores, coalesce(sum(d.dDescuentoUnitario * d.iCantidad),0) descuentos')->first();
+        $ranking = $this->detalles($f)->selectRaw('d.iIDServicio id, max(d.cPaquete) nombre, count(distinct v.iID) ventas, '.$adultos.' adultos, '.$habitaciones.' habitaciones, sum(d.iCantidadMenores) menores, sum(d.dSubtotal) importe')
             ->groupBy('d.iIDServicio')->orderByDesc('importe')->limit(10)->get();
         $vendedores = (!empty($f['servicio']) ? $this->detalles($f) : $this->ventas($f))
             ->leftJoin('users as u', 'u.id', '=', 'v.iIDUsuario')
@@ -135,9 +138,10 @@ class EstadisticasService
                     if (!empty($f['servicio']) && (int) $partida['servicio_id'] !== (int) $f['servicio']) continue;
                     $coincide = true; $importeCotizado += (int) round($partida['subtotal'] * 100);
                     $id = $partida['servicio_id'];
-                    if (!isset($cotizaciones['servicios'][$id])) $cotizaciones['servicios'][$id] = ['nombre' => $partida['nombre'], 'solicitudes' => 0, 'personas' => 0];
+                    if (!isset($cotizaciones['servicios'][$id])) $cotizaciones['servicios'][$id] = ['nombre' => $partida['nombre'], 'solicitudes' => 0, 'personas' => 0, 'habitaciones' => 0];
                     $cotizaciones['servicios'][$id]['solicitudes']++;
-                    $cotizaciones['servicios'][$id]['personas'] += $partida['adultos'] + $partida['menores'];
+                    if (($partida['opcion_precio']['unidad'] ?? '') === 'HABITACION') $cotizaciones['servicios'][$id]['habitaciones'] += $partida['adultos'];
+                    else $cotizaciones['servicios'][$id]['personas'] += $partida['adultos'] + $partida['menores'];
                 }
                 if ($coincide) $cotizaciones['cantidad']++;
             }
@@ -156,7 +160,7 @@ class EstadisticasService
             $meses = $anios;
         }
         return ['agrupacion' => $agrupacion, 'ventas' => ['cantidad' => $cantidad, 'importe' => $importe, 'ticket' => $cantidad ? $importe / $cantidad : 0,
-            'adultos' => (int) $cantidades->adultos, 'menores' => (int) $cantidades->menores, 'descuentos' => (float) $cantidades->descuentos, 'eliminadas' => $eliminadas],
+            'habitaciones' => (int) $cantidades->habitaciones, 'adultos' => (int) $cantidades->adultos, 'menores' => (int) $cantidades->menores, 'descuentos' => (float) $cantidades->descuentos, 'eliminadas' => $eliminadas],
             'apartados' => ['estados' => $estados, 'total' => $apartados->count(), 'conversion' => $apartados->count() ? $estados['Finalizados'] * 100 / $apartados->count() : 0],
             'finanzas' => $finanzas, 'web' => $web, 'cotizaciones' => $cotizaciones, 'ranking' => $ranking, 'vendedores' => $vendedores, 'meses' => $meses];
     }
