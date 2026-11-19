@@ -2,3 +2,15 @@
 #modalServicio .modal-content,#modalDetalleServicio .modal-content{border-radius:18px;overflow:hidden;box-shadow:0 24px 80px rgba(15,23,42,.16)!important}#modalServicio .modal-header,#modalDetalleServicio .modal-header{background:#f8fafc!important;color:#25324b!important;border-bottom:1px solid #e8edf4;padding:18px 22px}#modalServicio .modal-title,#modalDetalleServicio .modal-title{font-size:15px;font-weight:650!important}#modalServicio .modal-title i,#modalDetalleServicio .modal-title i{color:#536fe8!important}#modalServicio .btn-close,#modalDetalleServicio .btn-close{filter:none;background-color:#edf1f7;border-radius:10px;padding:10px}#modalServicio .modal-body,#modalDetalleServicio .modal-body{background:#f8fafc!important}#modalServicio .card,#modalDetalleServicio .card{border:1px solid #e8edf4!important;border-radius:14px!important;box-shadow:none!important}#modalServicio .form-label{font-size:12px;color:#64748b}#modalServicio .form-control,#modalServicio .form-select{border-color:#e0e6ef;border-radius:10px;font-size:13px;min-height:40px}#modalServicio .nav-pills{border:1px solid #e8edf4;border-radius:12px!important;box-shadow:none!important}#modalServicio .nav-link{font-size:12px;color:#79869b;border-radius:9px}#modalServicio .nav-link.active{background:#536fe8;color:white}#modalServicio .btn,#modalDetalleServicio .btn{border-radius:10px;font-size:12px;font-weight:600;box-shadow:none!important}#modalServicio .btn-primary,#modalServicio .btn-success,#modalDetalleServicio .btn-primary{background:#536fe8;border-color:#536fe8}#modalServicio .select2-selection--single{border-color:#e0e6ef;border-radius:10px;min-height:40px}#modalServicio .modal-footer,#modalDetalleServicio .modal-footer{background:#fff;border-top:1px solid #e8edf4}
 @media(prefers-reduced-motion:reduce){.servicios-panel .apartado-icono:hover{transform:none}}
 #serviciosPaginacion .servicios-pie{padding:16px 22px;margin:0;border-top:1px solid #eef2f7;align-items:center}#serviciosPaginacion .dataTables_info{font-size:12px;color:#8793a5;padding:0}#serviciosPaginacion .pagination{margin:0;justify-content:flex-end}#serviciosPaginacion .page-link{font-size:12px}#serviciosPaginacion .page-item.active .page-link{background:#536fe8;border-color:#536fe8}
+
+/* Mantener continuo el borde de los importes con prefijo de moneda. */
+#modalServicio .input-group > .input-group-text:first-child {
+    border-radius: 10px 0 0 10px;
+    border-color: #e0e6ef;
+    min-height: 40px;
+    font-size: 13px;
+}
+#modalServicio .input-group > .form-control:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
