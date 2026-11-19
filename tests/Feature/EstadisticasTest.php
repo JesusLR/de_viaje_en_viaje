@@ -47,7 +47,7 @@ class EstadisticasTest extends TestCase
         $this->get(route('estadisticas.index', ['periodo' => 'historico', 'moneda' => 'TST', 'usuario' => $other->id, 'desde' => 'incorrecta', 'hasta' => 'incorrecta']))->assertOk()
             ->assertViewHas('datos', fn ($d) => $d['ventas']['cantidad'] === 2 && $d['ventas']['importe'] === 2000.0 && $d['agrupacion'] === 'anual')
             ->assertViewHas('filtros', fn ($f) => $f['desde'] === '1999-11-01' && (int) $f['usuario'] === $user->id)
-            ->assertSee('Histórico de todos los tiempos');
+            ->assertSee('Histórico · Del');
     }
 
     public function test_statistics_separate_sales_and_payments_and_exclude_deleted_and_voided(): void

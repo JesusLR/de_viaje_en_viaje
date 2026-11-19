@@ -38,6 +38,7 @@ class ServicioTuristico extends Model
     protected $attributes = ['lUsaVigencia' => true, 'lPrecioMenorActivo' => false, 'dPrecioMenor' => 0];
 
     protected $fillable = [
+        'lOpcionesPrecio', 'opciones_precio',
         'cTipoItinerario',
         'cItinerarioPdf',
         'iIDItinerario',
@@ -77,6 +78,7 @@ class ServicioTuristico extends Model
     ];
 
     protected $casts = [
+        'lOpcionesPrecio' => 'boolean', 'opciones_precio' => 'array',
         'lPublicarItinerario' => 'boolean',
         'lPrecioMenorActivo' => 'boolean',
         'dPrecioMenor' => 'float',

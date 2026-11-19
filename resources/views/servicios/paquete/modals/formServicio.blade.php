@@ -148,6 +148,7 @@
                         <div class="tab-pane fade" id="tab-precios" role="tabpanel">
                             <div class="card border-0 shadow-sm p-3">
                                 <div class="row g-3">
+                                    @include('servicios.paquete.modals.opciones-precio')
                                     <div class="col-md-4">
                                         <label for="dPrecioCompra" class="form-label fw-bold">Precio de Compra (Costo) <span class="text-danger">*</span></label>
                                         <div class="input-group">
@@ -175,7 +176,7 @@
                                         </select>
                                     </div>
 
-                                    <div class="col-12 mt-3">
+                                    <div class="col-12 mt-3" id="precioMenorGeneral">
                                         <input type="hidden" name="lPrecioMenorActivo" value="0">
                                         <div class="form-check form-switch mb-2">
                                             <input class="form-check-input" type="checkbox" id="lPrecioMenorActivo" name="lPrecioMenorActivo" value="1">

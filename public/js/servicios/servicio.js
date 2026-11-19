@@ -156,6 +156,8 @@ $(document).ready(function () {
                     $('#detDestino').text($('#tablaServicios').DataTable().row(function (idx, data) { return data.iID === oData.iID; }).data()?.cDestino || 'N/A');
                     $('#detProveedor').text($('#tablaServicios').DataTable().row(function (idx, data) { return data.iID === oData.iID; }).data()?.cProveedor || 'N/A');
 
+                    window.mostrarDetalleOpcionesPrecio(oData);
+
                     // Precios y Comerciales
                     let rowData = $('#tablaServicios').DataTable().row(function (idx, data) { return data.iID === oData.iID; }).data();
                     if (rowData) {
@@ -381,6 +383,7 @@ $(document).ready(function () {
     // Abrir Modal para Nuevo Servicio
     $('#btnNuevo').on('click', function () {
         $('#formServicio')[0].reset();
+        window.cargarOpcionesPrecio({});
         actualizarPrecioMenor();
         $('#iID').val(0);
         $('#abrirItinerario').addClass('d-none').removeAttr('href');
@@ -446,6 +449,7 @@ $(document).ready(function () {
                     $('#dPrecioMenor').val(oData.dPrecioMenor);
                     $('#lPrecioMenorActivo').prop('checked', !!oData.lPrecioMenorActivo).trigger('change');
                     $('#cMoneda').val(oData.cMoneda || 'MXN');
+                    window.cargarOpcionesPrecio(oData);
 
                     // Promociones
                     $('#lTienePromocion').prop('checked', oData.lTienePromocion == 1).trigger('change');

@@ -42,10 +42,12 @@ class CotizacionServicioController extends Controller
             'cliente_nombre' => 'exclude_unless:tipo_cliente,generico|required|string|max:255',
             'cNombre' => 'nullable|string|max:150', 'cObservaciones' => 'nullable|string|max:2000',
             'items' => 'required|array|min:1|max:30',
-            'items.*.iIDServicio' => 'required|integer|distinct|exists:servicio_turisticos,iID',
+            'items.*.iIDServicio' => 'required|integer|exists:servicio_turisticos,iID',
+            'items.*.opcion_id' => 'nullable|uuid',
             'items.*.iCantidad' => 'required|integer|min:1|max:1000',
             'items.*.iCantidadMenores' => 'sometimes|integer|min:0|max:1000',
         ]);
+        app(\App\Services\OpcionesPrecioService::class)->validarPartidas($data['items']);
         $cotizacion = DB::transaction(function () use ($data, $request) {
             $cliente = $data['tipo_cliente'] === 'registrado' ? Cliente::where('lActivo', true)->lockForUpdate()->findOrFail($data['iIDCliente']) : null;
             $partidas = []; $moneda = null; $total = 0;
@@ -55,13 +57,14 @@ class CotizacionServicioController extends Controller
                 if ($moneda !== null && $moneda !== $servicio->cMoneda) throw ValidationException::withMessages(['items' => 'Los servicios deben tener la misma moneda.']);
                 $moneda = $servicio->cMoneda;
                 $adultos = (int) $item['iCantidad']; $menores = (int) ($item['iCantidadMenores'] ?? 0);
+                $servicio = app(\App\Services\OpcionesPrecioService::class)->resolver($servicio, $item['opcion_id'] ?? null, $menores, $adultos);
                 if ($menores && !$servicio->lPrecioMenorActivo) throw ValidationException::withMessages(['items' => 'El servicio '.$servicio->cNombre.' no admite tarifa para menores.']);
                 $precio = (int) round($servicio->d_precio_final * 100);
                 $regular = (int) round($servicio->dPrecioVenta * 100);
                 $precioMenor = $servicio->lPrecioMenorActivo ? (int) round($servicio->dPrecioMenor * 100) : null;
                 $subtotal = $precio * $adultos + ($precioMenor ?? 0) * $menores;
                 $total += $subtotal;
-                $partidas[] = ['servicio_id' => $servicio->iID, 'nombre' => $servicio->cNombre,
+                $partidas[] = ['opcion_precio' => $servicio->opcionSeleccionada, 'servicio_id' => $servicio->iID, 'nombre' => $servicio->cNombre,
                     'inicio' => $servicio->dFechaInicioViaje?->format('d/m/Y'), 'fin' => $servicio->dFechaFinViaje?->format('d/m/Y'),
                     'adultos' => $adultos, 'menores' => $menores, 'precio' => $precio / 100, 'precio_menor' => $precioMenor === null ? null : $precioMenor / 100,
                     'regular' => $regular / 100, 'descuento' => max(0, $regular - $precio) / 100,

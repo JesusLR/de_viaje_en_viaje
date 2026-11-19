@@ -41,7 +41,7 @@
                 </div>
 
                 <!-- Estado Financiero y Precios (Formato Tabla Formal) -->
-                <div class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card border-0 shadow-sm rounded-3 mb-3" id="detPreciosUnico">
                     <div class="card-header bg-white py-2 border-0">
                         <h6 class="m-0 font-weight-bold text-primary">
                             <i class="fas fa-balance-scale me-1"></i> Precios
@@ -91,6 +91,19 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-3 mb-3 d-none" id="detOpcionesPrecio">
+                    <div class="card-header bg-white py-2 border-0">
+                        <h6 class="m-0 fw-bold text-primary"><i class="fas fa-tags me-1"></i>Opciones de precio</h6>
+                        <small class="text-muted">Importes por estancia completa. El precio final incluye la promoción vigente.</small>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle mb-0">
+                            <thead class="table-light"><tr><th>Opción / Capacidad</th><th>Forma de cobro</th>@can('servicios.costos.ver')<th id="detOpcionesCosto" class="text-end">Costo</th>@endcan<th class="text-end">Precio regular</th><th class="text-end">Precio final</th><th class="text-end">Precio para menor</th><th>Estado</th></tr></thead>
+                            <tbody id="detOpcionesPrecioFilas"></tbody>
+                        </table>
                     </div>
                 </div>
 

@@ -205,6 +205,9 @@ class ServicioTuristicoController extends Controller
                 'urlItinerarioPdf'      => $oServ->cTipoItinerario === 'PDF' && $oServ->cItinerarioPdf ? route('servicios.paquetes.itinerarioArchivo', $oServ) : null,
                 'lPublicarItinerario'   => $oServ->lPublicarItinerario,
                 'cImagenPrincipal'      => $oServ->cImagenPrincipal ? asset(str_replace('public/', 'storage/', $oServ->cImagenPrincipal)) : null,
+                'lOpcionesPrecio' => $oServ->lOpcionesPrecio,
+                'opciones_precio' => $oServ->opciones_precio ?? [],
+                'tarifas_detalle' => app(\App\Services\OpcionesPrecioService::class)->publicas($oServ, false),
                 'dPrecioCompra'         => $oServ->dPrecioCompra,
                 'dPrecioVenta'          => $oServ->dPrecioVenta,
                 'lPrecioMenorActivo'    => $oServ->lPrecioMenorActivo,
@@ -365,6 +368,8 @@ class ServicioTuristicoController extends Controller
                 'lActivo'               => $request->boolean('lActivo', true) ? 1 : 0,
             ];
 
+            $aData = array_replace($aData, app(\App\Services\OpcionesPrecioService::class)->guardar($request, $actual));
+
             if ($esPdf && $request->hasFile('itinerarioPdfFile')) {
                 $aData['cItinerarioPdf'] = app(\App\Services\ItinerarioPdfService::class)->guardar($request->file('itinerarioPdfFile'));
             }
@@ -428,6 +433,8 @@ class ServicioTuristicoController extends Controller
                 'cMensaje' => collect($ex->errors())->flatten()->first() ?? 'Error de validación.',
                 'cData'    => null,
             ], 422);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $ex) {
+            throw $ex;
         } catch (Exception $ex) {
             return response()->json([
                 'lSuccess' => false,
